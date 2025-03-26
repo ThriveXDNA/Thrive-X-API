@@ -1,0 +1,27 @@
+<!-- src/views/layouts/main.handlebars -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}} - ThriveX API</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
+    <link rel="icon" href="/img/favicon.png" type="image/png">
+    {{#if scripts}}
+        {{#each scripts}}
+            <script src="{{this}}" defer></script>
+        {{/each}}
+    {{/if}}
+</head>
+<body class="min-h-screen flex flex-col">
+    {{> header}}
+    
+    <main class="flex-grow">
+        {{{body}}}
+    </main>
+    
+    {{> footer}}
+</body>
+</html>

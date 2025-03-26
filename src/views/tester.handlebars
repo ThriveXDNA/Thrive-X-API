@@ -1,0 +1,202 @@
+<!-- src/views/tester.handlebars -->
+<div class="bg-gradient-to-r from-blue-400 to-cyan-500 text-white py-10">
+    <div class="container mx-auto px-4">
+        <h1 class="text-3xl font-bold mb-2">ThriveX API Tester</h1>
+        <p class="text-xl">Try out our API endpoints with this interactive testing tool</p>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Food Analysis Test Panel -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-primary text-white py-4 px-6">
+                <h2 class="text-xl font-bold">Food Analysis</h2>
+                <p class="text-sm opacity-90">Analyze compatibility with carnivore diet</p>
+            </div>
+            <div class="p-6">
+                <form id="analyze-form" class="space-y-4">
+                    <div class="input-group">
+                        <label for="foods">Foods (comma separated)</label>
+                        <input type="text" id="foods" class="border rounded-md p-2 w-full" 
+                               placeholder="grass-fed beef, eggs, lamb liver" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="user-id">User ID</label>
+                        <input type="text" id="user-id" class="border rounded-md p-2 w-full" 
+                               value="550e8400-e29b-41d4-a716-446655440000" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full">Analyze Foods</button>
+                </form>
+                <div class="mt-6">
+                    <h3 class="font-semibold mb-2">Response:</h3>
+                    <div class="result-container">
+                        <pre id="result" class="text-sm whitespace-pre-wrap">Response will appear here...</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Review Submission Test Panel -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-secondary text-white py-4 px-6">
+                <h2 class="text-xl font-bold">Submit Review</h2>
+                <p class="text-sm opacity-90">Evaluate food products with preparation methods</p>
+            </div>
+            <div class="p-6">
+                <form id="review-form" class="space-y-4">
+                    <div class="input-group">
+                        <label for="review-user-id">User ID</label>
+                        <input type="text" id="review-user-id" class="border rounded-md p-2 w-full" 
+                               value="550e8400-e29b-41d4-a716-446655440001" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="product-id">Product ID</label>
+                        <input type="text" id="product-id" class="border rounded-md p-2 w-full" 
+                               value="grass-fed-beef" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="rating">Rating</label>
+                        <select id="rating" class="border rounded-md p-2 w-full" required>
+                            <option value="5">5 - Excellent</option>
+                            <option value="4">4 - Very Good</option>
+                            <option value="3">3 - Good</option>
+                            <option value="2">2 - Fair</option>
+                            <option value="1">1 - Poor</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="review-text">Review Text</label>
+                        <textarea id="review-text" class="border rounded-md p-2 w-full" rows="3" 
+                                  placeholder="Share your experience with this product..." required></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="preparation">Preparation Method</label>
+                            <select id="preparation" class="border rounded-md p-2 w-full" required>
+                                <option value="traditional">Traditional</option>
+                                <option value="standard">Standard</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="dietary">Dietary Practice</label>
+                            <select id="dietary" class="border rounded-md p-2 w-full" required>
+                                <option value="strict">Strict</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="flexible">Flexible</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-secondary w-full">Submit Review</button>
+                </form>
+                <div class="mt-6">
+                    <h3 class="font-semibold mb-2">Response:</h3>
+                    <div class="result-container">
+                        <pre id="review-result" class="text-sm whitespace-pre-wrap">Response will appear here...</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Meal Planning Test Panel -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-primary text-white py-4 px-6">
+                <h2 class="text-xl font-bold">Meal Planning</h2>
+                <p class="text-sm opacity-90">Generate personalized carnivore meal plans</p>
+            </div>
+            <div class="p-6">
+                <form id="meal-plan-form" class="space-y-4">
+                    <div class="input-group">
+                        <label for="plan-user-id">User ID</label>
+                        <input type="text" id="plan-user-id" class="border rounded-md p-2 w-full" 
+                               value="550e8400-e29b-41d4-a716-446655440001" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="plan-days">Days</label>
+                            <select id="plan-days" class="border rounded-md p-2 w-full" required>
+                                <option value="1">1 Day</option>
+                                <option value="3">3 Days</option>
+                                <option value="7" selected>7 Days</option>
+                                <option value="14">14 Days</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="plan-preference">Preference</label>
+                            <select id="plan-preference" class="border rounded-md p-2 w-full" required>
+                                <option value="standard">Standard Carnivore</option>
+                                <option value="strict">Strict Carnivore</option>
+                                <option value="flexible">Flexible Carnivore</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="plan-goal">Goal</label>
+                        <select id="plan-goal" class="border rounded-md p-2 w-full" required>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="weight_loss">Weight Loss</option>
+                            <option value="muscle_gain">Muscle Gain</option>
+                            <option value="health_optimization">Health Optimization</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full">Generate Meal Plan</button>
+                </form>
+                <div class="mt-6">
+                    <h3 class="font-semibold mb-2">Response:</h3>
+                    <div class="result-container">
+                        <pre id="meal-plan-result" class="text-sm whitespace-pre-wrap">Response will appear here...</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Food Plate Analysis Test Panel -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-secondary text-white py-4 px-6">
+                <h2 class="text-xl font-bold">Food Plate Analysis</h2>
+                <p class="text-sm opacity-90">Analyze a complete meal for carnivore compatibility</p>
+            </div>
+            <div class="p-6">
+                <form id="plate-form" class="space-y-4">
+                    <div class="input-group">
+                        <label for="plate-user-id">User ID</label>
+                        <input type="text" id="plate-user-id" class="border rounded-md p-2 w-full" 
+                               value="550e8400-e29b-41d4-a716-446655440003" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="plate-foods">Foods in Meal (comma separated)</label>
+                        <textarea id="plate-foods" class="border rounded-md p-2 w-full" rows="3" 
+                                  placeholder="ribeye steak, eggs, liver, butter" required></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="meal-type">Meal Type</label>
+                            <select id="meal-type" class="border rounded-md p-2 w-full" required>
+                                <option value="breakfast">Breakfast</option>
+                                <option value="lunch">Lunch</option>
+                                <option value="dinner">Dinner</option>
+                                <option value="snack">Snack</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="analysis-depth">Analysis Depth</label>
+                            <select id="analysis-depth" class="border rounded-md p-2 w-full" required>
+                                <option value="basic">Basic</option>
+                                <option value="detailed">Detailed</option>
+                                <option value="comprehensive">Comprehensive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-secondary w-full">Analyze Plate</button>
+                </form>
+                <div class="mt-6">
+                    <h3 class="font-semibold mb-2">Response:</h3>
+                    <div class="result-container">
+                        <pre id="plate-result" class="text-sm whitespace-pre-wrap">Response will appear here...</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

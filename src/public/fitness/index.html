@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness & Nutrition API</title>
+    <style>
+        :root {
+            --primary: #1ECBE1;
+            --highlight: #E1341E;
+            --dark: #333333;
+            --light: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), #0da8bc);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin-bottom: 2rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--highlight);
+            color: white;
+            padding: 0.8rem 1.8rem;
+            font-size: 1rem;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background-color: #c42a15;
+            transform: translateY(-2px);
+        }
+        
+        .tab-navigation {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            background-color: #f0f0f0;
+            padding: 10px;
+        }
+        
+        .tab-button {
+            margin: 0 10px;
+            padding: 10px 20px;
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button.active {
+            background-color: var(--primary);
+            color: white;
+            border-radius: 5px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .features {
+            padding: 4rem 0;
+            background-color: var(--light);
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .feature-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            padding: 2rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-card h3 {
+            color: var(--primary);
+            font-size: 1.3rem;
+            margin-top: 0;
+        }
+        
+        .api-endpoints {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .api-card {
+            background-color: var(--light);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .api-card h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+        
+        .api-card .endpoint {
+            background-color: #272822;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 1rem 0;
+        }
+        
+        /* Enhanced pricing styles */
+        .pricing-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            padding: 2rem;
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .pricing-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .pricing-price {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        
+        .pricing-price span {
+            font-size: 1rem;
+            color: #888;
+            font-weight: normal;
+        }
+        
+        .pricing-features {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+        
+        .pricing-features li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .pricing-features li:last-child {
+            border-bottom: none;
+        }
+        
+        .footer {
+            background-color: var(--dark);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .tab-navigation {
+                flex-direction: column;
+            }
+            
+            .tab-button {
+                margin: 5px 0;
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="hero">
+                <h1>Fitness & Nutrition API</h1>
+                <p>Personalized workout plans and nutrition advice tailored to your unique goals and preferences</p>
+                <a href="/fitness/docs" class="btn">API Documentation</a>
+            </div>
+        </div>
+    </header>
+    
+    <div class="tab-navigation">
+        <button class="tab-button active" data-tab="features">Features</button>
+        <button class="tab-button" data-tab="endpoints">API Endpoints</button>
+        <button class="tab-button" data-tab="pricing">Pricing</button>
+    </div>
+    
+    <div class="container">
+        <div id="features-tab" class="tab-content active">
+            <section class="features">
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h3>Personalized Workout Plans</h3>
+                        <p>Our AI-powered exercise plans are meticulously crafted to match your fitness goals, whether it's shedding pounds, building muscle, or enhancing endurance.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Nutrition Advice</h3>
+                        <p>Receive comprehensive nutrition guidance tailored to your dietary preferences, health conditions, and fitness goals.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Custom Meal Planning</h3>
+                        <p>Get detailed meal plans with recipes and nutritional information customized to your needs and preferences.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Food Plate Analysis</h3>
+                        <p>Analyze the nutritional content of your meals with our food plate analysis feature.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Exercise Details</h3>
+                        <p>Comprehensive information about specific exercises, including proper form and target muscles.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Food Ingredient Directory</h3>
+                        <p>Explore detailed information about food ingredients, chemicals, and label info with insights on health quality.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Natural Remedies</h3>
+                        <p>Access natural remedy variations for specific symptoms, including efficacy ratings, ingredients, and preparation steps.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <div id="endpoints-tab" class="tab-content">
+            <section class="api-section">
+                <div class="api-endpoints">
+                    <div class="api-card">
+                        <h3>Generate Workout Plan</h3>
+                        <div class="endpoint">POST /api/fitness/generateWorkoutPlan</div>
+                        <p>Creates a personalized workout plan based on your goals, fitness level, and preferences.</p>
+                    </div>
+                    <div class="api-card">
+                        <h3>Exercise Details</h3>
+                        <div class="endpoint">POST /api/fitness/exerciseDetails</div>
+                        <p>Provides detailed information about specific exercises, including proper form and target muscles.</p>
+                    </div>
+                    <div class="api-card">
+                        <h3>Nutrition Advice</h3>
+                        <div class="endpoint">POST /api/fitness/nutritionAdvice</div>
+                        <p>Delivers personalized nutrition guidance based on your goals and dietary preferences.</p>
+                    </div>
+                    <div class="api-card">
+                        <h3>Custom Meal Plan</h3>
+                        <div class="endpoint">POST /api/fitness/customMealPlan</div>
+                        <p>Generates detailed meal plans with recipes and nutritional information.</p>
+                    </div>
+                    <div class="api-card">
+                        <h3>Analyze Food Plate</h3>
+                        <div class="endpoint">POST /api/fitness/analyzeFoodPlate</div>
+                        <p>Analyzes the nutritional content of your meals based on the food items.</p>
+                    </div>
+                    <div class="api-card">
+                        <h3>Food Ingredient Directory</h3>
+                        <div class="endpoint">POST /api/food-ingredients</div>
+                        <p>Provides detailed information about food ingredients, additives, and their health implications.</p>
+                    </div>
+                    <div class="api-card">
+                        <h3>Natural Remedies</h3>
+                        <div class="endpoint">POST /api/natural-remedies</div>
+                        <p>Get natural remedy variations for a specific symptom, including efficacy ratings, ingredients, and preparation steps.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <div id="pricing-tab" class="tab-content">
+            <section class="features">
+                <div class="feature-grid">
+                    <div class="pricing-card">
+                        <div class="pricing-name">Essential</div>
+                        <div class="pricing-price">$0<span>/month</span></div>
+                        <ul class="pricing-features">
+                            <li><i class="fas fa-check"></i> 10 requests/month</li>
+                            <li><i class="fas fa-check"></i> Access to all endpoints</li>
+                            <li class="unavailable"><i class="fas fa-times"></i> No additional requests</li>
+                        </ul>
+                        <a href="/fitness/subscribe?plan=essential" class="btn">Start Free</a>
+                    </div>
+                    <div class="pricing-card" style="position: relative; border: 2px solid var(--primary);">
+                        <div style="position: absolute; top: -10px; right: 10px; background-color: var(--highlight); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; font-weight: bold;">POPULAR</div>
+                        <div class="pricing-name">Core</div>
+                        <div class="pricing-price">$14.99<span>/month</span></div>
+                        <ul class="pricing-features">
+                            <li><i class="fas fa-check"></i> 500 requests/month</li>
+                            <li><i class="fas fa-check"></i> Access to all endpoints</li>
+                            <li><i class="fas fa-check"></i> Additional requests at $0.04 each</li>
+                        </ul>
+                        <a href="/fitness/subscribe?plan=core" class="btn">Select Core</a>
+                    </div>
+                    <div class="pricing-card">
+                        <div class="pricing-name">Elite</div>
+                        <div class="pricing-price">$49.99<span>/month</span></div>
+                        <ul class="pricing-features">
+                            <li><i class="fas fa-check"></i> 15,000 requests/month</li>
+                            <li><i class="fas fa-check"></i> Access to all endpoints</li>
+                            <li><i class="fas fa-check"></i> Additional requests at $0.025 each</li>
+                        </ul>
+                        <a href="/fitness/subscribe?plan=elite" class="btn">Select Elite</a>
+                    </div>
+                    <div class="pricing-card">
+                        <div class="pricing-name">Ultimate</div>
+                        <div class="pricing-price">$129.99<span>/month</span></div>
+                        <ul class="pricing-features">
+                            <li><i class="fas fa-check"></i> 75,000 requests/month</li>
+                            <li><i class="fas fa-check"></i> Access to all endpoints</li>
+                            <li><i class="fas fa-check"></i> Additional requests at $0.015 each</li>
+                        </ul>
+                        <a href="/fitness/subscribe?plan=ultimate" class="btn">Select Ultimate</a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Fitness & Nutrition API. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Tab Navigation
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.dataset.tab;
+                
+                // Remove active class from all buttons and contents
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding content
+                button.classList.add('active');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

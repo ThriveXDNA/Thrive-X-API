@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thrive X Fitness & Nutrition API Documentation</title>
+    <!-- Chart.js for Graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #1ECBE1;
+            --highlight: #E1341E;
+            --dark: #333333;
+            --light: #f8f9fa;
+            --sidebar-width: 260px;
+            --shadow: 0 4px 15px rgba(0,0,0,0.2);
+            --gradient-bg: linear-gradient(135deg, #1ECBE1, #0da8bc);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--dark);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--light);
+            border-right: 1px solid #ddd;
+            padding: 20px 0;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        
+        .sidebar-logo {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 0 20px;
+        }
+        
+        .sidebar-logo img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .sidebar-logo h1 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-top: 10px;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: #777;
+            padding: 0 20px;
+            margin-bottom: 10px;
+        }
+        
+        .sidebar-item {
+            display: block;
+            padding: 10px 20px;
+            color: var(--dark);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+        
+        .sidebar-item:hover, .sidebar-item.active {
+            background-color: rgba(30, 203, 225, 0.1);
+            border-left-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            width: calc(100% - var(--sidebar-width));
+        }
+        
+        .content-header {
+            margin-bottom: 30px;
+        }
+        
+        .content-header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        /* Tabs Navigation */
+        .tabs-nav {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #777;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .tab-btn:hover {
+            color: var(--primary);
+        }
+        
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* API Endpoint Styling */
+        .endpoint {
+            margin-bottom: 40px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .endpoint-method {
+            background-color: var(--primary);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-right: 15px;
+        }
+        
+        .endpoint-path {
+            font-family: monospace;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .endpoint-body {
+            padding: 20px;
+        }
+        
+        .endpoint-description {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 1.2rem;
+            margin: 20px 0 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        /* Request/Response Examples */
+        .code-block {
+            background-color: #272822;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        .param-table, .subscription-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .param-table th, .param-table td, .subscription-table th, .subscription-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        
+        .param-table th, .subscription-table th {
+            background-color: #f5f5f5;
+        }
+        
+        .param-required {
+            color: var(--highlight);
+            font-weight: bold;
+        }
+        
+        .subscription-table th.recommended {
+            background-color: #ffd700;
+            color: var(--dark);
+        }
+        
+        /* Pie Chart Styling */
+        .pie-chart-container {
+            margin: 20px auto;
+            max-width: 400px;
+            padding: 15px;
+            background: var(--gradient-bg);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .pie-chart-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+            animation: glow 5s infinite;
+        }
+        
+        @keyframes glow {
+            0% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 0.5; }
+        }
+        
+        .pie-chart-title {
+            color: white;
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Legal Document Styling */
+        .legal-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .legal-content h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .legal-content h3 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .legal-content p {
+            margin-bottom: 1rem;
+        }
+        
+        .legal-content ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .legal-content ul li {
+            margin-bottom: 5px;
+        }
+        
+        .medical-notice {
+            background-color: #ffe8e8;
+            border: 1px solid #ffcccc;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        /* Mobile Menu Toggle */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: none;
+            cursor: pointer;
+            z-index: 100;
+        }
+        
+        /* Mobile Responsiveness */
+        @media (max-width: 992px) {
+            body {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                transform: none;
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 10px;
+            }
+            
+            .sidebar.collapsed {
+                display: none;
+            }
+            
+            .content-area {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .menu-toggle {
+                display: flex;
+            }
+            
+            .pie-chart-container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <h1>Thrive X API</h1>
+        </div>
+        
+        <div class="sidebar-section">
+            <div class="sidebar-title">Navigation</div>
+            <a href="/fitness" class="sidebar-item">Home</a>
+            <a href="/fitness/api-interface" class="sidebar-item">API Interface</a>
+            <a href="https://thrivexdna.com" class="sidebar-item">Thrive X DNA Website</a>
+        </div>
+        
+        <div class="sidebar-section">
+            <div class="sidebar-title">Getting Started</div>
+            <a href="#introduction" class="sidebar-item active">Introduction</a>
+            <a href="#authentication" class="sidebar-item">Authentication</a>
+            <a href="#rate-limits" class="sidebar-item">Rate Limits</a>
+        </div>
+        
+        <div class="sidebar-section">
+            <div class="sidebar-title">API Endpoints</div>
+            <a href="#generate-workout-plan" class="sidebar-item">Generate Workout Plan</a>
+            <a href="#exercise-details" class="sidebar-item">Exercise Details</a>
+            <a href="#nutrition-meal-plan" class="sidebar-item">Nutrition & Meal Plan</a>
+            <a href="#analyze-food-plate" class="sidebar-item">Analyze Food Plate</a>
+            <a href="#food-ingredient-directory" class="sidebar-item">Food Ingredient Directory</a>
+            <a href="#natural-remedies" class="sidebar-item">Natural Remedies</a>
+        </div>
+        
+        <div class="sidebar-section">
+            <div class="sidebar-title">Resources</div>
+            <a href="#examples" class="sidebar-item">Examples</a>
+            <a href="#support" class="sidebar-item">Support</a>
+        </div>
+        
+        <div class="sidebar-section">
+            <div class="sidebar-title">Legal Information</div>
+            <a href="#terms-of-service" class="sidebar-item">Terms of Service</a>
+            <a href="#privacy-policy" class="sidebar-item">Privacy Policy</a>
+            <a href="#subscription-terms" class="sidebar-item">Subscription Terms</a>
+            <a href="#medical-disclaimer" class="sidebar-item">Medical Disclaimer</a>
+            <a href="#data-security" class="sidebar-item">Data Security</a>
+            <a href="#refund-policy" class="sidebar-item">Refund Policy</a>
+        </div>
+    </aside>
+    
+    <!-- Mobile menu toggle -->
+    <button class="menu-toggle" id="menu-toggle">☰</button>
+    
+    <!-- Main Content Area -->
+    <main class="content-area">
+        <div class="content-header">
+            <h1>Thrive X DNA Fitness & Nutrition API Documentation</h1>
+            <p>Complete documentation for the Thrive X DNA Fitness & Nutrition API, including all endpoints, request parameters, and response formats.</p>
+        </div>
+        
+        <!-- Tabs Navigation -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" data-tab="overview">Overview</button>
+            <button class="tab-btn" data-tab="generate-workout-plan">Generate Workout Plan</button>
+            <button class="tab-btn" data-tab="exercise-details">Exercise Details</button>
+            <button class="tab-btn" data-tab="nutrition-meal-plan">Nutrition & Meal Plan</button>
+            <button class="tab-btn" data-tab="analyze-food-plate">Analyze Food Plate</button>
+            <button class="tab-btn" data-tab="food-ingredient-directory">Food Ingredient Directory</button>
+            <button class="tab-btn" data-tab="natural-remedies">Natural Remedies</button>
+            <button class="tab-btn" data-tab="examples">Examples</button>
+            <button class="tab-btn" data-tab="terms-of-service">Terms of Service</button>
+            <button class="tab-btn" data-tab="privacy-policy">Privacy Policy</button>
+            <button class="tab-btn" data-tab="subscription-terms">Subscription Terms</button>
+            <button class="tab-btn" data-tab="medical-disclaimer">Medical Disclaimer</button>
+            <button class="tab-btn" data-tab="data-security">Data Security</button>
+            <button class="tab-btn" data-tab="refund-policy">Refund Policy</button>
+        </div>
+        
+        <!-- Tab Contents -->
+        <div id="overview" class="tab-content active">
+            <h2 id="introduction">Introduction</h2>
+            <p>The Thrive X DNA Fitness & Nutrition API is designed to empower developers, fitness enthusiasts, and health professionals with cutting-edge tools for personalized fitness and nutrition management. Powered by advanced AI through OpenAI integration, this API offers a suite of endpoints to generate tailored workout plans, detailed exercise information, comprehensive nutrition advice, custom meal plans, food plate analysis, food ingredient details, and natural remedies. Whether you're building a fitness app, optimizing your own training, or exploring dietary options, our API provides flexible, data-driven solutions. Key features include support for diverse fitness goals, dietary preferences (e.g., carnivore, vegan), real-time nutritional analysis, ingredient breakdowns, and natural health solutions, all accessible via a RESTful interface returning JSON data.</p>
+            
+            <h2 id="authentication">Authentication</h2>
+            <p>To access the Thrive X DNA Fitness & Nutrition API, every request must include an API key in the header. This key is provided upon subscription and ensures secure access to our services. For certain administrative routes (e.g., `/admin` endpoints), additional authentication via Supabase tokens is required, which is handled server-side for authorized users only.</p>
+            <div class="code-block">
+                X-API-Key: your_api_key_here
+            </div>
+            <p>To obtain an API key, subscribe to one of our plans (see Rate Limits below) or contact <a href="mailto:support@thrivexdna.com">support@thrivexdna.com</a> for assistance.</p>
+            
+            <h2 id="rate-limits">Rate Limits</h2>
+            <p>The Thrive X DNA Fitness & Nutrition API enforces rate limits based on your subscription tier to ensure fair usage and optimal performance. Exceeding these limits results in a <code>429 Too Many Requests</code> response. Below are the available subscription tiers with their monthly request quotas, additional per-request costs, and rate limits:</p>
+            <table class="subscription-table">
+                <thead>
+                    <tr>
+                        <th>Tier</th>
+                        <th>Cost</th>
+                        <th>Requests/Month</th>
+                        <th>Additional Cost</th>
+                        <th>Rate Limit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Basic</td>
+                        <td>$0.00/mo</td>
+                        <td>10</td>
+                        <td>N/A (Hard Limit)</td>
+                        <td>1000 requests/hour</td>
+                    </tr>
+                    <tr>
+                        <td>Premium</td>
+                        <td>$14.99/mo</td>
+                        <td>500</td>
+                        <td>$0.04/request</td>
+                        <td>1 request/second</td>
+                    </tr>
+                    <tr>
+                        <td>Professional</td>
+                        <td>$49.00/mo</td>
+                        <td>15,000</td>
+                        <td>$0.025/request</td>
+                        <td>3 requests/second</td>
+                    </tr>
+                    <tr>
+                        <td class="recommended">Enterprise ⭐️ Recommended</td>
+                        <td>$129.00/mo</td>
+                        <td>75,000</td>
+                        <td>$0.015/request</td>
+                        <td>20 requests/second</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Notes:</strong> The Basic tier has a hard limit of 10 requests/month. Higher tiers (Premium, Professional, Enterprise) allow additional requests beyond the monthly quota at the specified rates. Rate limits are enforced per API key, and development mode defaults to 1000 requests/24 hours unless overridden by your subscription. For custom plans or enterprise solutions, contact <a href="mailto:support@thrivexdna.com">support@thrivexdna.com</a>.</p>
+        </div>
+        
+        <div id="generate-workout-plan" class="tab-content">
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="endpoint-method">POST</span>
+                    <span class="endpoint-path">/api/openai</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="endpoint-description">
+                        <p>Create a personalized workout plan based on your goals, fitness level, and preferences.</p>
+                    </div>
+                    
+                    <h3 class="section-title">Request Parameters</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>prompt</td>
+                                <td>string</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Instruction including fitnessLevel, goals, preferences, daysPerWeek, sessionDuration, planDurationWeeks</td>
+                            </tr>
+                            <tr>
+                                <td>model</td>
+                                <td>string</td>
+                                <td>No</td>
+                                <td>AI model (default: "gpt-4o")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3 class="section-title">Example Request</h3>
+                    <div class="code-block">
+{
+  "prompt": "Generate a detailed workout plan for an intermediate with goal endurance, preferring weight_training, cardio, hiit, bodyweight, yoga, 5 days/week, 90 min sessions, over 3 weeks.",
+  "model": "gpt-4o"
+}
+                    </div>
+                    
+                    <h3 class="section-title">Example Response</h3>
+                    <div class="code-block">
+{
+  "success": true,
+  "data": {
+    "name": "Endurance Hybrid Plan",
+    "goals": "endurance",
+    "fitnessLevel": "intermediate",
+    "daysPerWeek": "5",
+    "planDurationWeeks": "2",
+    "days": [
+      {
+        "name": "Week 1 - Monday - Cardio & Weight Training",
+        "sessionDuration": "90 minutes",
+        "exercises": [
+          {"name": "Treadmill Running (Moderate Pace)", "sets": 1, "reps": "30 min", "restSeconds": 0, "progression": "Increase speed by 0.5 mph in Week 2"},
+          {"name": "Dumbbell Lunges", "sets": 3, "reps": 12, "restSeconds": 60, "progression": "Add 5 lbs in Week 2"},
+          {"name": "Kettlebell Swings", "sets": 3, "reps": 15, "restSeconds": 60, "progression": "Increase reps to 20 in Week 2"},
+          {"name": "Cool-Down Jog", "sets": 1, "reps": "15 min", "restSeconds": 0, "progression": "Maintain pace"}
+        ]
+      },
+      {
+        "name": "Week 1 - Tuesday - HIIT & Bodyweight",
+        "sessionDuration": "90 minutes",
+        "exercises": [
+          {"name": "Sprint Intervals (30s sprint, 90s walk)", "sets": 10, "reps": "2 min cycle", "restSeconds": 0, "progression": "Add 1 interval in Week 2"},
+          {"name": "Burpees", "sets": 4, "reps": 15, "restSeconds": 45, "progression": "Increase reps to 20 in Week 2"},
+          {"name": "Mountain Climbers", "sets": 4, "reps": "45s", "restSeconds": 45, "progression": "Extend to 60s in Week 2"},
+          {"name": "Bodyweight Squats", "sets": 3, "reps": 20, "restSeconds": 60, "progression": "Add 5 reps in Week 2"}
+        ]
+      }
+    ]
+  }
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="exercise-details" class="tab-content">
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="endpoint-method">POST</span>
+                    <span class="endpoint-path">/api/openai</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="endpoint-description">
+                        <p>Get detailed information about a specific exercise, including proper form and target muscles.</p>
+                    </div>
+                    
+                    <h3 class="section-title">Request Parameters</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>prompt</td>
+                                <td>string</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Instruction including exercise name and optional variations request</td>
+                            </tr>
+                            <tr>
+                                <td>model</td>
+                                <td>string</td>
+                                <td>No</td>
+                                <td>AI model (default: "gpt-4o")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3 class="section-title">Example Request</h3>
+                    <div class="code-block">
+{
+  "prompt": "Provide detailed information for the exercise 'Squat'. Include variations.",
+  "model": "gpt-4o"
+}
+                    </div>
+                    
+                    <h3 class="section-title">Example Response</h3>
+                    <div class="code-block">
+{
+  "success": true,
+  "data": {
+    "name": "Squat",
+    "muscleGroups": ["Quadriceps", "Glutes", "Hamstrings"],
+    "equipment": "Barbell or Bodyweight",
+    "instructions": "Stand with feet shoulder-width apart, lower your hips...",
+    "difficulty": "Intermediate",
+    "tips": ["Keep back straight", "Knees over toes", "Engage core"],
+    "variations": ["Front Squat", "Goblet Squat"]
+  }
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="nutrition-meal-plan" class="tab-content">
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="endpoint-method">POST</span>
+                    <span class="endpoint-path">/api/openai</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="endpoint-description">
+                        <p>Get personalized nutrition advice and a custom meal plan tailored to your goals, preferences, and needs.</p>
+                    </div>
+                    
+                    <h3 class="section-title">Request Parameters</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>prompt</td>
+                                <td>string</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Instruction including goals, dietType, gender, age, weight, height, activityLevel, calorieTarget, mealsPerDay, numberOfDays, allergies, religiousPreferences</td>
+                            </tr>
+                            <tr>
+                                <td>model</td>
+                                <td>string</td>
+                                <td>No</td>
+                                <td>AI model (default: "gpt-4o")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3 class="section-title">Example Request</h3>
+                    <div class="code-block">
+{
+  "prompt": "Generate detailed nutrition advice and a 7-day meal plan for a male, age 32, weight 112.49 kg, height 193.04 cm, lightly active, aiming for muscle_gain with a vegetarian diet, targeting 3500 calories/day, 6 meals/day. Account for food allergies (peanuts, dairy, gluten, shellfish, soy, tree nuts) and religious preferences (halal).",
+  "model": "gpt-4o"
+}
+                    </div>
+                    
+                    <h3 class="section-title">Example Response</h3>
+                    <div class="code-block">
+{
+  "success": true,
+  "data": {
+    "macros": {"protein": 245, "fat": 117, "carbs": 377, "totalCalories": 3500},
+    "recommendations": {
+      "general": "To support muscle gain on a vegetarian, halal diet, focus on high-protein plant-based sources...",
+      "keyPoints": [
+        "Prioritize halal-certified legumes, quinoa, and seeds for protein.",
+        "Use gluten-free grains like rice and oats for carbs.",
+        "Incorporate olive oil and avocado for allergen-free fats.",
+        "Stay hydrated with 3+ liters of water daily.",
+        "Avoid pork, non-halal items, and listed allergens."
+      ],
+      "mealPlan": [
+        {
+          "day": "Day 1",
+          "meals": [
+            {"mealName": "Breakfast", "foods": [
+              {"name": "Oatmeal (Gluten-Free) with Chia Seeds", "calories": 600, "protein": 20, "fat": 20, "carbs": 90}
+            ]},
+            {"mealName": "Dinner", "foods": [
+              {"name": "Lentil Curry with Brown Rice", "calories": 750, "protein": 30, "fat": 20, "carbs": 105}
+            ]}
+          ]
+        }
+      ]
+    },
+    "goals": "muscle_gain",
+    "dietType": "vegetarian",
+    "gender": "male",
+    "age": 32,
+    "weight": 112.49,
+    "heightFeetInches": "6 ft 4 in",
+    "activityLevel": "lightly",
+    "allergies": "peanuts, dairy, gluten, shellfish, soy, tree nuts",
+    "religiousPreferences": "halal"
+  }
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="analyze-food-plate" class="tab-content">
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="endpoint-method">POST</span>
+                    <span class="endpoint-path">/api/fitness/analyzeFoodPlate</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="endpoint-description">
+                        <p>Upload an image of your food plate to analyze its nutritional content.</p>
+                    </div>
+                    
+                    <h3 class="section-title">Request Parameters (FormData)</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>food_image</td>
+                                <td>file</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Image file of the food plate</td>
+                            </tr>
+                            <tr>
+                                <td>cooking_oil</td>
+                                <td>string</td>
+                                <td>No</td>
+                                <td>Optional cooking oil type (e.g., "olive_oil")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3 class="section-title">Example Request</h3>
+                    <div class="code-block">
+Content-Type: multipart/form-data
+X-API-Key: your_api_key_here
+Body:
+- food_image: [file]
+- cooking_oil: "olive_oil"
+                    </div>
+                    
+                    <h3 class="section-title">Example Response</h3>
+                    <div class="code-block">
+{
+  "success": true,
+  "data": {
+    "title": "Food Plate Analysis",
+    "foods": [
+      {"name": "Grilled Chicken", "calories": 200, "protein": 30, "fat": 5, "carbs": 0},
+      {"name": "Steamed Broccoli", "calories": 50, "protein": 3, "fat": 0, "carbs": 10}
+    ]
+  }
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="food-ingredient-directory" class="tab-content">
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="endpoint-method">POST</span>
+                    <span class="endpoint-path">/api/food-ingredients</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="endpoint-description">
+                        <p>Explore detailed information about food ingredients, chemicals, and label items, including definitions, layman's terms, production methods, and usage examples.</p>
+                    </div>
+                    
+                    <h3 class="section-title">Request Parameters</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>ingredient</td>
+                                <td>string</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Name of the ingredient to search (e.g., "Ascorbic Acid")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3 class="section-title">Example Request</h3>
+                    <div class="code-block">
+{
+  "ingredient": "Ascorbic Acid"
+}
+                    </div>
+                    
+                    <h3 class="section-title">Example Response</h3>
+                    <div class="code-block">
+{
+  "success": true,
+  "data": {
+    "ingredients": [
+      {
+        "name": "Ascorbic Acid",
+        "definition": "A water-soluble vitamin (C6H8O6) essential for collagen synthesis and antioxidant activity.",
+        "layman_term": "Vitamin C - keeps your skin healthy and fights off colds.",
+        "production": "Synthesized from glucose via fermentation or chemical processes.",
+        "example_use": "Added to orange juice to boost vitamin content."
+      }
+    ]
+  }
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="natural-remedies" class="tab-content">
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="endpoint-method">POST</span>
+                    <span class="endpoint-path">/api/natural-remedies</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="endpoint-description">
+                        <p>Get natural remedy variations for a specific symptom, including efficacy ratings, ingredients, and preparation steps.</p>
+                    </div>
+                    
+                    <div class="medical-notice">
+                        <p style="margin-bottom: 10px;"><strong>Important Medical Disclaimer:</strong> These remedies and approaches are provided for informational purposes only and are not intended to diagnose, treat, cure, or prevent any disease. They represent traditional or alternative perspectives that have not been evaluated by the FDA.</p>
+                        <p>Always consult qualified healthcare professionals for medical conditions, especially for serious conditions like cancer, diabetes, heart disease, and other chronic or acute medical concerns. Never delay seeking or disregard professional medical advice because of something you read through our Services.</p>
+                        <p>See our full <a href="#medical-disclaimer">Medical Disclaimer</a> for more information.</p>
+                    </div>
+                    
+                    <h3 class="section-title">Request Parameters</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>symptom</td>
+                                <td>string</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Symptom to find remedies for (e.g., "Headache")</td>
+                            </tr>
+                            <tr>
+                                <td>approach</td>
+                                <td>string</td>
+                                <td>No</td>
+                                <td>Specific approach type (e.g., "comprehensive", "dietary", "herbs")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3 class="section-title">Example Request</h3>
+                    <div class="code-block">
+{
+  "symptom": "Headache",
+  "approach": "comprehensive"
+}
+                    </div>
+                    
+                    <h3 class="section-title">Example Response</h3>
+                    <div class="code-block">
+{
+  "success": true,
+  "data": {
+    "symptom": "Headache",
+    "remedies": [
+      {
+        "name": "Peppermint Oil Massage",
+        "efficacy_rating": 4.0,
+        "research_level": "Moderate",
+        "ingredients": [
+          {"name": "Peppermint Oil", "amount": "2-3 drops", "substitutes": ["Eucalyptus Oil"]}
+        ],
+        "preparation": ["Dilute with a carrier oil", "Massage onto temples"],
+        "usage": "Apply every 4-6 hours",
+        "warnings": ["Avoid eye contact", "Test for skin sensitivity"],
+        "insurance_notes": "May be HSA eligible with documentation"
+      }
+    ],
+    "dietary_approach": {
+      "overview": "Dietary adjustments can help prevent headaches by stabilizing blood sugar and reducing inflammation.",
+      "recommendations": [
+        "Stay hydrated with at least 2-3 liters of water daily",
+        "Reduce refined sugar and processed foods",
+        "Consider eliminating common triggers like MSG, artificial sweeteners, and alcohol"
+      ],
+      "foods_to_eat": ["Magnesium-rich foods", "Omega-3 fatty acids", "Anti-inflammatory herbs and spices"],
+      "foods_to_avoid": ["Aged cheeses", "Processed meats", "Food additives", "Alcohol"]
+    }
+  }
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="examples" class="tab-content">
+            <h2 id="examples">Code Examples</h2>
+            
+            <h3 class="section-title">JavaScript / Node.js</h3>
+            <div class="code-block">
+const fetch = require('node-fetch');
+
+const apiKey = 'your_api_key_here';
+const url = '/api/food-ingredients';
+
+const requestData = {
+  "ingredient": "Sugar"
+};
+
+fetch(url, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': apiKey
+  },
+  body: JSON.stringify(requestData)
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error));
+            </div>
+            
+            <h3 class="section-title">Python</h3>
+            <div class="code-block">
+import requests
+
+api_key = 'your_api_key_here'
+url = '/api/food-ingredients'
+
+headers = {
+    'Content-Type': 'application/json',
+    'X-API-Key': api_key
+}
+
+request_data = {
+    'ingredient': 'Sugar'
+}
+
+response = requests.post(url, headers=headers, json=request_data)
+data = response.json()
+print(data)
+            </div>
+            
+            <h3 class="section-title">Sample Nutritional Breakdown Visualization</h3>
+            <p>Below is an example of how the API's nutritional data (e.g., from /api/fitness/analyzeFoodPlate) could be visualized:</p>
+            <div class="pie-chart-container">
+                <div class="pie-chart-title">Sample Meal Nutrition Breakdown</div>
+                <canvas id="nutrition-pie-chart"></canvas>
+            </div>
+            
+            <h2 id="support">Support</h2>
+            <p>For additional help, contact support at <a href="mailto:support@thrivexdna.com">support@thrivexdna.com</a>.</p>
+        </div>
+        
+        <!-- Terms of Service Section -->
+        <div id="terms-of-service" class="tab-content">
+            <div class="legal-content">
+                <h2>Terms of Service</h2>
+                <p><strong>Last Updated: March 12, 2025</strong></p>
+                
+                <h3 class="section-title">1. Agreement to Terms</h3>
+                <p>These Terms of Service ("Terms") constitute a legally binding agreement made between you and Thrive X DNA Fitness API ("we," "us," or "our") concerning your access to and use of our fitness and nutrition API services ("Services"). By accessing or using our Services, you agree to be bound by these Terms. If you disagree with any part of these Terms, you may not access the Services.</p>
+                
+                <h3 class="section-title">2. Modifications to Terms</h3>
+                <p>We reserve the right to modify these Terms at any time. We will provide notice of any material changes by posting the updated Terms on this page with a new "Last Updated" date. Your continued use of the Services after such modifications constitutes your acceptance of the modified Terms.</p>
+                
+                <h3 class="section-title">3. API Use and Limitations</h3>
+                <p>Our Services provide programmatic access to fitness and nutrition data through our API. Your use of our API is subject to these Terms and the rate limits associated with your subscription tier. You agree not to:</p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Use our Services for any illegal purpose</li>
+                    <li>Attempt to bypass rate limits or authentication mechanisms</li>
+                    <li>Reverse engineer our Services</li>
+                    <li>Sell, lease, share, or provide direct access to our API credentials to any third party</li>
+                    <li>Use our Services in a manner that could damage, disable, overburden, or impair our servers or networks</li>
+                </ul>
+                
+                <h3 class="section-title">4. Intellectual Property</h3>
+                <p>Our Services, including all content, features, and functionality, are owned by us or our licensors and are protected by intellectual property laws. You may not duplicate, copy, or reuse any portion of the HTML, CSS, JavaScript, visual design elements, or concepts without express written permission.</p>
+                
+                <h3 class="section-title">5. User Content</h3>
+                <p>By uploading images or other content to our Services, you grant us a non-exclusive, royalty-free, worldwide license to use, store, and display that content for the purpose of providing our Services. You are solely responsible for all data, information, and content you submit through our Services.</p>
+                
+                <h3 class="section-title">6. Termination</h3>
+                <p>We may terminate or suspend your access to our Services immediately, without prior notice or liability, for any reason whatsoever, including, without limitation, if you breach these Terms. All provisions which by their nature should survive termination shall survive termination, including, without limitation, ownership provisions, warranty disclaimers, indemnity, and limitations of liability.</p>
+                
+                <h3 class="section-title">7. Governing Law</h3>
+                <p>These Terms shall be governed by and construed in accordance with the laws of the state of Delaware, without regard to its conflict of law principles.</p>
+                
+                <h3 class="section-title">8. Dispute Resolution</h3>
+                <p>Any dispute arising from or relating to these Terms or our Services will first be resolved through good-faith negotiations. If such negotiations fail, the dispute shall be resolved through binding arbitration conducted in Delaware.</p>
+            </div>
+        </div>
+
+        <!-- Privacy Policy Section -->
+        <div id="privacy-policy" class="tab-content">
+            <div class="legal-content">
+                <h2>Privacy Policy</h2>
+                <p><strong>Last Updated: March 12, 2025</strong></p>
+                
+                <h3 class="section-title">1. Information We Collect</h3>
+                <p>We collect information you provide directly to us when using our Services, including:</p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Account information (name, email address, billing information)</li>
+                    <li>API usage data (request logs, IP addresses, usage timestamps)</li>
+                    <li>User-provided content (food images, health metrics, fitness goals)</li>
+                    <li>Device information (browser type, operating system, device type)</li>
+                </ul>
+                
+                <h3 class="section-title">2. How We Use Your Information</h3>
+                <p>We use the information we collect to:</p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Provide, maintain, and improve our Services</li>
+                    <li>Process transactions and send related information</li>
+                    <li>Monitor and analyze usage patterns and trends</li>
+                    <li>Send technical notices, updates, security alerts, and administrative messages</li>
+                    <li>Respond to customer service requests and support needs</li>
+                </ul>
+                
+                <h3 class="section-title">3. Data Retention</h3>
+                <p>We retain user data for as long as your account is active or as needed to provide Services. We may retain certain data as necessary to comply with our legal obligations, resolve disputes, or enforce our agreements.</p>
+                
+                <h3 class="section-title">4. Data Security</h3>
+                <p>We implement appropriate technical and organizational measures to protect the security of your personal information. However, no method of transmission over the Internet or electronic storage is 100% secure, and we cannot guarantee absolute security.</p>
+                
+                <h3 class="section-title">5. Third-Party Services</h3>
+                <p>Our Services may integrate with or contain links to third-party websites or services. We are not responsible for the practices employed by these third parties, and we encourage you to read their privacy policies.</p>
+                
+                <h3 class="section-title">6. Children's Privacy</h3>
+                <p>Our Services are not directed to children under 13, and we do not knowingly collect personal information from children under 13. If you believe we may have collected information from a child under 13, please contact us immediately.</p>
+                
+                <h3 class="section-title">7. Your Rights</h3>
+                <p>Depending on your location, you may have certain rights regarding your personal information, including the right to access, correct, delete, restrict, or object to our processing of your data. To exercise these rights, please contact us at privacy@thrivexdna.com.</p>
+                
+                <h3 class="section-title">8. Changes to this Privacy Policy</h3>
+                <p>We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page with a new "Last Updated" date.</p>
+            </div>
+        </div>
+
+        <!-- Subscription Terms Section -->
+        <div id="subscription-terms" class="tab-content">
+            <div class="legal-content">
+                <h2>Subscription Terms</h2>
+                <p><strong>Last Updated: March 12, 2025</strong></p>
+                
+                <h3 class="section-title">1. Subscription Plans</h3>
+                <p>We offer various subscription plans with different features, limitations, and pricing as described on our website. By subscribing to our Services, you agree to the terms and conditions outlined in these Subscription Terms.</p>
+                
+                <h3 class="section-title">2. Billing and Payments</h3>
+                <p>When you subscribe to a paid plan, you agree to pay all applicable fees as described at the time of subscription. Subscription fees are billed in advance on a monthly basis. All payments are processed through our third-party payment processor, Stripe.</p>
+                
+                <p>For plans that include a limited number of API requests, exceeding this limit will result in additional charges at the per-request rate specified in your plan. These additional charges will be billed at the end of your billing cycle.</p>
+                
+                <h3 class="section-title">3. Subscription Term and Renewal</h3>
+                <p>Your subscription will automatically renew each month until you cancel. You may cancel your subscription at any time through your account settings or by contacting our customer support. Cancellation will be effective at the end of your current billing period.</p>
+                
+                <h3 class="section-title">4. Free Tier</h3>
+                <p>Our Basic subscription plan is provided free of charge and includes limited access to our Services. We reserve the right to modify, restrict, or discontinue any aspect of the free plan at any time without prior notice.</p>
+                
+                <h3 class="section-title">5. Changes to Pricing and Plans</h3>
+                <p>We reserve the right to change our subscription plans and pricing at any time. For existing subscribers, price changes will take effect at the start of the next billing period. We will provide reasonable notice of any price changes by email or through our website.</p>
+                
+                <h3 class="section-title">6. Refunds</h3>
+                <p>All subscription payments are non-refundable except where required by law. In exceptional circumstances, we may issue refunds at our sole discretion. No refunds will be provided for partial use or non-use of Services or for any unused API requests within your plan's limits.</p>
+                
+                <h3 class="section-title">7. Account Termination</h3>
+                <p>We reserve the right to suspend or terminate your account and access to Services if:</p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>You violate our Terms of Service</li>
+                    <li>Your payment fails or is declined</li>
+                    <li>We suspect fraudulent activity</li>
+                    <li>You abuse or misuse our Services</li>
+                </ul>
+                <p>Upon termination, your right to use the Services will cease immediately. If you wish to terminate your account, you may simply discontinue using the Services or contact us to request account deletion.</p>
+            </div>
+        </div>
+
+        <!-- Medical Disclaimer Section -->
+        <div id="medical-disclaimer" class="tab-content">
+            <div class="legal-content">
+                <h2>Medical and Health Disclaimer</h2>
+                <p><strong>Last Updated: March 12, 2025</strong></p>
+                
+                <p>The information provided through our Services, including workout plans, nutritional advice, meal plans, food analysis, and natural remedies, is for informational and educational purposes only. It is not intended to be a substitute for professional medical advice, diagnosis, or treatment.</p>
+                
+                <h3 class="section-title">1. Not Medical Advice</h3>
+                <p>Our Services do not provide medical advice, diagnosis, or treatment. The content provided through our API, including nutritional information, workout plans, and remedies, should not be considered medical advice. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.</p>
+                
+                <h3 class="section-title">2. No Professional-Client Relationship</h3>
+                <p>Using our Services does not create a doctor-patient relationship, a dietitian-client relationship, or any other professional healthcare relationship.</p>
+                
+                <h3 class="section-title">3. Individual Results May Vary</h3>
+                <p>Fitness and nutritional results may vary from person to person. The effectiveness of workout plans, nutritional advice, and other information provided through our Services depends on many factors, including individual physical condition, diet, discipline, and dedication.</p>
+                
+                <h3 class="section-title">4. Natural Remedies</h3>
+                <p>The natural remedies and alternative approaches provided through our Services are based on traditional wisdom and available research. They are not FDA-approved treatments and should not be used as a replacement for conventional medical care. These approaches, especially for serious conditions like cancer, diabetes, heart disease, and other chronic or acute medical conditions, should be discussed with qualified healthcare providers.</p>
+                
+                <h3 class="section-title">5. Food and Ingredient Analysis</h3>
+                <p>The food plate analysis and ingredient information provided through our Services are estimates based on available data and AI analysis. Actual nutritional content may vary based on specific brands, preparation methods, and other factors.</p>
+                
+                <h3 class="section-title">6. Health Risk Acknowledgment</h3>
+                <p>Before starting any fitness program or making significant changes to your diet, consult with a qualified healthcare provider, especially if you have a health condition, are pregnant or nursing, or have other health concerns. Not all exercises or nutritional approaches are suitable for everyone.</p>
+                
+                <h3 class="section-title">7. Emergency Medical Situations</h3>
+                <p>In case of a medical emergency, call your doctor or emergency services immediately. Do not rely on our Services for emergency medical needs.</p>
+                
+                <p>BY USING OUR SERVICES, YOU ACKNOWLEDGE THAT YOU ARE DOING SO AT YOUR OWN RISK AND THAT NEITHER WE NOR ANY PERSONS ASSOCIATED WITH US SHALL BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES ARISING FROM YOUR USE OF OUR SERVICES OR YOUR RELIANCE ON INFORMATION PROVIDED THROUGH OUR SERVICES.</p>
+            </div>
+        </div>
+
+        <!-- Data Security Section -->
+        <div id="data-security" class="tab-content">
+            <div class="legal-content">
+                <h2>Data Security</h2>
+                <p><strong>Last Updated: March 12, 2025</strong></p>
+                
+                <h3 class="section-title">1. Security Measures</h3>
+                <p>We implement industry-standard security measures to protect your data, including:</p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Data encryption in transit (HTTPS/TLS) and at rest</li>
+                    <li>Secure API authentication mechanisms</li>
+                    <li>Regular security audits and vulnerability assessments</li>
+                    <li>Infrastructure security controls and monitoring</li>
+                    <li>Employee access controls and security training</li>
+                </ul>
+                
+                <h3 class="section-title">2. API Key Security</h3>
+                <p>Your API key is your credential for accessing our Services. You are responsible for maintaining the security of your API key and should:</p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Never share your API key publicly or with unauthorized persons</li>
+                    <li>Store your API key securely in your application code or configuration</li>
+                    <li>Implement proper access controls for any systems that use your API key</li>
+                    <li>Notify us immediately if you believe your API key has been compromised</li>
+                </ul>
+                
+                <h3 class="section-title">3. Data Processing</h3>
+                <p>When processing your data, we follow these principles:</p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>We process data only for the purposes specified in our Privacy Policy</li>
+                    <li>We limit access to your data to authorized personnel only</li>
+                    <li>We maintain records of our data processing activities</li>
+                    <li>We process data in accordance with applicable data protection laws</li>
+                </ul>
+                
+                <h3 class="section-title">4. Data Handling for Food Images</h3>
+                <p>When you upload food images for analysis, we:</p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Process the images for the specific purpose of nutritional analysis</li>
+                    <li>May temporarily store images to improve our service and for debugging</li>
+                    <li>Do not use images for purposes beyond those stated in our Privacy Policy</li>
+                    <li>Implement appropriate technical measures to protect image data</li>
+                </ul>
+                
+                <h3 class="section-title">5. Third-Party Processors</h3>
+                <p>We may use third-party processors to provide certain aspects of our Services. These processors are contractually bound to process data only as instructed by us and to maintain appropriate security measures.</p>
+                
+                <h3 class="section-title">6. Data Breach Procedures</h3>
+                <p>In the event of a data breach that affects your personal information, we will:</p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Investigate the breach and take remedial actions</li>
+                    <li>Notify affected users as required by applicable law</li>
+                    <li>Cooperate with regulatory authorities as necessary</li>
+                    <li>Take steps to prevent similar breaches in the future</li>
+                </ul>
+                
+                <h3 class="section-title">7. User Responsibilities</h3>
+                <p>While we implement security measures to protect your data, the security of your account also depends on you. We recommend that you:</p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Use strong, unique passwords for your account</li>
+                    <li>Regularly check your account for suspicious activity</li>
+                    <li>Keep your contact information up to date</li>
+                    <li>Follow our security guidelines for API key management</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Refund Policy Section -->
+        <div id="refund-policy" class="tab-content">
+            <div class="legal-content">
+                <h2>Refund Policy</h2>
+                <p><strong>Last Updated: March 12, 2025</strong></p>
+                
+                <h3 class="section-title">1. Subscription Payments</h3>
+                <p>All subscription payments are generally non-refundable. When you subscribe to our Services, you agree to pay the subscription fees according to your selected plan. These fees are charged at the beginning of each billing cycle and are not refundable, even if you cancel your subscription mid-cycle.</p>
+                
+                <h3 class="section-title">2. Exceptional Circumstances</h3>
+                <p>In exceptional circumstances, we may consider refund requests at our sole discretion. Such circumstances may include:</p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Technical issues that severely impacted your ability to use our Services</li>
+                    <li>Unauthorized charges or billing errors</li>
+                    <li>Service outages exceeding 24 continuous hours</li>
+                </ul>
+                <p>To request a refund, please contact our customer support team at support@thrivexdna.com with details of your request, including your account information and the reason for seeking a refund.</p>
+                
+                <h3 class="section-title">3. Additional Charges</h3>
+                <p>Additional charges incurred for exceeding your plan's API request limits are not refundable. These charges represent actual usage of our Services beyond your subscription plan's allocation.</p>
+                
+                <h3 class="section-title">4. Cancellation Policy</h3>
+                <p>You may cancel your subscription at any time through your account settings or by contacting our customer support team. Cancellation will be effective at the end of your current billing period, and you will continue to have access to your subscription until that time. No partial refunds will be issued for the remaining unused portion of your billing period after cancellation.</p>
+                
+                <h3 class="section-title">5. Free Trial Conversions</h3>
+                <p>If we offer a free trial period and you convert to a paid subscription, you will be charged at the beginning of your first paid billing cycle. If you cancel during the free trial, you will not be charged.</p>
+                
+                <h3 class="section-title">6. Account Termination</h3>
+                <p>If your account is terminated for violation of our Terms of Service or other policies, you will not be eligible for a refund of any fees paid.</p>
+                
+                <h3 class="section-title">7. Processing of Refunds</h3>
+                <p>If a refund is approved, it will be processed using the same payment method used for the original purchase. Refunds may take 5-10 business days to appear on your statement, depending on your payment provider.</p>
+                
+                <h3 class="section-title">8. Changes to Refund Policy</h3>
+                <p>We reserve the right to modify this Refund Policy at any time. Any changes will be effective upon posting the updated policy on our website with a new "Last Updated" date.</p>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.getElementById('sidebar');
+        
+        menuToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+        });
+        
+        // Tab Navigation
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.dataset.tab;
+                
+                tabBtns.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                btn.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+        
+        // Sidebar Navigation - highlight active item and scroll to section
+        const sidebarItems = document.querySelectorAll('.sidebar-item');
+        
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                if (item.getAttribute('href').startsWith('#')) {
+                    e.preventDefault();
+                    
+                    sidebarItems.forEach(item => item.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    const id = item.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(id);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth' });
+                        // Activate corresponding tab
+                        const tabBtn = document.querySelector(`.tab-btn[data-tab="${id}"]`);
+                        if (tabBtn) {
+                            tabBtns.forEach(btn => btn.classList.remove('active'));
+                            tabContents.forEach(content => content.classList.remove('active'));
+                            tabBtn.classList.add('active');
+                            document.getElementById(id).classList.add('active');
+                        }
+                    }
+                    
+                    if (window.innerWidth <= 992) {
+                        sidebar.classList.add('collapsed');
+                    }
+                }
+            });
+        });
+        
+        // Render Sample Pie Chart
+        const ctx = document.getElementById('nutrition-pie-chart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Protein (g)', 'Fat (g)', 'Carbs (g)'],
+                datasets: [{
+                    data: [50, 30, 20],
+                    backgroundColor: [
+                        '#28a745', // Protein
+                        '#dc3545', // Fat
+                        '#ffc107'  // Carbs
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#fff',
+                            textShadow: '1px 1px 3px rgba(0,0,0,0.3)'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

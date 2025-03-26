@@ -1,0 +1,188 @@
+<!-- Add near the top of your page -->
+<div class="admin-header">
+  <h1>Admin Dashboard</h1>
+  <button id="logout-button" class="btn-secondary">Logout</button>
+</div>
+
+<div class="bg-gradient-to-r from-blue-400 to-cyan-500 text-white py-10">
+    <div class="container mx-auto px-4">
+        <h1 class="text-3xl font-bold mb-2">Admin Dashboard</h1>
+        <p class="text-xl">Monitor API usage and manage user reviews</p>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Stats Cards -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-lg font-semibold mb-4 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.006 5.006 0 00-5-5H9a5.006 5.006 0 00-5 5v1h12z" />
+                </svg>
+                Users
+            </h2>
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <p class="text-gray-500 text-sm">Total</p>
+                    <p class="text-2xl font-bold" id="total-users">0</p>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Paid</p>
+                    <p class="text-2xl font-bold text-green-500" id="active-users">0</p>
+                </div>
+            </div>
+            <canvas id="user-chart" height="200"></canvas>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-lg font-semibold mb-4 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd" />
+                </svg>
+                Reviews
+            </h2>
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <p class="text-gray-500 text-sm">Total</p>
+                    <p class="text-2xl font-bold" id="total-reviews">0</p>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Pending</p>
+                    <p class="text-2xl font-bold text-yellow-500" id="pending-reviews">0</p>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Approved</p>
+                    <p class="text-2xl font-bold text-green-500" id="approved-reviews">0</p>
+                </div>
+            </div>
+            <canvas id="review-chart" height="200" class="mt-4"></canvas>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-lg font-semibold mb-4 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v7h-2l-1 2H8l-1-2H5V5z" clip-rule="evenodd" />
+                </svg>
+                API Usage
+            </h2>
+            <div class="p-4">
+                <div class="text-center mb-6">
+                    <p class="text-gray-500 text-sm">Total Requests (24h)</p>
+                    <p class="text-3xl font-bold" id="api-requests">0</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>Food Analysis</span>
+                            <span id="food-analysis-count">0</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-primary h-2 rounded-full" style="width: 60%" id="food-analysis-bar"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>Meal Planning</span>
+                            <span id="meal-planning-count">0</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-primary h-2 rounded-full" style="width: 40%" id="meal-planning-bar"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>Food Plate Analysis</span>
+                            <span id="plate-analysis-count">0</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-primary h-2 rounded-full" style="width: 25%" id="plate-analysis-bar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Latest Reviews -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg font-semibold flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd" />
+                </svg>
+                Latest Reviews
+            </h2>
+            <button class="text-sm px-4 py-2 rounded-md bg-primary text-white hover:bg-blue-600 transition-colors">
+                View All
+            </button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Product
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Rating
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Review
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="reviews-table-body">
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            Loading...
+                        </td>
+                        <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            Please wait...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- API Documentation Link -->
+    <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg shadow-md p-6 relative overflow-hidden">
+        <div class="relative z-10">
+            <h2 class="text-lg font-semibold mb-2">API Documentation</h2>
+            <p class="text-gray-600 mb-4">Comprehensive documentation for all API endpoints with examples and response formats.</p>
+            <a href="/api-docs" class="inline-block bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors">
+                View Documentation
+            </a>
+        </div>
+        <div class="absolute right-0 top-0 h-full">
+            <svg width="150" height="150" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="opacity-10">
+                <path d="M38 66L0 104H38V66Z" fill="#1ECBE1"/>
+                <path d="M76 104L38 142H76V104Z" fill="#1ECBE1"/>
+                <path d="M114 142L76 180H114V142Z" fill="#1ECBE1"/>
+                <path d="M152 104L114 142H152V104Z" fill="#1ECBE1"/>
+                <path d="M190 66L152 104H190V66Z" fill="#1ECBE1"/>
+                <path d="M152 28L114 66H152V28Z" fill="#1ECBE1"/>
+                <path d="M114 -10L76 28H114V-10Z" fill="#1ECBE1"/>
+                <path d="M38 66L76 28H38V66Z" fill="#1ECBE1"/>
+            </svg>
+        </div>
+    </div>
+</div>
+
+<!-- Add before your other scripts at the bottom -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@latest/dist/umd/supabase.min.js"></script>
+<script>
+  // Initialize Supabase client
+  const SUPABASE_URL = '{{supabaseUrl}}';
+  const SUPABASE_KEY = '{{supabaseKey}}';
+  window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+</script>

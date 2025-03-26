@@ -1,0 +1,41 @@
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Subscribe to {{plan.name}}</h1>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title text-center">{{plan.name}} Plan</h2>
+                    <p class="plan-price text-center">${{plan.price}}<span>/month</span></p>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item">{{plan.description}}</li>
+                        <li class="list-group-item">Full access to all API features</li>
+                        <li class="list-group-item">Priority support</li>
+                    </ul>
+                    <div id="checkout-section">
+                        <button id="checkout-button" class="btn btn-primary w-100">Checkout with Stripe</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    const stripe = Stripe('{{stripePublicKey}}');
+    document.getElementById('checkout-button').addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/create-checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ planId: '{{plan.id}}' })
+            });
+            if (!response.ok) throw new Error('Failed to create checkout session');
+            const { id } = await response.json();
+            stripe.redirectToCheckout({ sessionId: id });
+        } catch (error) {
+            console.error('Checkout error:', error);
+            alert('Failed to initiate checkout. Please try again.');
+        }
+    });
+</script>

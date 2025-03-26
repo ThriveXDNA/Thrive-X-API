@@ -1,0 +1,64 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Node.js dependencies
+/node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Supabase
+.supabase
+.supabase-local
+supabase/.temp
+supabase/.env
+
+# Build directories
+/dist
+/build
+
+# Uploads directory (likely contains user-uploaded content)
+/uploads/*
+!uploads/.gitkeep
+
+# macOS specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDE and editor files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# Logs
+/logs
+*.log
+
+# Testing and coverage
+/coverage
+.nyc_output
+
+# Temporary files
+.tmp
+.temp
+# TypeScript incremental compilation files
+*.tsbuildinfo
+
+# JWT keys (if applicable)
+*.key
+*.pem
+/keys
+
+# Cache directories
+.npm
+.eslintcache
+
+# Project specific
+.vercel

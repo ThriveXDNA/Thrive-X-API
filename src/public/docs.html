@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thrive X API Documentation</title>
+    <style>
+        :root {
+            --primary: #1ECBE1;
+            --highlight: #E1341E;
+            --dark: #333333;
+            --light: #f8f9fa;
+            --sidebar-width: 260px;
+            --header-height: 60px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--dark);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background: linear-gradient(135deg, var(--primary), #0da8bc);
+            color: white;
+            height: var(--header-height);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .header-logo { font-size: 1.5rem; font-weight: bold; }
+        .header-nav { margin-left: auto; }
+        .header-nav a { color: white; text-decoration: none; margin-left: 20px; font-weight: 500; }
+        .main-container { display: flex; margin-top: var(--header-height); min-height: calc(100vh - var(--header-height)); }
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--light);
+            border-right: 1px solid #ddd;
+            padding: 20px 0;
+            height: calc(100vh - var(--header-height));
+            position: fixed;
+            overflow-y: auto;
+        }
+        .sidebar-section { margin-bottom: 20px; }
+        .sidebar-title { font-size: 0.85rem; text-transform: uppercase; color: #777; padding: 0 20px; margin-bottom: 10px; }
+        .sidebar-item {
+            display: block; padding: 10px 20px; color: var(--dark); text-decoration: none;
+            border-left: 3px solid transparent; transition: all 0.2s ease; font-size: 0.95rem;
+        }
+        .sidebar-item:hover, .sidebar-item.active {
+            background-color: rgba(30, 203, 225, 0.1); border-left-color: var(--primary); color: var(--primary);
+        }
+        .content-area { flex: 1; margin-left: var(--sidebar-width); padding: 30px; }
+        .content-header { margin-bottom: 30px; }
+        .content-header h1 { font-size: 2rem; margin-bottom: 10px; }
+        .tabs-nav { display: flex; border-bottom: 1px solid #ddd; margin-bottom: 30px; }
+        .tab-btn {
+            padding: 12px 24px; background: none; border: none; border-bottom: 3px solid transparent;
+            font-size: 1rem; font-weight: 500; color: #777; cursor: pointer; transition: all 0.2s ease;
+        }
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .code-block {
+            background-color: #272822; color: #f8f8f2; padding: 15px; border-radius: 5px;
+            font-family: monospace; overflow-x: auto; margin: 15px 0;
+        }
+        h3 { margin-top: 20px; color: var(--primary); }
+        ul { margin-left: 20px; }
+        @media (max-width: 992px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 99; }
+            .sidebar.active { transform: translateX(0); }
+            .content-area { margin-left: 0; }
+            .menu-toggle {
+                display: block; position: fixed; bottom: 20px; right: 20px; background-color: var(--primary);
+                color: white; width: 50px; height: 50px; border-radius: 50%; display: flex;
+                align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                border: none; cursor: pointer; z-index: 100;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-logo">Thrive X API</div>
+        <nav class="header-nav">
+            <a href="/">Home</a>
+            <a href="/fitness">Fitness</a>
+            <a href="https://thrivexdna.com">Thrive X</a>
+        </nav>
+    </header>
+
+    <div class="main-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Getting Started</div>
+                <a href="#introduction" class="sidebar-item active">Introduction</a>
+                <a href="#authentication" class="sidebar-item">Authentication</a>
+                <a href="#rate-limits" class="sidebar-item">Rate Limits</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Fitness & Nutrition API</div>
+                <a href="#generate-workout-plan" class="sidebar-item">Generate Workout Plan</a>
+                <a href="#exercise-details" class="sidebar-item">Exercise Details</a>
+                <a href="#nutrition-meal-plan" class="sidebar-item">Nutrition & Meal Plan</a>
+                <a href="#analyze-food-plate" class="sidebar-item">Analyze Food Plate</a>
+                <a href="#food-directory" class="sidebar-item">Food Directory</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">NPI Directory</div>
+                <a href="#npi-review-directory" class="sidebar-item">NPI Review Directory</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Resources</div>
+                <a href="#support" class="sidebar-item">Support</a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+            <div class="content-header">
+                <h1>Thrive X API Documentation</h1>
+                <p>Welcome to the Thrive X API documentation. This is the main hub for all API resources.</p>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="overview">Overview</button>
+                <button class="tab-btn" data-tab="categories">Categories</button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div id="overview" class="tab-content active">
+                <h2 id="introduction">Introduction</h2>
+                <p>The Thrive X API provides access to tools and services for health and wellness, including fitness, nutrition, and medical provider information.</p>
+
+                <h2 id="authentication">Authentication</h2>
+                <p>All API requests require an API key in the header. Some endpoints also require user authentication via Supabase tokens:</p>
+                <div class="code-block">
+                    X-API-Key: your_api_key_here
+                </div>
+
+                <h2 id="rate-limits">Rate Limits</h2>
+                <p>APIs are rate-limited to 1000 requests per 24 hours in development mode. Admin routes and the homepage are exempt. Contact support for production limits.</p>
+            </div>
+
+            <div id="categories" class="tab-content">
+                <h2 id="fitness-api">Fitness & Nutrition API</h2>
+                <p>This API offers personalized fitness and nutrition tools accessible via the API interface.</p>
+
+                <h3 id="generate-workout-plan">Generate Workout Plan</h3>
+                <p>Create a personalized workout plan based on your goals, fitness level, and preferences.</p>
+                <ul>
+                    <li><strong>Endpoint:</strong> POST /api/openai</li>
+                    <li><strong>Description:</strong> Generates a detailed workout plan with exercise variety and progressive overload.</li>
+                    <li><strong>Request Example:</strong></li>
+                    <div class="code-block">
+                        {
+                            "prompt": "Generate a detailed workout plan for an intermediate with goal strength, preferring weight_training, cardio, 5 days/week, 60 min sessions, over 4 weeks.",
+                            "model": "gpt-4o"
+                        }
+                    </div>
+                    <li><strong>Response Example:</strong></li>
+                    <div class="code-block">
+                        {
+                            "success": true,
+                            "data": {
+                                "name": "Strength Training Plan",
+                                "goals": "strength",
+                                "fitnessLevel": "intermediate",
+                                "daysPerWeek": "5",
+                                "planDurationWeeks": "4",
+                                "days": [
+                                    {
+                                        "name": "Monday",
+                                        "sessionDuration": "60 minutes",
+                                        "exercises": [
+                                            {"name": "Bench Press", "sets": 4, "reps": 8, "restSeconds": 90, "progression": "Increase weight by 5 lbs weekly"}
+                                        ]
+                                    }
+                                    // ... other days
+                                ]
+                            }
+                        }
+                    </div>
+                </ul>
+
+                <h3 id="exercise-details">Exercise Details</h3>
+                <p>Get detailed information about a specific exercise, including proper form and target muscles.</p>
+                <ul>
+                    <li><strong>Endpoint:</strong> POST /api/openai</li>
+                    <li><strong>Description:</strong> Provides detailed exercise info including muscle groups, equipment, and tips.</li>
+                    <li><strong>Request Example:</strong></li>
+                    <div class="code-block">
+                        {
+                            "prompt": "Provide detailed information for the exercise 'Squat'. Include variations.",
+                            "model": "gpt-4o"
+                        }
+                    </div>
+                    <li><strong>Response Example:</strong></li>
+                    <div class="code-block">
+                        {
+                            "success": true,
+                            "data": {
+                                "name": "Squat",
+                                "muscleGroups": ["Quadriceps", "Glutes", "Hamstrings"],
+                                "equipment": "Barbell or Bodyweight",
+                                "instructions": "Stand with feet shoulder-width apart, lower your hips...",
+                                "difficulty": "Intermediate",
+                                "tips": ["Keep back straight", "Knees over toes", "Engage core"],
+                                "variations": ["Front Squat", "Goblet Squat"]
+                            }
+                        }
+                    </div>
+                </ul>
+
+                <h3 id="nutrition-meal-plan">Nutrition & Meal Plan</h3>
+                <p>Get personalized nutrition advice and a custom meal plan tailored to your goals, preferences, and needs.</p>
+                <ul>
+                    <li><strong>Endpoint:</strong> POST /api/openai</li>
+                    <li><strong>Description:</strong> Provides nutrition advice and a multi-day meal plan with macros and dietary restrictions.</li>
+                    <li><strong>Request Example:</strong></li>
+                    <div class="code-block">
+                        {
+                            "prompt": "Generate detailed nutrition advice and a 7-day meal plan for a male, age 32, weight 112.49 kg, height 193.04 cm, very active, aiming for weight_loss with a carnivore diet, advanced experience, targeting 3500 calories/day, 2 meals/day. Account for food allergies (peanuts, dairy, gluten, shellfish, soy, tree nuts) and religious preferences (kosher).",
+                            "model": "gpt-4o"
+                        }
+                    </div>
+                    <li><strong>Response Example:</strong></li>
+                    <div class="code-block">
+                        {
+                            "success": true,
+                            "data": {
+                                "macros": {"protein": 250, "fat": 250, "carbs": 30, "totalCalories": 3500},
+                                "recommendations": {
+                                    "general": "Following a carnivore diet while aiming for weight loss...",
+                                    "keyPoints": ["Prioritize high-quality animal-based protein...", "..."],
+                                    "mealPlan": [
+                                        {
+                                            "day": "Monday",
+                                            "meals": [
+                                                {"mealName": "Meal 1", "foods": [{"name": "Grilled Ribeye Steak", "calories": 1200, "protein": 100, "fat": 90, "carbs": 0}]}
+                                            ]
+                                        }
+                                        // ... Tuesday to Sunday
+                                    ]
+                                },
+                                "goals": "weight_loss",
+                                "dietType": "carnivore",
+                                "gender": "male",
+                                "age": 32,
+                                "weight": 112.49,
+                                "heightFeetInches": "6 ft 4 in",
+                                "activityLevel": "very",
+                                "experience": "advanced",
+                                "allergies": "peanuts, dairy, gluten, shellfish, soy, tree nuts",
+                                "religiousPreferences": "kosher"
+                            }
+                        }
+                    </div>
+                </ul>
+
+                <h3 id="analyze-food-plate">Analyze Food Plate</h3>
+                <p>Upload an image of your food plate to analyze its nutritional content.</p>
+                <ul>
+                    <li><strong>Endpoint:</strong> POST /api/fitness/analyzeFoodPlate</li>
+                    <li><strong>Description:</strong> Analyzes a food plate image for nutritional breakdown.</li>
+                    <li><strong>Request Example (FormData):</strong></li>
+                    <div class="code-block">
+                        Content-Type: multipart/form-data
+                        X-API-Key: your_api_key_here
+                        Body:
+                        - food_image: [file]
+                        - cooking_oil: "olive_oil" (optional)
+                    </div>
+                    <li><strong>Response Example:</strong></li>
+                    <div class="code-block">
+                        {
+                            "success": true,
+                            "data": {
+                                "title": "Food Plate Analysis",
+                                "foods": [
+                                    {"name": "Grilled Chicken", "calories": 200, "protein": 30, "fat": 5, "carbs": 0},
+                                    {"name": "Steamed Broccoli", "calories": 50, "protein": 3, "fat": 0, "carbs": 10}
+                                ]
+                            }
+                        }
+                    </div>
+                </ul>
+
+                <h3 id="food-directory">Food Directory</h3>
+                <p>Browse and search the USDA food database.</p>
+                <ul>
+                    <li><strong>Endpoint:</strong> POST /api/openai</li>
+                    <li><strong>Description:</strong> Searches for foods with nutritional data.</li>
+                    <li><strong>Request Example:</strong></li>
+                    <div class="code-block">
+                        {
+                            "prompt": "Search for foods matching 'Chicken' in category 'Meats'.",
+                            "model": "gpt-4o"
+                        }
+                    </div>
+                    <li><strong>Response Example:</strong></li>
+                    <div class="code-block">
+                        {
+                            "success": true,
+                            "data": {
+                                "foods": [
+                                    {"name": "Chicken Breast", "energy": 165, "protein": 31, "totalLipidFat": 3.6, "carbohydrateByDifference": 0}
+                                ]
+                            }
+                        }
+                    </div>
+                </ul>
+
+                <h2 id="npi-directory">NPI Directory</h2>
+                <p>The NPI Directory API provides access to medical provider information and reviews.</p>
+
+                <h3 id="npi-review-directory">NPI Review Directory</h3>
+                <p>Search for healthcare providers using NPI data and submit reviews.</p>
+                <ul>
+                    <li><strong>Search Endpoint:</strong> POST /proxy/npi</li>
+                    <li><strong>Description:</strong> Proxies requests to the NPI Registry for provider verification.</li>
+                    <li><strong>Request Example:</strong></li>
+                    <div class="code-block">
+                        {
+                            "npi": "1234567890",
+                            "enumerationType": "NPI-1"
+                        }
+                    </div>
+                    <li><strong>Response Example:</strong></li>
+                    <div class="code-block">
+                        {
+                            "results": [
+                                {
+                                    "number": "1234567890",
+                                    "enumeration_type": "NPI-1",
+                                    "basic": {"first_name": "John", "last_name": "Doe"},
+                                    "taxonomies": [{"desc": "Family Medicine"}],
+                                    "addresses": [{"address_1": "123 Main St", "city": "Anytown", "state": "CA", "postal_code": "12345"}]
+                                }
+                            ]
+                        }
+                    </div>
+                    <li><strong>Review Endpoint:</strong> POST /api/reviews/submit</li>
+                    <li><strong>Description:</strong> Submits a review for a provider (requires authentication).</li>
+                    <li><strong>Request Example:</strong></li>
+                    <div class="code-block">
+                        {
+                            "npi": "1234567890",
+                            "rating": 4,
+                            "reviewText": "Great doctor!",
+                            "paymentToken": "pm_123"
+                        }
+                    </div>
+                    <li><strong>Response Example:</strong></li>
+                    <div class="code-block">
+                        {
+                            "success": true,
+                            "data": {
+                                "npi": "1234567890",
+                                "rating": 4,
+                                "reviewText": "Great doctor!"
+                            }
+                        }
+                    </div>
+                </ul>
+
+                <h2 id="support">Support</h2>
+                <p>For additional help, contact support at <a href="mailto:support@thrivexdna.com">support@thrivexdna.com</a>.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Menu Toggle Button -->
+    <button class="menu-toggle" style="display: none;">☰</button>
+
+    <script>
+        // Tab Navigation
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.dataset.tab;
+                tabBtns.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Sidebar Navigation
+        const sidebarItems = document.querySelectorAll('.sidebar-item');
+
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                sidebarItems.forEach(item => item.classList.remove('active'));
+                item.classList.add('active');
+                const id = item.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(id);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
+                if (window.innerWidth <= 992) {
+                    document.querySelector('.sidebar').classList.remove('active');
+                }
+            });
+        });
+
+        // Mobile Menu Toggle
+        const menuToggle = document.querySelector('.menu-toggle');
+        const sidebar = document.querySelector('.sidebar');
+
+        if (window.innerWidth <= 992) {
+            menuToggle.style.display = 'flex';
+        }
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth <= 992) {
+                menuToggle.style.display = 'flex';
+            } else {
+                menuToggle.style.display = 'none';
+                sidebar.classList.remove('active');
+            }
+        });
+
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+    </script>
+</body>
+</html>

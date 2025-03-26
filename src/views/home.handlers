@@ -1,0 +1,110 @@
+<!-- src/views/home.handlebars -->
+<div class="hero">
+    <div class="container mx-auto">
+        <h1 class="text-4xl font-bold mb-4">Carnivore Diet Analysis & Nutrition API</h1>
+        <p class="mb-8 max-w-3xl mx-auto">Revolutionize your diet planning with cutting-edge AI analysis tailored for optimal carnivore nutrition. Get personalized food recommendations, meal plans, and nutrition insights.</p>
+        <div class="flex justify-center space-x-4">
+            <a href="/docs" class="btn btn-secondary">View Documentation</a>
+            <a href="/tester" class="btn bg-white text-primary hover:bg-gray-100">Try API Now</a>
+        </div>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 py-16">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="card">
+            <h2 class="text-xl font-bold mb-4 text-primary">Food Analysis</h2>
+            <p class="mb-4">Analyze any food item with our advanced AI to determine its compatibility with a carnivore diet. Get detailed nutritional information, preparation recommendations, and more.</p>
+            <ul class="feature-list">
+                <li>Carnivore compatibility score</li>
+                <li>Nutrient density evaluation</li>
+                <li>Optimal preparation methods</li>
+                <li>Quality indicators and sourcing tips</li>
+                <li>Traditional preparation guidance</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <h2 class="text-xl font-bold mb-4 text-primary">Meal Planning</h2>
+            <p class="mb-4">Generate AI-optimized meal plans tailored to your specific carnivore diet preferences, goals, and dietary requirements.</p>
+            <ul class="feature-list">
+                <li>Personalized daily meal suggestions</li>
+                <li>Nutritional balance optimization</li>
+                <li>Variety to prevent nutritional gaps</li>
+                <li>Adaptation to your food preferences</li>
+                <li>Traditional preparation techniques</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <h2 class="text-xl font-bold mb-4 text-primary">Food Plate Analysis</h2>
+            <p class="mb-4">Submit your meal to analyze its nutritional content, carnivore compatibility, and get suggestions for optimization.</p>
+            <ul class="feature-list">
+                <li>Multi-food analysis</li>
+                <li>Portion recommendations</li>
+                <li>Nutritional content breakdown</li>
+                <li>Improvement suggestions</li>
+                <li>Meal quality scoring</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="mt-16">
+        <h2 class="section-title">How It Works</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center text-2xl font-bold mx-auto">1</div>
+                <h3 class="font-bold mt-4">Choose API Endpoint</h3>
+                <p class="text-gray-600">Select from our various specialized endpoints</p>
+            </div>
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center text-2xl font-bold mx-auto">2</div>
+                <h3 class="font-bold mt-4">Send Your Request</h3>
+                <p class="text-gray-600">Provide your data in simple JSON format</p>
+            </div>
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center text-2xl font-bold mx-auto">3</div>
+                <h3 class="font-bold mt-4">AI Analysis</h3>
+                <p class="text-gray-600">Our carnivore-focused AI processes your data</p>
+            </div>
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center text-2xl font-bold mx-auto">4</div>
+                <h3 class="font-bold mt-4">Receive Results</h3>
+                <p class="text-gray-600">Get detailed analysis in clean JSON format</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-16">
+        <h2 class="section-title">Example Response</h2>
+        <div class="bg-gray-900 rounded-lg p-6 text-white overflow-auto max-h-96">
+            <pre class="text-sm"><code>{
+  "success": true,
+  "data": {
+    "food": "grass-fed beef",
+    "carnivore_score": 10,
+    "recommendation": "Optimal Choice",
+    "nutrients": [
+      "Protein: 26g per 100g",
+      "Fat: 15g per 100g",
+      "Iron: 2.5mg per 100g",
+      "Zinc: 4.8mg per 100g",
+      "B12: 2.6µg per 100g"
+    ],
+    "preparation": [
+      "Traditional methods",
+      "Slow cooking for tough cuts",
+      "Medium-rare for steaks",
+      "Bone broth from bones"
+    ],
+    "quality_indicators": [
+      "Grass-finished",
+      "Proper fat marbling",
+      "Bright red color",
+      "Minimal processing"
+    ]
+  }
+}</code></pre>
+        </div>
+    </div>
+</div>

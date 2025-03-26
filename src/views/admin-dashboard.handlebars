@@ -1,0 +1,75 @@
+<!-- src/views/admin-dashboard.handlebars -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 {
+            margin: 0;
+        }
+        .logout-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .dashboard-content {
+            background-color: white;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .welcome-message {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Admin Dashboard</h1>
+        <a href="/admin-logout" class="logout-btn">Logout</a>
+    </header>
+    
+    <div class="dashboard-container">
+        <div class="dashboard-content">
+            <div class="welcome-message">
+                Welcome to the Admin Dashboard!
+                {{#if user}}
+                <p>Logged in as: {{user.email}}</p>
+                {{/if}}
+            </div>
+            
+            <h2>API Statistics</h2>
+            <p>Total API Requests: 1,245</p>
+            <p>Active Users: 78</p>
+            <p>Average Response Time: 235ms</p>
+            
+            <!-- Add more dashboard content as needed -->
+        </div>
+    </div>
+</body>
+</html>
