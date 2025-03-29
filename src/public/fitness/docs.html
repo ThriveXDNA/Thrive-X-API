@@ -369,8 +369,8 @@
         <div class="sidebar-section">
             <div class="sidebar-title">Navigation</div>
             <a href="/fitness" class="sidebar-item">Home</a>
-            <a href="/fitness/api-interface" class="sidebar-item">API Interface</a>
-            <a href="https://thrivexdna.com" class="sidebar-item">Thrive X DNA Website</a>
+            <a href="/fitness" class="sidebar-item">API Interface</a>
+            <a href="https://thrivexdna.com" class="sidebar-item">ThriveXDNA Website</a>
         </div>
         
         <div class="sidebar-section">
@@ -438,7 +438,7 @@
         <!-- Tab Contents -->
         <div id="overview" class="tab-content active">
             <h2 id="introduction">Introduction</h2>
-            <p>The Thrive X DNA Fitness & Nutrition API is designed to empower developers, fitness enthusiasts, and health professionals with cutting-edge tools for personalized fitness and nutrition management. Powered by advanced AI through OpenAI integration, this API offers a suite of endpoints to generate tailored workout plans, detailed exercise information, comprehensive nutrition advice, custom meal plans, food plate analysis, food ingredient details, and natural remedies. Whether you're building a fitness app, optimizing your own training, or exploring dietary options, our API provides flexible, data-driven solutions. Key features include support for diverse fitness goals, dietary preferences (e.g., carnivore, vegan), real-time nutritional analysis, ingredient breakdowns, and natural health solutions, all accessible via a RESTful interface returning JSON data.</p>
+            <p>The Thrive X DNA Fitness & Nutrition API is designed to empower developers, fitness enthusiasts, and health professionals with cutting-edge tools for personalized fitness and nutrition management. Powered by advanced AI through Anthropic and OpenAI integration, this API offers a suite of endpoints to generate tailored workout plans, detailed exercise information, comprehensive nutrition advice, custom meal plans, food plate analysis, food ingredient details, and natural remedies. Whether you're building a fitness app, optimizing your own training, or exploring dietary options, our API provides flexible, data-driven solutions. Key features include support for diverse fitness goals, dietary preferences (e.g., carnivore, vegan), real-time nutritional analysis, ingredient breakdowns, and natural health solutions, all accessible via a RESTful interface returning JSON data.</p>
             
             <h2 id="authentication">Authentication</h2>
             <p>To access the Thrive X DNA Fitness & Nutrition API, every request must include an API key in the header. This key is provided upon subscription and ensures secure access to our services. For certain administrative routes (e.g., `/admin` endpoints), additional authentication via Supabase tokens is required, which is handled server-side for authorized users only.</p>
@@ -468,21 +468,21 @@
                         <td>1000 requests/hour</td>
                     </tr>
                     <tr>
-                        <td>Premium</td>
+                        <td>Core</td>
                         <td>$14.99/mo</td>
                         <td>500</td>
                         <td>$0.04/request</td>
                         <td>1 request/second</td>
                     </tr>
                     <tr>
-                        <td>Professional</td>
+                        <td>Elite</td>
                         <td>$49.00/mo</td>
                         <td>15,000</td>
                         <td>$0.025/request</td>
                         <td>3 requests/second</td>
                     </tr>
                     <tr>
-                        <td class="recommended">Enterprise ⭐️ Recommended</td>
+                        <td class="recommended">Ultimate ⭐️ Recommended</td>
                         <td>$129.00/mo</td>
                         <td>75,000</td>
                         <td>$0.015/request</td>
@@ -490,18 +490,18 @@
                     </tr>
                 </tbody>
             </table>
-            <p><strong>Notes:</strong> The Basic tier has a hard limit of 10 requests/month. Higher tiers (Premium, Professional, Enterprise) allow additional requests beyond the monthly quota at the specified rates. Rate limits are enforced per API key, and development mode defaults to 1000 requests/24 hours unless overridden by your subscription. For custom plans or enterprise solutions, contact <a href="mailto:support@thrivexdna.com">support@thrivexdna.com</a>.</p>
+            <p><strong>Notes:</strong> The Basic tier has a hard limit of 10 requests/month. Higher tiers (Core, Elite, Ultimate) allow additional requests beyond the monthly quota at the specified rates. Rate limits are enforced per API key, and development mode defaults to 1000 requests/24 hours unless overridden by your subscription. For custom plans or Ultimate solutions, contact <a href="mailto:support@thrivexdna.com">support@thrivexdna.com</a>.</p>
         </div>
         
         <div id="generate-workout-plan" class="tab-content">
             <div class="endpoint">
                 <div class="endpoint-header">
                     <span class="endpoint-method">POST</span>
-                    <span class="endpoint-path">/api/openai</span>
+                    <span class="endpoint-path">/api/fitness/workout</span>
                 </div>
                 <div class="endpoint-body">
                     <div class="endpoint-description">
-                        <p>Create a personalized workout plan based on your goals, fitness level, and preferences.</p>
+                        <p>Create a personalized workout plan based on your goals, fitness level, and preferences. This endpoint uses Anthropic's AI models for generating workout plans.</p>
                     </div>
                     
                     <h3 class="section-title">Request Parameters</h3>
@@ -516,16 +516,58 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td>prompt</td>
+                                <td>goals</td>
                                 <td>string</td>
                                 <td><span class="param-required">Yes</span></td>
-                                <td>Instruction including fitnessLevel, goals, preferences, daysPerWeek, sessionDuration, planDurationWeeks</td>
+                                <td>Fitness goals (e.g., "endurance", "strength", "weight_loss")</td>
                             </tr>
                             <tr>
-                                <td>model</td>
+                                <td>fitnessLevel</td>
+                                <td>string</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Fitness level (e.g., "beginner", "intermediate", "advanced")</td>
+                            </tr>
+                            <tr>
+                                <td>preferences</td>
+                                <td>array</td>
+                                <td>No</td>
+                                <td>Exercise preferences (e.g., ["weight_training", "cardio", "yoga"])</td>
+                            </tr>
+                            <tr>
+                                <td>bodyFocus</td>
                                 <td>string</td>
                                 <td>No</td>
-                                <td>AI model (default: "gpt-4o")</td>
+                                <td>Body focus area (e.g., "upper_body", "lower_body", "full_body")</td>
+                            </tr>
+                            <tr>
+                                <td>muscleGroups</td>
+                                <td>array</td>
+                                <td>No</td>
+                                <td>Target muscle groups (e.g., ["chest", "legs"])</td>
+                            </tr>
+                            <tr>
+                                <td>includeWarmupCooldown</td>
+                                <td>boolean</td>
+                                <td>No</td>
+                                <td>Include warmup and cooldown (default: false)</td>
+                            </tr>
+                            <tr>
+                                <td>daysPerWeek</td>
+                                <td>integer</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Days per week (1-7)</td>
+                            </tr>
+                            <tr>
+                                <td>sessionDuration</td>
+                                <td>integer</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Session duration in minutes (e.g., 90)</td>
+                            </tr>
+                            <tr>
+                                <td>planDurationWeeks</td>
+                                <td>integer</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Plan duration in weeks (e.g., 3)</td>
                             </tr>
                         </tbody>
                     </table>
@@ -533,8 +575,15 @@
                     <h3 class="section-title">Example Request</h3>
                     <div class="code-block">
 {
-  "prompt": "Generate a detailed workout plan for an intermediate with goal endurance, preferring weight_training, cardio, hiit, bodyweight, yoga, 5 days/week, 90 min sessions, over 3 weeks.",
-  "model": "gpt-4o"
+  "goals": "endurance",
+  "fitnessLevel": "intermediate",
+  "preferences": ["weight_training", "cardio", "hiit", "bodyweight", "yoga"],
+  "bodyFocus": "full_body",
+  "muscleGroups": ["legs", "core"],
+  "includeWarmupCooldown": true,
+  "daysPerWeek": 5,
+  "sessionDuration": 90,
+  "planDurationWeeks": 3
 }
                     </div>
                     
@@ -546,27 +595,27 @@
     "name": "Endurance Hybrid Plan",
     "goals": "endurance",
     "fitnessLevel": "intermediate",
-    "daysPerWeek": "5",
-    "planDurationWeeks": "2",
+    "daysPerWeek": 5,
+    "planDurationWeeks": 3,
     "days": [
       {
         "name": "Week 1 - Monday - Cardio & Weight Training",
         "sessionDuration": "90 minutes",
         "exercises": [
-          {"name": "Treadmill Running (Moderate Pace)", "sets": 1, "reps": "30 min", "restSeconds": 0, "progression": "Increase speed by 0.5 mph in Week 2"},
-          {"name": "Dumbbell Lunges", "sets": 3, "reps": 12, "restSeconds": 60, "progression": "Add 5 lbs in Week 2"},
-          {"name": "Kettlebell Swings", "sets": 3, "reps": 15, "restSeconds": 60, "progression": "Increase reps to 20 in Week 2"},
-          {"name": "Cool-Down Jog", "sets": 1, "reps": "15 min", "restSeconds": 0, "progression": "Maintain pace"}
+          {"name": "Treadmill Running (Moderate Pace)", "sets": 1, "reps": "30 min", "restSeconds": 0, "muscleGroup": "legs"},
+          {"name": "Dumbbell Lunges", "sets": 3, "reps": 12, "restSeconds": 60, "muscleGroup": "legs"},
+          {"name": "Kettlebell Swings", "sets": 3, "reps": 15, "restSeconds": 60, "muscleGroup": "core"},
+          {"name": "Cool-Down Jog", "sets": 1, "reps": "15 min", "restSeconds": 0, "muscleGroup": "legs"}
         ]
       },
       {
         "name": "Week 1 - Tuesday - HIIT & Bodyweight",
         "sessionDuration": "90 minutes",
         "exercises": [
-          {"name": "Sprint Intervals (30s sprint, 90s walk)", "sets": 10, "reps": "2 min cycle", "restSeconds": 0, "progression": "Add 1 interval in Week 2"},
-          {"name": "Burpees", "sets": 4, "reps": 15, "restSeconds": 45, "progression": "Increase reps to 20 in Week 2"},
-          {"name": "Mountain Climbers", "sets": 4, "reps": "45s", "restSeconds": 45, "progression": "Extend to 60s in Week 2"},
-          {"name": "Bodyweight Squats", "sets": 3, "reps": 20, "restSeconds": 60, "progression": "Add 5 reps in Week 2"}
+          {"name": "Sprint Intervals (30s sprint, 90s walk)", "sets": 10, "reps": "2 min cycle", "restSeconds": 0, "muscleGroup": "legs"},
+          {"name": "Burpees", "sets": 4, "reps": 15, "restSeconds": 45, "muscleGroup": "full_body"},
+          {"name": "Mountain Climbers", "sets": 4, "reps": "45s", "restSeconds": 45, "muscleGroup": "core"},
+          {"name": "Bodyweight Squats", "sets": 3, "reps": 20, "restSeconds": 60, "muscleGroup": "legs"}
         ]
       }
     ]
@@ -581,11 +630,11 @@
             <div class="endpoint">
                 <div class="endpoint-header">
                     <span class="endpoint-method">POST</span>
-                    <span class="endpoint-path">/api/openai</span>
+                    <span class="endpoint-path">/api/fitness/exercise</span>
                 </div>
                 <div class="endpoint-body">
                     <div class="endpoint-description">
-                        <p>Get detailed information about a specific exercise, including proper form and target muscles.</p>
+                        <p>Get detailed information about a specific exercise, including proper form and target muscles. This endpoint uses Anthropic's AI models for providing exercise details.</p>
                     </div>
                     
                     <h3 class="section-title">Request Parameters</h3>
@@ -600,16 +649,16 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td>prompt</td>
+                                <td>exerciseId</td>
                                 <td>string</td>
                                 <td><span class="param-required">Yes</span></td>
-                                <td>Instruction including exercise name and optional variations request</td>
+                                <td>Name of the exercise (e.g., "Squat")</td>
                             </tr>
                             <tr>
-                                <td>model</td>
-                                <td>string</td>
+                                <td>includeVariations</td>
+                                <td>boolean</td>
                                 <td>No</td>
-                                <td>AI model (default: "gpt-4o")</td>
+                                <td>Include exercise variations (default: false)</td>
                             </tr>
                         </tbody>
                     </table>
@@ -617,8 +666,8 @@
                     <h3 class="section-title">Example Request</h3>
                     <div class="code-block">
 {
-  "prompt": "Provide detailed information for the exercise 'Squat'. Include variations.",
-  "model": "gpt-4o"
+  "exerciseId": "Squat",
+  "includeVariations": true
 }
                     </div>
                     
@@ -645,11 +694,11 @@
             <div class="endpoint">
                 <div class="endpoint-header">
                     <span class="endpoint-method">POST</span>
-                    <span class="endpoint-path">/api/openai</span>
+                    <span class="endpoint-path">/api/fitness/meal-plan</span>
                 </div>
                 <div class="endpoint-body">
                     <div class="endpoint-description">
-                        <p>Get personalized nutrition advice and a custom meal plan tailored to your goals, preferences, and needs.</p>
+                        <p>Get personalized nutrition advice and a custom meal plan tailored to your goals, preferences, and needs. This endpoint uses Anthropic's AI models for generating nutrition and meal plans.</p>
                     </div>
                     
                     <h3 class="section-title">Request Parameters</h3>
@@ -664,16 +713,76 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td>prompt</td>
+                                <td>goals</td>
                                 <td>string</td>
                                 <td><span class="param-required">Yes</span></td>
-                                <td>Instruction including goals, dietType, gender, age, weight, height, activityLevel, calorieTarget, mealsPerDay, numberOfDays, allergies, religiousPreferences</td>
+                                <td>Nutrition goals (e.g., "muscle_gain", "weight_loss")</td>
                             </tr>
                             <tr>
-                                <td>model</td>
+                                <td>dietType</td>
+                                <td>string</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Diet type (e.g., "vegetarian", "carnivore", "vegan")</td>
+                            </tr>
+                            <tr>
+                                <td>gender</td>
+                                <td>string</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Gender (e.g., "male", "female")</td>
+                            </tr>
+                            <tr>
+                                <td>age</td>
+                                <td>integer</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Age in years</td>
+                            </tr>
+                            <tr>
+                                <td>weight</td>
+                                <td>number</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Weight in kg</td>
+                            </tr>
+                            <tr>
+                                <td>heightCm</td>
+                                <td>number</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Height in cm</td>
+                            </tr>
+                            <tr>
+                                <td>activityLevel</td>
+                                <td>string</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Activity level (e.g., "sedentary", "lightly", "active")</td>
+                            </tr>
+                            <tr>
+                                <td>allergies</td>
+                                <td>array</td>
+                                <td>No</td>
+                                <td>Allergies (e.g., ["peanuts", "gluten"])</td>
+                            </tr>
+                            <tr>
+                                <td>religiousPreferences</td>
                                 <td>string</td>
                                 <td>No</td>
-                                <td>AI model (default: "gpt-4o")</td>
+                                <td>Religious dietary preferences (e.g., "halal", "kosher", "none")</td>
+                            </tr>
+                            <tr>
+                                <td>calorieTarget</td>
+                                <td>integer</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Daily calorie target (e.g., 3500)</td>
+                            </tr>
+                            <tr>
+                                <td>mealsPerDay</td>
+                                <td>integer</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Meals per day (e.g., 6)</td>
+                            </tr>
+                            <tr>
+                                <td>numberOfDays</td>
+                                <td>integer</td>
+                                <td><span class="param-required">Yes</span></td>
+                                <td>Number of days for the plan (e.g., 7)</td>
                             </tr>
                         </tbody>
                     </table>
@@ -681,8 +790,18 @@
                     <h3 class="section-title">Example Request</h3>
                     <div class="code-block">
 {
-  "prompt": "Generate detailed nutrition advice and a 7-day meal plan for a male, age 32, weight 112.49 kg, height 193.04 cm, lightly active, aiming for muscle_gain with a vegetarian diet, targeting 3500 calories/day, 6 meals/day. Account for food allergies (peanuts, dairy, gluten, shellfish, soy, tree nuts) and religious preferences (halal).",
-  "model": "gpt-4o"
+  "goals": "muscle_gain",
+  "dietType": "vegetarian",
+  "gender": "male",
+  "age": 32,
+  "weight": 112.49,
+  "heightCm": 193.04,
+  "activityLevel": "lightly",
+  "allergies": ["peanuts", "dairy", "gluten", "shellfish", "soy", "tree nuts"],
+  "religiousPreferences": "halal",
+  "calorieTarget": 3500,
+  "mealsPerDay": 6,
+  "numberOfDays": 7
 }
                     </div>
                     
@@ -697,9 +816,7 @@
       "keyPoints": [
         "Prioritize halal-certified legumes, quinoa, and seeds for protein.",
         "Use gluten-free grains like rice and oats for carbs.",
-        "Incorporate olive oil and avocado for allergen-free fats.",
-        "Stay hydrated with 3+ liters of water daily.",
-        "Avoid pork, non-halal items, and listed allergens."
+        "Incorporate olive oil and avocado for allergen-free fats."
       ],
       "mealPlan": [
         {
@@ -714,16 +831,7 @@
           ]
         }
       ]
-    },
-    "goals": "muscle_gain",
-    "dietType": "vegetarian",
-    "gender": "male",
-    "age": 32,
-    "weight": 112.49,
-    "heightFeetInches": "6 ft 4 in",
-    "activityLevel": "lightly",
-    "allergies": "peanuts, dairy, gluten, shellfish, soy, tree nuts",
-    "religiousPreferences": "halal"
+    }
   }
 }
                     </div>
@@ -739,7 +847,7 @@
                 </div>
                 <div class="endpoint-body">
                     <div class="endpoint-description">
-                        <p>Upload an image of your food plate to analyze its nutritional content.</p>
+                        <p>Upload an image of your food plate to analyze its nutritional content. This endpoint uses OpenAI's AI models for food image analysis.</p>
                     </div>
                     
                     <h3 class="section-title">Request Parameters (FormData)</h3>
@@ -798,11 +906,11 @@ Body:
             <div class="endpoint">
                 <div class="endpoint-header">
                     <span class="endpoint-method">POST</span>
-                    <span class="endpoint-path">/api/food-ingredients</span>
+                    <span class="endpoint-path">/api/fitness/food-ingredient</span>
                 </div>
                 <div class="endpoint-body">
                     <div class="endpoint-description">
-                        <p>Explore detailed information about food ingredients, chemicals, and label items, including definitions, layman's terms, production methods, and usage examples.</p>
+                        <p>Explore detailed information about food ingredients, chemicals, and label items, including definitions, layman's terms, production methods, and usage examples. This endpoint uses Anthropic's AI models for generating food ingredient information.</p>
                     </div>
                     
                     <h3 class="section-title">Request Parameters</h3>
@@ -837,15 +945,14 @@ Body:
 {
   "success": true,
   "data": {
-    "ingredients": [
-      {
-        "name": "Ascorbic Acid",
-        "definition": "A water-soluble vitamin (C6H8O6) essential for collagen synthesis and antioxidant activity.",
-        "layman_term": "Vitamin C - keeps your skin healthy and fights off colds.",
-        "production": "Synthesized from glucose via fermentation or chemical processes.",
-        "example_use": "Added to orange juice to boost vitamin content."
-      }
-    ]
+    "name": "Ascorbic Acid",
+    "category": "Vitamin",
+    "origin": "Synthetic or natural (e.g., citrus fruits)",
+    "safety_rating": "Generally Recognized as Safe (GRAS)",
+    "definition": "A water-soluble vitamin (C6H8O6) essential for collagen synthesis and antioxidant activity.",
+    "layman_term": "Vitamin C - keeps your skin healthy and fights off colds.",
+    "production_process": "Synthesized from glucose via fermentation or chemical processes.",
+    "example_use": "Added to orange juice to boost vitamin content."
   }
 }
                     </div>
@@ -857,11 +964,11 @@ Body:
             <div class="endpoint">
                 <div class="endpoint-header">
                     <span class="endpoint-method">POST</span>
-                    <span class="endpoint-path">/api/natural-remedies</span>
+                    <span class="endpoint-path">/api/fitness/natural-remedies</span>
                 </div>
                 <div class="endpoint-body">
                     <div class="endpoint-description">
-                        <p>Get natural remedy variations for a specific symptom, including efficacy ratings, ingredients, and preparation steps.</p>
+                        <p>Get natural remedy variations for a specific symptom, including efficacy ratings, ingredients, and preparation steps. This endpoint uses Anthropic's AI models for generating natural remedy information.</p>
                     </div>
                     
                     <div class="medical-notice">
@@ -913,26 +1020,21 @@ Body:
     "remedies": [
       {
         "name": "Peppermint Oil Massage",
-        "efficacy_rating": 4.0,
-        "research_level": "Moderate",
+        "source": "Herbal",
         "ingredients": [
-          {"name": "Peppermint Oil", "amount": "2-3 drops", "substitutes": ["Eucalyptus Oil"]}
+          {"name": "Peppermint Oil", "amount": "2-3 drops"}
         ],
         "preparation": ["Dilute with a carrier oil", "Massage onto temples"],
         "usage": "Apply every 4-6 hours",
-        "warnings": ["Avoid eye contact", "Test for skin sensitivity"],
-        "insurance_notes": "May be HSA eligible with documentation"
+        "warnings": ["Avoid eye contact", "Test for skin sensitivity"]
       }
     ],
     "dietary_approach": {
       "overview": "Dietary adjustments can help prevent headaches by stabilizing blood sugar and reducing inflammation.",
       "recommendations": [
         "Stay hydrated with at least 2-3 liters of water daily",
-        "Reduce refined sugar and processed foods",
-        "Consider eliminating common triggers like MSG, artificial sweeteners, and alcohol"
-      ],
-      "foods_to_eat": ["Magnesium-rich foods", "Omega-3 fatty acids", "Anti-inflammatory herbs and spices"],
-      "foods_to_avoid": ["Aged cheeses", "Processed meats", "Food additives", "Alcohol"]
+        "Reduce refined sugar and processed foods"
+      ]
     }
   }
 }
@@ -949,7 +1051,7 @@ Body:
 const fetch = require('node-fetch');
 
 const apiKey = 'your_api_key_here';
-const url = '/api/food-ingredients';
+const url = 'https://yourdomain.com/api/fitness/food-ingredient';
 
 const requestData = {
   "ingredient": "Sugar"
@@ -973,7 +1075,7 @@ fetch(url, {
 import requests
 
 api_key = 'your_api_key_here'
-url = '/api/food-ingredients'
+url = 'https://yourdomain.com/api/fitness/food-ingredient'
 
 headers = {
     'Content-Type': 'application/json',
@@ -1004,7 +1106,7 @@ print(data)
         <div id="terms-of-service" class="tab-content">
             <div class="legal-content">
                 <h2>Terms of Service</h2>
-                <p><strong>Last Updated: March 12, 2025</strong></p>
+                <p><strong>Last Updated: March 26, 2025</strong></p>
                 
                 <h3 class="section-title">1. Agreement to Terms</h3>
                 <p>These Terms of Service ("Terms") constitute a legally binding agreement made between you and Thrive X DNA Fitness API ("we," "us," or "our") concerning your access to and use of our fitness and nutrition API services ("Services"). By accessing or using our Services, you agree to be bound by these Terms. If you disagree with any part of these Terms, you may not access the Services.</p>
@@ -1043,7 +1145,7 @@ print(data)
         <div id="privacy-policy" class="tab-content">
             <div class="legal-content">
                 <h2>Privacy Policy</h2>
-                <p><strong>Last Updated: March 12, 2025</strong></p>
+                <p><strong>Last Updated: March 26, 2025</strong></p>
                 
                 <h3 class="section-title">1. Information We Collect</h3>
                 <p>We collect information you provide directly to us when using our Services, including:</p>
@@ -1088,7 +1190,7 @@ print(data)
         <div id="subscription-terms" class="tab-content">
             <div class="legal-content">
                 <h2>Subscription Terms</h2>
-                <p><strong>Last Updated: March 12, 2025</strong></p>
+                <p><strong>Last Updated: March 26, 2025</strong></p>
                 
                 <h3 class="section-title">1. Subscription Plans</h3>
                 <p>We offer various subscription plans with different features, limitations, and pricing as described on our website. By subscribing to our Services, you agree to the terms and conditions outlined in these Subscription Terms.</p>
@@ -1126,7 +1228,7 @@ print(data)
         <div id="medical-disclaimer" class="tab-content">
             <div class="legal-content">
                 <h2>Medical and Health Disclaimer</h2>
-                <p><strong>Last Updated: March 12, 2025</strong></p>
+                <p><strong>Last Updated: March 26, 2025</strong></p>
                 
                 <p>The information provided through our Services, including workout plans, nutritional advice, meal plans, food analysis, and natural remedies, is for informational and educational purposes only. It is not intended to be a substitute for professional medical advice, diagnosis, or treatment.</p>
                 
@@ -1159,7 +1261,7 @@ print(data)
         <div id="data-security" class="tab-content">
             <div class="legal-content">
                 <h2>Data Security</h2>
-                <p><strong>Last Updated: March 12, 2025</strong></p>
+                <p><strong>Last Updated: March 26, 2025</strong></p>
                 
                 <h3 class="section-title">1. Security Measures</h3>
                 <p>We implement industry-standard security measures to protect your data, including:</p>
@@ -1225,7 +1327,7 @@ print(data)
         <div id="refund-policy" class="tab-content">
             <div class="legal-content">
                 <h2>Refund Policy</h2>
-                <p><strong>Last Updated: March 12, 2025</strong></p>
+                <p><strong>Last Updated: March 26, 2025</strong></p>
                 
                 <h3 class="section-title">1. Subscription Payments</h3>
                 <p>All subscription payments are generally non-refundable. When you subscribe to our Services, you agree to pay the subscription fees according to your selected plan. These fees are charged at the beginning of each billing cycle and are not refundable, even if you cancel your subscription mid-cycle.</p>
@@ -1267,40 +1369,59 @@ print(data)
         
         menuToggle.addEventListener('click', function() {
             sidebar.classList.toggle('collapsed');
+            menuToggle.textContent = sidebar.classList.contains('collapsed') ? '☰' : '✕';
         });
         
-        // Tab Navigation
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        const tabContents = document.querySelectorAll('.tab-content');
-        
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tabId = btn.dataset.tab;
-                
-                tabBtns.forEach(btn => btn.classList.remove('active'));
-                tabContents.forEach(content => content.classList.remove('active'));
-                
-                btn.classList.add('active');
-                document.getElementById(tabId).classList.add('active');
+        // Tab Navigation and Sidebar Sync
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM fully loaded and tab listeners attached');
+            
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const sidebarItems = document.querySelectorAll('.sidebar-item');
+
+            // Tab button click handler
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    console.log('Tab clicked:', btn.dataset.tab);
+                    const tabId = btn.dataset.tab;
+
+                    // Update tabs
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    const content = document.getElementById(tabId);
+                    if (content) content.classList.add('active');
+
+                    // Sync sidebar
+                    sidebarItems.forEach(item => {
+                        item.classList.remove('active');
+                        if (item.getAttribute('href') === `#${tabId}`) {
+                            item.classList.add('active');
+                        }
+                    });
+                });
             });
-        });
-        
-        // Sidebar Navigation - highlight active item and scroll to section
-        const sidebarItems = document.querySelectorAll('.sidebar-item');
-        
-        sidebarItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                if (item.getAttribute('href').startsWith('#')) {
-                    e.preventDefault();
-                    
-                    sidebarItems.forEach(item => item.classList.remove('active'));
-                    item.classList.add('active');
-                    
-                    const id = item.getAttribute('href').substring(1);
-                    const targetElement = document.getElementById(id);
-                    if (targetElement) {
-                        targetElement.scrollIntoView({ behavior: 'smooth' });
-                        // Activate corresponding tab
+
+            // Sidebar item click handler
+            sidebarItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (item.getAttribute('href').startsWith('#')) {
+                        e.preventDefault();
+                        
+                        const id = item.getAttribute('href').substring(1);
+                        const targetElement = document.getElementById(id);
+                        
+                        // Update sidebar
+                        sidebarItems.forEach(i => i.classList.remove('active'));
+                        item.classList.add('active');
+                        
+                        // Scroll to section
+                        if (targetElement) {
+                            targetElement.scrollIntoView({ behavior: 'smooth' });
+                        }
+
+                        // Update tabs
                         const tabBtn = document.querySelector(`.tab-btn[data-tab="${id}"]`);
                         if (tabBtn) {
                             tabBtns.forEach(btn => btn.classList.remove('active'));
@@ -1308,43 +1429,45 @@ print(data)
                             tabBtn.classList.add('active');
                             document.getElementById(id).classList.add('active');
                         }
+
+                        // Collapse sidebar on mobile
+                        if (window.innerWidth <= 992) {
+                            sidebar.classList.add('collapsed');
+                            menuToggle.textContent = '☰';
+                        }
                     }
-                    
-                    if (window.innerWidth <= 992) {
-                        sidebar.classList.add('collapsed');
-                    }
-                }
+                });
             });
-        });
-        
-        // Render Sample Pie Chart
-        const ctx = document.getElementById('nutrition-pie-chart').getContext('2d');
-        new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['Protein (g)', 'Fat (g)', 'Carbs (g)'],
-                datasets: [{
-                    data: [50, 30, 20],
-                    backgroundColor: [
-                        '#28a745', // Protein
-                        '#dc3545', // Fat
-                        '#ffc107'  // Carbs
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            color: '#fff',
-                            textShadow: '1px 1px 3px rgba(0,0,0,0.3)'
+
+            // Render Sample Pie Chart
+            const ctx = document.getElementById('nutrition-pie-chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Protein (g)', 'Fat (g)', 'Carbs (g)'],
+                    datasets: [{
+                        data: [50, 30, 20],
+                        backgroundColor: [
+                            '#28a745', // Protein
+                            '#dc3545', // Fat
+                            '#ffc107'  // Carbs
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#fff',
+                                textShadow: '1px 1px 3px rgba(0,0,0,0.3)'
+                            }
                         }
                     }
                 }
-            }
+            });
         });
     </script>
 </body>

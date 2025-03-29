@@ -1,45 +1,45 @@
-// controllers/workoutController.js
-const workoutService = require('../services/workoutService');
+// src/api/fitness/workoutController.js
+const { handleAnthropicRequest } = require('../anthropic');
 
-const generateWorkoutPlan = (req, res) => {
+const generateWorkoutPlan = async (req, res) => {
   try {
-    const { 
-      goal, 
-      fitness_level, 
-      preferences, 
-      health_conditions, 
-      schedule, 
-      plan_duration_weeks,
-      diet_preference,
-      lang = 'en' 
+    const {
+      fitnessLevel,
+      goals,
+      preferences,
+      bodyFocus,
+      muscleGroups,
+      includeWarmupCooldown,
+      daysPerWeek,
+      sessionDuration,
+      planDurationWeeks
     } = req.body;
+    const apiKey = req.headers['x-api-key'];
 
-    // Validate required parameters
-    if (!goal || !fitness_level || !schedule) {
+    if (!apiKey) return res.status(401).json({ error: 'API key is required' });
+    if (!fitnessLevel || !goals || !daysPerWeek || !sessionDuration || !planDurationWeeks) {
       return res.status(400).json({ 
-        error: 'Missing required parameters. Please provide goal, fitness_level, and schedule.' 
+        error: 'Missing required parameters: fitnessLevel, goals, daysPerWeek, sessionDuration, planDurationWeeks' 
       });
     }
 
-    // Generate workout plan using the service
-    const workoutPlan = workoutService.generateWorkoutPlan(
-      goal, 
-      fitness_level, 
-      preferences, 
-      health_conditions, 
-      schedule, 
-      plan_duration_weeks, 
-      diet_preference,
-      lang
-    );
+    const result = await handleAnthropicRequest('generateWorkoutPlan', {
+      fitnessLevel,
+      goals,
+      preferences: preferences || [],
+      bodyFocus,
+      muscleGroups: muscleGroups || [],
+      includeWarmupCooldown: includeWarmupCooldown === 'true',
+      daysPerWeek: parseInt(daysPerWeek),
+      sessionDuration: parseInt(sessionDuration),
+      planDurationWeeks: parseInt(planDurationWeeks)
+    });
 
-    res.json({ result: workoutPlan });
+    res.json({ data: result });
   } catch (error) {
     console.error('Error generating workout plan:', error);
-    res.status(500).json({ error: 'Failed to generate workout plan' });
+    res.status(500).json({ error: 'Failed to generate workout plan', details: error.message });
   }
 };
 
-module.exports = {
-  generateWorkoutPlan
-};
+module.exports = { generateWorkoutPlan };

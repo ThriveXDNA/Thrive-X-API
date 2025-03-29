@@ -1,47 +1,51 @@
-// controllers/mealPlanController.js
-const mealPlanService = require('../services/mealPlanService');
+// src/api/fitness/mealPlanController.js
+const { handleAnthropicRequest } = require('../anthropic');
 
-const generateCustomMealPlan = (req, res) => {
+const generateMealPlan = async (req, res) => {
   try {
-    const { 
-      goal, 
-      fitness_level, 
-      dietary_preferences, 
-      health_conditions,
-      meals_per_day,
-      plan_duration_days,
-      custom_goals,
-      carnivore_focus = false,
-      lang = 'en' 
+    const {
+      gender,
+      age,
+      weight,
+      heightCm,
+      activityLevel,
+      goals,
+      dietType,
+      calorieTarget,
+      mealsPerDay,
+      numberOfDays,
+      allergies,
+      religiousPreferences
     } = req.body;
+    const apiKey = req.headers['x-api-key'];
 
-    // Validate required parameters
-    if (!goal || !dietary_preferences || !meals_per_day) {
+    if (!apiKey) return res.status(401).json({ error: 'API key is required' });
+    if (!goals || !dietType || !mealsPerDay || !numberOfDays) {
       return res.status(400).json({ 
-        error: 'Missing required parameters. Please provide goal, dietary_preferences, and meals_per_day.' 
+        error: 'Missing required parameters: goals, dietType, mealsPerDay, numberOfDays' 
       });
     }
 
-    // Generate meal plan using the service
-    const mealPlan = mealPlanService.generateCustomMealPlan(
-      goal,
-      fitness_level,
-      dietary_preferences,
-      health_conditions,
-      meals_per_day,
-      plan_duration_days,
-      custom_goals,
-      carnivore_focus,
-      lang
-    );
+    const result = await handleAnthropicRequest('nutritionMealPlan', {
+      gender,
+      age: parseInt(age),
+      weight: parseFloat(weight),
+      heightCm: parseFloat(heightCm),
+      activityLevel,
+      goals,
+      dietType,
+      calorieTarget: parseInt(calorieTarget),
+      mealsPerDay: parseInt(mealsPerDay),
+      numberOfDays: parseInt(numberOfDays),
+      allergies: allergies || [],
+      religiousPreferences
+    });
 
-    res.json({ result: mealPlan });
+    res.json({ data: result });
   } catch (error) {
     console.error('Error generating meal plan:', error);
-    res.status(500).json({ error: 'Failed to generate meal plan' });
+    res.status(500).json({ error: 'Failed to generate meal plan', details: error.message });
   }
 };
 
-module.exports = {
-  generateCustomMealPlan
-};
+module.exports = { generateMealPlan };

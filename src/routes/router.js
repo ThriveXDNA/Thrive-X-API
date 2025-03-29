@@ -1,20 +1,14 @@
 // src/routes/router.js
-import express from 'express';
-
+const express = require('express');
 const router = express.Router();
+const fitnessRoutes = require('./fitnessRoutes');
 
-// API endpoints
+// Health check endpoint
 router.get('/status', (req, res) => {
-  res.json({ status: 'API is running', version: '1.0.0' });
+  res.json({ status: 'API is running', version: '1.0.0', timestamp: new Date().toISOString() });
 });
 
-// Add your existing routes here - these are examples you can modify
-router.get('/user/:id', (req, res) => {
-  res.json({ message: `User data for ID: ${req.params.id}` });
-});
+// Mount fitness-specific routes at /api/fitness
+router.use('/api/fitness', fitnessRoutes);
 
-router.post('/data', (req, res) => {
-  res.json({ message: 'Data received', data: req.body });
-});
-
-export default router;
+module.exports = router;

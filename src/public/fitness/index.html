@@ -1,402 +1,639 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitness & Nutrition API</title>
-    <style>
-        :root {
-            --primary: #1ECBE1;
-            --highlight: #E1341E;
-            --dark: #333333;
-            --light: #f8f9fa;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            color: var(--dark);
-            line-height: 1.6;
-        }
-        
-        header {
-            background: linear-gradient(135deg, var(--primary), #0da8bc);
-            color: white;
-            padding: 2rem 0;
-            text-align: center;
-        }
-        
-        .container {
-            width: 90%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-        
-        .hero {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem 0;
-        }
-        
-        .hero h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .hero p {
-            font-size: 1.2rem;
-            max-width: 800px;
-            margin-bottom: 2rem;
-        }
-        
-        .btn {
-            display: inline-block;
-            background-color: var(--highlight);
-            color: white;
-            padding: 0.8rem 1.8rem;
-            font-size: 1rem;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .btn:hover {
-            background-color: #c42a15;
-            transform: translateY(-2px);
-        }
-        
-        .tab-navigation {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 2rem;
-            background-color: #f0f0f0;
-            padding: 10px;
-        }
-        
-        .tab-button {
-            margin: 0 10px;
-            padding: 10px 20px;
-            border: none;
-            background-color: transparent;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .tab-button.active {
-            background-color: var(--primary);
-            color: white;
-            border-radius: 5px;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .features {
-            padding: 4rem 0;
-            background-color: var(--light);
-        }
-        
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-        
-        .feature-card {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            padding: 2rem;
-            transition: transform 0.3s ease;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .feature-card h3 {
-            color: var(--primary);
-            font-size: 1.3rem;
-            margin-top: 0;
-        }
-        
-        .api-endpoints {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-        
-        .api-card {
-            background-color: var(--light);
-            border-radius: 10px;
-            padding: 1.5rem;
-            border-left: 4px solid var(--primary);
-        }
-        
-        .api-card h3 {
-            margin-top: 0;
-            color: var(--primary);
-        }
-        
-        .api-card .endpoint {
-            background-color: #272822;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            font-family: monospace;
-            margin: 1rem 0;
-        }
-        
-        /* Enhanced pricing styles */
-        .pricing-card {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            padding: 2rem;
-            transition: transform 0.3s ease;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .pricing-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .pricing-name {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--primary);
-            margin-bottom: 1rem;
-        }
-        
-        .pricing-price {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-bottom: 1rem;
-        }
-        
-        .pricing-price span {
-            font-size: 1rem;
-            color: #888;
-            font-weight: normal;
-        }
-        
-        .pricing-features {
-            list-style: none;
-            padding: 0;
-            margin-bottom: 1.5rem;
-            flex-grow: 1;
-        }
-        
-        .pricing-features li {
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .pricing-features li:last-child {
-            border-bottom: none;
-        }
-        
-        .footer {
-            background-color: var(--dark);
-            color: white;
-            padding: 2rem 0;
-            text-align: center;
-        }
-        
-        @media (max-width: 768px) {
-            .tab-navigation {
-                flex-direction: column;
-            }
-            
-            .tab-button {
-                margin: 5px 0;
-                width: 100%;
-                text-align: center;
-            }
-        }
-    </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thrive X Fitness API Interface</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="hero">
-                <h1>Fitness & Nutrition API</h1>
-                <p>Personalized workout plans and nutrition advice tailored to your unique goals and preferences</p>
-                <a href="/fitness/docs" class="btn">API Documentation</a>
-            </div>
-        </div>
-    </header>
-    
-    <div class="tab-navigation">
-        <button class="tab-button active" data-tab="features">Features</button>
-        <button class="tab-button" data-tab="endpoints">API Endpoints</button>
-        <button class="tab-button" data-tab="pricing">Pricing</button>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <h1>Thrive X Fitness API</h1>
     </div>
     
+    <div class="sidebar-section">
+      <div class="sidebar-title">Navigation</div>
+      <a href="/fitness" class="sidebar-item">Home</a>
+      <a href="/fitness/docs" class="sidebar-item">API Documentation</a>
+      <a href="https://thrivexdna.com" class="sidebar-item">Thrive X DNA Website</a>
+      <a href="#" id="sidebar-subscribe-btn" class="sidebar-item highlight-item">Subscribe to API</a>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-title">API Endpoints</div>
+      <a href="#" class="sidebar-item tab-trigger" data-tab="workout">Generate Workout Plan</a>
+      <a href="#" class="sidebar-item tab-trigger" data-tab="exercise">Exercise Details</a>
+      <a href="#" class="sidebar-item tab-trigger" data-tab="nutrition-meal">Nutrition & Meal Plan</a>
+      <a href="#" class="sidebar-item tab-trigger" data-tab="food">Analyze Food Plate</a>
+      <a href="#" class="sidebar-item tab-trigger" data-tab="food-ingredient-directory">Food Ingredient Directory</a>
+      <a href="#" class="sidebar-item tab-trigger" data-tab="natural-remedies">Natural Remedies</a>
+    </div>
+    
+    <div class="sidebar-section">
+      <div class="sidebar-title">Legal Information</div>
+      <a href="/fitness/docs#terms-of-service" class="sidebar-item">Terms of Service</a>
+      <a href="/fitness/docs#privacy-policy" class="sidebar-item">Privacy Policy</a>
+      <a href="/fitness/docs#subscription-terms" class="sidebar-item">Subscription Terms</a>
+      <a href="/fitness/docs#medical-disclaimer" class="sidebar-item">Medical Disclaimer</a>
+    </div>
+  </aside>
+  
+  <button class="menu-toggle" id="menu-toggle">☰</button>
+  
+  <div class="main-container">
     <div class="container">
-        <div id="features-tab" class="tab-content active">
-            <section class="features">
-                <div class="feature-grid">
-                    <div class="feature-card">
-                        <h3>Personalized Workout Plans</h3>
-                        <p>Our AI-powered exercise plans are meticulously crafted to match your fitness goals, whether it's shedding pounds, building muscle, or enhancing endurance.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h3>Nutrition Advice</h3>
-                        <p>Receive comprehensive nutrition guidance tailored to your dietary preferences, health conditions, and fitness goals.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h3>Custom Meal Planning</h3>
-                        <p>Get detailed meal plans with recipes and nutritional information customized to your needs and preferences.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h3>Food Plate Analysis</h3>
-                        <p>Analyze the nutritional content of your meals with our food plate analysis feature.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h3>Exercise Details</h3>
-                        <p>Comprehensive information about specific exercises, including proper form and target muscles.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h3>Food Ingredient Directory</h3>
-                        <p>Explore detailed information about food ingredients, chemicals, and label info with insights on health quality.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h3>Natural Remedies</h3>
-                        <p>Access natural remedy variations for specific symptoms, including efficacy ratings, ingredients, and preparation steps.</p>
-                    </div>
-                </div>
-            </section>
+      <div class="auth-container">
+        <div class="api-key-container">
+          <input type="text" id="api-key" placeholder="Enter your API key" />
+          <button id="save-api-key" class="submit-button">Save</button>
         </div>
-        
-        <div id="endpoints-tab" class="tab-content">
-            <section class="api-section">
-                <div class="api-endpoints">
-                    <div class="api-card">
-                        <h3>Generate Workout Plan</h3>
-                        <div class="endpoint">POST /api/fitness/generateWorkoutPlan</div>
-                        <p>Creates a personalized workout plan based on your goals, fitness level, and preferences.</p>
-                    </div>
-                    <div class="api-card">
-                        <h3>Exercise Details</h3>
-                        <div class="endpoint">POST /api/fitness/exerciseDetails</div>
-                        <p>Provides detailed information about specific exercises, including proper form and target muscles.</p>
-                    </div>
-                    <div class="api-card">
-                        <h3>Nutrition Advice</h3>
-                        <div class="endpoint">POST /api/fitness/nutritionAdvice</div>
-                        <p>Delivers personalized nutrition guidance based on your goals and dietary preferences.</p>
-                    </div>
-                    <div class="api-card">
-                        <h3>Custom Meal Plan</h3>
-                        <div class="endpoint">POST /api/fitness/customMealPlan</div>
-                        <p>Generates detailed meal plans with recipes and nutritional information.</p>
-                    </div>
-                    <div class="api-card">
-                        <h3>Analyze Food Plate</h3>
-                        <div class="endpoint">POST /api/fitness/analyzeFoodPlate</div>
-                        <p>Analyzes the nutritional content of your meals based on the food items.</p>
-                    </div>
-                    <div class="api-card">
-                        <h3>Food Ingredient Directory</h3>
-                        <div class="endpoint">POST /api/food-ingredients</div>
-                        <p>Provides detailed information about food ingredients, additives, and their health implications.</p>
-                    </div>
-                    <div class="api-card">
-                        <h3>Natural Remedies</h3>
-                        <div class="endpoint">POST /api/natural-remedies</div>
-                        <p>Get natural remedy variations for a specific symptom, including efficacy ratings, ingredients, and preparation steps.</p>
-                    </div>
-                </div>
-            </section>
+        <div class="api-limits">
+          Need access? <a href="#" id="auth-subscribe-btn">Subscribe</a> to our Fitness API service
         </div>
-        
-        <div id="pricing-tab" class="tab-content">
-            <section class="features">
-                <div class="feature-grid">
-                    <div class="pricing-card">
-                        <div class="pricing-name">Essential</div>
-                        <div class="pricing-price">$0<span>/month</span></div>
-                        <ul class="pricing-features">
-                            <li><i class="fas fa-check"></i> 10 requests/month</li>
-                            <li><i class="fas fa-check"></i> Access to all endpoints</li>
-                            <li class="unavailable"><i class="fas fa-times"></i> No additional requests</li>
-                        </ul>
-                        <a href="/fitness/subscribe?plan=essential" class="btn">Start Free</a>
-                    </div>
-                    <div class="pricing-card" style="position: relative; border: 2px solid var(--primary);">
-                        <div style="position: absolute; top: -10px; right: 10px; background-color: var(--highlight); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; font-weight: bold;">POPULAR</div>
-                        <div class="pricing-name">Core</div>
-                        <div class="pricing-price">$14.99<span>/month</span></div>
-                        <ul class="pricing-features">
-                            <li><i class="fas fa-check"></i> 500 requests/month</li>
-                            <li><i class="fas fa-check"></i> Access to all endpoints</li>
-                            <li><i class="fas fa-check"></i> Additional requests at $0.04 each</li>
-                        </ul>
-                        <a href="/fitness/subscribe?plan=core" class="btn">Select Core</a>
-                    </div>
-                    <div class="pricing-card">
-                        <div class="pricing-name">Elite</div>
-                        <div class="pricing-price">$49.99<span>/month</span></div>
-                        <ul class="pricing-features">
-                            <li><i class="fas fa-check"></i> 15,000 requests/month</li>
-                            <li><i class="fas fa-check"></i> Access to all endpoints</li>
-                            <li><i class="fas fa-check"></i> Additional requests at $0.025 each</li>
-                        </ul>
-                        <a href="/fitness/subscribe?plan=elite" class="btn">Select Elite</a>
-                    </div>
-                    <div class="pricing-card">
-                        <div class="pricing-name">Ultimate</div>
-                        <div class="pricing-price">$129.99<span>/month</span></div>
-                        <ul class="pricing-features">
-                            <li><i class="fas fa-check"></i> 75,000 requests/month</li>
-                            <li><i class="fas fa-check"></i> Access to all endpoints</li>
-                            <li><i class="fas fa-check"></i> Additional requests at $0.015 each</li>
-                        </ul>
-                        <a href="/fitness/subscribe?plan=ultimate" class="btn">Select Ultimate</a>
-                    </div>
+      </div>
+      
+      <div class="units-toggle">
+        <label for="unit-system">Unit System:</label>
+        <select id="unit-system">
+          <option value="imperial">US (lbs, ft/in)</option>
+          <option value="metric">Metric (kg, cm)</option>
+        </select>
+      </div>
+      <h2 class="page-title">Select an API Endpoint to Use</h2>
+      <div class="tab-navigation">
+        <button class="tab-button active" data-tab="workout">Generate Workout Plan</button>
+        <button class="tab-button" data-tab="exercise">Exercise Details</button>
+        <button class="tab-button" data-tab="nutrition-meal">Nutrition & Meal Plan</button>
+        <button class="tab-button" data-tab="food">Analyze Food Plate</button>
+        <button class="tab-button" data-tab="food-ingredient-directory">Food Ingredient Directory</button>
+        <button class="tab-button" data-tab="natural-remedies">Natural Remedies</button>
+      </div>
+      <div id="workout-tab" class="tab-content active">
+        <div class="api-card">
+          <h2>Generate Workout Plan</h2>
+          <p>Create a personalized workout plan based on your goals, fitness level, and preferences.</p>
+          <form id="workout-form">
+            <div class="form-group">
+              <label for="goal">Fitness Goal:</label>
+              <select id="goal" name="goals" required>
+                <option value="">Select your goal</option>
+                <option value="weight_loss">Weight Loss</option>
+                <option value="muscle_gain">Muscle Gain</option>
+                <option value="endurance">Endurance</option>
+                <option value="strength">Strength</option>
+                <option value="overall_fitness">Overall Fitness</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="fitness_level">Fitness Level:</label>
+              <select id="fitness_level" name="fitnessLevel" required>
+                <option value="">Select your fitness level</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Workout Preferences:</label>
+              <div class="checkbox-group">
+                <div class="checkbox-item">
+                  <input type="checkbox" id="weight_training" name="preferences" value="weight_training">
+                  <label for="weight_training">Weight Training</label>
                 </div>
-            </section>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="cardio" name="preferences" value="cardio">
+                  <label for="cardio">Cardio</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="hiit" name="preferences" value="hiit">
+                  <label for="hiit">HIIT</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="bodyweight" name="preferences" value="bodyweight">
+                  <label for="bodyweight">Bodyweight</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="yoga" name="preferences" value="yoga">
+                  <label for="yoga">Yoga</label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Body Focus (Optional):</label>
+              <select id="body_focus" name="bodyFocus">
+                <option value="">Any (Default)</option>
+                <option value="full_body">Full Body</option>
+                <option value="upper_body">Upper Body</option>
+                <option value="lower_body">Lower Body</option>
+                <option value="alternating">Alternating Upper/Lower</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Muscle Group Focus (Optional):</label>
+              <div class="checkbox-group">
+                <div class="checkbox-item">
+                  <input type="checkbox" id="chest" name="muscleGroups" value="chest">
+                  <label for="chest">Chest</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="back" name="muscleGroups" value="back">
+                  <label for="back">Back</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="shoulders" name="muscleGroups" value="shoulders">
+                  <label for="shoulders">Shoulders</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="arms" name="muscleGroups" value="arms">
+                  <label for="arms">Arms</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="core" name="muscleGroups" value="core">
+                  <label for="core">Core</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="legs" name="muscleGroups" value="legs">
+                  <label for="legs">Legs</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="glutes" name="muscleGroups" value="glutes">
+                  <label for="glutes">Glutes</label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Include Warm-up & Cool-down:</label>
+              <select id="include_warmup_cooldown" name="includeWarmupCooldown">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="days_per_week">Days Per Week:</label>
+              <select id="days_per_week" name="daysPerWeek" required>
+                <option value="">Select days</option>
+                <option value="1">1 day</option>
+                <option value="2">2 days</option>
+                <option value="3">3 days</option>
+                <option value="4">4 days</option>
+                <option value="5">5 days</option>
+                <option value="6">6 days</option>
+                <option value="7">7 days</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="session_duration">Session Duration (minutes):</label>
+              <select id="session_duration" name="sessionDuration" required>
+                <option value="">Select duration</option>
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60">60 minutes</option>
+                <option value="90">90 minutes</option>
+                <option value="120">120 minutes</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="plan_duration_weeks">Plan Duration (weeks):</label>
+              <select id="plan_duration_weeks" name="planDurationWeeks" required>
+                <option value="">Select duration</option>
+                <option value="1">1 week</option>
+                <option value="2">2 weeks</option>
+                <option value="3">3 weeks</option>
+              </select>
+            </div>
+            <button type="submit" class="submit-button">Generate Workout Plan</button>
+          </form>
+          <div id="workout-result" class="result-container">
+            <div class="result-header">
+              <div class="result-title">Your Personalized Workout Plan</div>
+              <div class="action-buttons">
+                <button class="copy-btn" onclick="copyResult('workout-result')">📋 Copy</button>
+                <button class="print-btn" onclick="printResult('workout-result')">🖨️ Print</button>
+                <div class="status-badge status-success">Success</div>
+              </div>
+            </div>
+            <div class="result-content"></div>
+          </div>
         </div>
+      </div>
+      
+      <div id="exercise-tab" class="tab-content">
+        <div class="api-card">
+          <h2>Exercise Details</h2>
+          <p>Get detailed information about a specific exercise, including proper form and target muscles.</p>
+          <form id="exercise-form">
+            <div class="form-group">
+              <label for="exercise_name">Exercise Name:</label>
+              <input type="text" id="exercise_name" name="exerciseId" placeholder="e.g. Bench Press, Squat, Deadlift" required>
+            </div>
+            <div class="form-group">
+              <label for="include_variations">Include Variations:</label>
+              <select id="include_variations" name="includeVariations">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <button type="submit" class="submit-button">Get Exercise Details</button>
+          </form>
+          <div id="exercise-result" class="result-container">
+            <div class="result-header">
+              <div class="result-title">Exercise Details</div>
+              <div class="action-buttons">
+                <button class="copy-btn" onclick="copyResult('exercise-result')">📋 Copy</button>
+                <button class="print-btn" onclick="printResult('exercise-result')">🖨️ Print</button>
+                <div class="status-badge status-success">Success</div>
+              </div>
+            </div>
+            <div class="result-content"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="nutrition-meal-tab" class="tab-content">
+        <div class="api-card">
+          <h2>Nutrition & Meal Plan</h2>
+          <p>Get personalized nutrition advice and a custom meal plan tailored to your goals, preferences, and needs.</p>
+          <form id="nutrition-meal-form">
+            <div class="form-group">
+              <label for="nutrition_goal">Nutrition Goal:</label>
+              <select id="nutrition_goal" name="goals" required>
+                <option value="">Select your goal</option>
+                <option value="weight_loss">Weight Loss</option>
+                <option value="muscle_gain">Muscle Gain</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="performance">Sports Performance</option>
+                <option value="health">General Health</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="diet_type">Diet Type:</label>
+              <select id="diet_type" name="dietType" required>
+                <option value="">Select diet type</option>
+                <option value="omnivore">Omnivore</option>
+                <option value="carnivore">Carnivore</option>
+                <option value="vegetarian">Vegetarian</option>
+                <option value="vegan">Vegan</option>
+                <option value="keto">Keto</option>
+                <option value="paleo">Paleo</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="age">Age:</label>
+              <input type="number" id="age" name="age" min="18" max="120" placeholder="Enter your age" required>
+            </div>
+            <div class="form-group">
+              <label for="weight" id="weight-label">Weight (lbs):</label>
+              <input type="number" id="weight" name="weight" min="66" max="660" step="0.1" placeholder="Enter your weight in lbs" required>
+            </div>
+            <div class="form-group imperial-height">
+              <label>Height (ft/in):</label>
+              <div class="height-group">
+                <input type="number" id="height_feet" name="heightFeet" min="3" max="8" placeholder="Feet" required>
+                <input type="number" id="height_inches" name="heightInches" min="0" max="11" placeholder="Inches" required>
+              </div>
+            </div>
+            <div class="form-group metric-height" style="display: none;">
+              <label for="height_cm">Height (cm):</label>
+              <input type="number" id="height_cm" name="heightCm" min="100" max="250" placeholder="Enter your height in cm">
+            </div>
+            <div class="form-group">
+              <label for="gender">Gender:</label>
+              <select id="gender" name="gender" required>
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="activity_level">Activity Level:</label>
+              <select id="activity_level" name="activityLevel" required>
+                <option value="">Select activity level</option>
+                <option value="sedentary">Sedentary</option>
+                <option value="light">Lightly active</option>
+                <option value="moderate">Moderately active</option>
+                <option value="very">Very active</option>
+                <option value="extra">Extra active</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Food Allergies:</label>
+              <div class="checkbox-group">
+                <div class="checkbox-item">
+                  <input type="checkbox" id="allergy_peanuts" name="allergies" value="peanuts">
+                  <label for="allergy_peanuts">Peanuts</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="allergy_dairy" name="allergies" value="dairy">
+                  <label for="allergy_dairy">Dairy</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="allergy_gluten" name="allergies" value="gluten">
+                  <label for="allergy_gluten">Gluten</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="allergy_shellfish" name="allergies" value="shellfish">
+                  <label for="allergy_shellfish">Shellfish</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="allergy_soy" name="allergies" value="soy">
+                  <label for="allergy_soy">Soy</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="allergy_nuts" name="allergies" value="tree nuts">
+                  <label for="allergy_nuts">Tree Nuts</label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="religious_preferences">Religious Preferences:</label>
+              <select id="religious_preferences" name="religiousPreferences">
+                <option value="">None</option>
+                <option value="halal">Halal</option>
+                <option value="kosher">Kosher</option>
+                <option value="hindu">Hindu (No Beef)</option>
+                <option value="buddhist">Buddhist (Vegetarian)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="calories">Daily Calorie Target:</label>
+              <input type="number" id="calories" name="calorieTarget" min="1000" max="5000" placeholder="e.g. 2000" required>
+            </div>
+            <div class="form-group">
+              <label for="meals_per_day">Meals Per Day:</label>
+              <select id="meals_per_day" name="mealsPerDay" required>
+                <option value="">Select number of meals</option>
+                <option value="1">1 meal</option>
+                <option value="2">2 meals</option>
+                <option value="3">3 meals</option>
+                <option value="4">4 meals</option>
+                <option value="5">5 meals</option>
+                <option value="6">6 meals</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="days">Number of Days:</label>
+              <select id="days" name="numberOfDays" required>
+                <option value="">Select number of days</option>
+                <option value="1">1 day</option>
+                <option value="3">3 days</option>
+                <option value="7">7 days</option>
+                <option value="14">14 days</option>
+              </select>
+            </div>
+            <button type="submit" class="submit-button">Generate Nutrition & Meal Plan</button>
+          </form>
+          <div id="nutrition-meal-result" class="result-container">
+            <div class="result-header">
+              <div class="result-title">Your Nutrition & Meal Plan</div>
+              <div class="action-buttons">
+                <button class="copy-btn" onclick="copyResult('nutrition-meal-result')">📋 Copy</button>
+                <button class="print-btn" onclick="printResult('nutrition-meal-result')">🖨️ Print</button>
+                <div class="status-badge status-success">Success</div>
+              </div>
+            </div>
+            <div class="result-content"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="food-tab" class="tab-content">
+        <div class="api-card">
+          <h2>Analyze Food Plate</h2>
+          <p>Upload an image of your food plate to analyze its nutritional content and health quality.</p>
+          <form id="food-form" enctype="multipart/form-data">
+            <div class="form-group">
+              <label for="food_image">Upload Food Image:</label>
+              <input type="file" id="food_image" name="food_image" accept="image/*" required>
+              <div class="image-preview" id="food-image-preview"></div>
+            </div>
+            <div class="form-group">
+              <label for="cooking_oil">Adjust Cooking Oil (optional):</label>
+              <select id="cooking_oil" name="cooking_oil">
+                <option value="">Detect Automatically</option>
+                <option value="tallow">Tallow</option>
+                <option value="lard">Lard</option>
+                <option value="butter">Butter</option>
+                <option value="ghee">Ghee</option>
+                <option value="olive_oil">Olive Oil</option>
+                <option value="coconut_oil">Coconut Oil</option>
+                <option value="avocado_oil">Avocado Oil</option>
+                <option value="canola_oil">Canola Oil</option>
+                <option value="vegetable_oil">Vegetable Oil</option>
+                <option value="sunflower_oil">Sunflower Oil</option>
+                <option value="soybean_oil">Soybean Oil</option>
+                <option value="corn_oil">Corn Oil</option>
+              </select>
+            </div>
+            <button type="submit" class="submit-button">Analyze Food Plate</button>
+          </form>
+          <div id="food-result" class="result-container">
+            <div class="result-header">
+              <div class="result-title">Food Plate Analysis</div>
+              <div class="action-buttons">
+                <button class="copy-btn" onclick="copyResult('food-result')">📋 Copy</button>
+                <button class="print-btn" onclick="printResult('food-result')">🖨️ Print</button>
+                <div class="status-badge status-success">Success</div>
+              </div>
+            </div>
+            <div class="result-content"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="food-ingredient-directory-tab" class="tab-content">
+        <div class="api-card">
+          <h2>Food Ingredient Directory</h2>
+          <p>Explore detailed information about food ingredients, chemicals, and label info with insights on daily consumption.</p>
+          <form id="food-ingredient-directory-form">
+            <div class="form-group">
+              <label for="ingredient_search">Search Ingredient:</label>
+              <input type="text" id="ingredient_search" name="ingredient" placeholder="e.g., Ascorbic Acid, Sugar" required>
+            </div>
+            <button type="submit" class="submit-button">Search Ingredients</button>
+          </form>
+          <div id="food-ingredient-directory-result" class="result-container">
+            <div class="result-header">
+              <div class="result-title">Food Ingredient Directory Results</div>
+              <div class="action-buttons">
+                <button class="copy-btn" onclick="copyResult('food-ingredient-directory-result')">📋 Copy</button>
+                <button class="print-btn" onclick="printResult('food-ingredient-directory-result')">🖨️ Print</button>
+                <div class="status-badge status-success">Success</div>
+              </div>
+            </div>
+            <div class="result-content"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="natural-remedies-tab" class="tab-content">
+        <div class="api-card">
+          <h2>Natural Remedies & Healing Approaches</h2>
+          <p>Explore suggested natural options and ancestral healing approaches for health conditions based on traditional wisdom and holistic perspectives. These are personal recommendations, not medical advice.</p>
+          <form id="natural-remedies-form">
+            <div class="form-group">
+              <label for="symptom">Condition or Health Goal:</label>
+              <input type="text" id="symptom" name="symptom" placeholder="e.g., Cancer, Diabetes, Heart Disease, Common Cold, Weight Loss" required>
+            </div>
+            <div class="form-group">
+              <label for="remedy_approach">Preferred Approach:</label>
+              <select id="remedy_approach" name="approach">
+                <option value="comprehensive">Comprehensive</option>
+                <option value="dietary">Ancestral Dietary Changes</option>
+                <option value="herbs">Herbs & Traditional Medicine</option>
+                <option value="lifestyle">Lifestyle & Environmental Changes</option>
+                <option value="supplements">Nutritional Supplements</option>
+                <option value="oneminute">One Minute Cure Approach</option>
+                <option value="sebi">Dr. Sebi Methodology</option>
+              </select>
+            </div>
+            <button type="submit" class="submit-button">Get Natural Solutions</button>
+          </form>
+          <div class="medical-notice">
+            <p style="margin-bottom: 10px;"><strong>Important Medical Disclaimer:</strong> These remedies and approaches are provided for informational purposes only. They represent traditional or alternative perspectives that have not been evaluated by the FDA.</p>
+            <p>Always consult healthcare professionals for medical concerns. See our full <a href="/fitness/docs#medical-disclaimer" target="_blank">Medical Disclaimer</a> for more information.</p>
+          </div>
+          <div id="natural-remedies-result" class="result-container">
+            <div class="result-header">
+              <div class="result-title">Natural Healing Solutions</div>
+              <div class="action-buttons">
+                <button class="copy-btn" onclick="copyResult('natural-remedies-result')">📋 Copy</button>
+                <button class="print-btn" onclick="printResult('natural-remedies-result')">🖨️ Print</button>
+                <div class="status-badge status-success">Success</div>
+              </div>
+            </div>
+            <div class="result-content">
+              <p><em>Note: These are personal recommendations based on traditional wisdom and holistic perspectives, not medical advice. Always consult healthcare professionals for medical concerns.</em></p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    
-    <footer>
-        <div class="container">
-            <p>&copy; 2025 Fitness & Nutrition API. All rights reserved.</p>
+  </div>
+  
+  <div id="subscription-modal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6);">
+    <div class="modal-content" style="background-color: #fefefe; margin: 5% auto; padding: 0; border: none; width: 90%; max-width: 1000px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden;">
+      <div style="background: var(--gradient-bg); padding: 20px; color: white; position: relative;">
+        <span class="close" style="color: white; position: absolute; right: 20px; top: 15px; font-size: 28px; font-weight: bold; cursor: pointer;">×</span>
+        <h2 style="text-align: center; margin: 0; font-size: 2rem;">Choose Your Thrive X Fitness API Plan</h2>
+        <p style="text-align: center; margin-top: 10px; opacity: 0.9;">Unlock the power of fitness & nutrition data with our flexible subscription plans</p>
+      </div>
+      
+      <div style="margin: 20px 0; text-align: center;">
+        <div class="billing-toggle" style="display: inline-flex; background: #f0f0f0; border-radius: 30px; padding: 5px;">
+          <button id="monthly-toggle" class="billing-btn active" style="border: none; background: var(--primary); color: white; padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: bold;">Monthly</button>
+          <button id="yearly-toggle" class="billing-btn" style="border: none; background: transparent; padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: bold;">Yearly (Save 10-20%)</button>
         </div>
-    </footer>
+      </div>
+      
+      <div id="monthly-plans" style="padding: 30px 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+        <div class="plan-card" style="flex: 1; min-width: 215px; border: 1px solid #eee;">
+          <h3 class="plan-name">Basic</h3>
+          <div class="plan-price">$0<span>/month</span></div>
+          <ul class="plan-features">
+            <li><i class="fas fa-check"></i> 10 requests/month</li>
+            <li><i class="fas fa-check"></i> All features</li>
+            <li><i class="fas fa-times"></i> No additional requests</li>
+          </ul>
+          <button class="plan-select-btn" data-plan="basic" style="background: #5a6268;">Start Free</button>
+        </div>
+        
+        <div class="plan-card" style="flex: 1; min-width: 215px; border: 1px solid #eee;">
+          <h3 class="plan-name">Core</h3>
+          <div class="plan-price">$14.99<span>/month</span></div>
+          <ul class="plan-features">
+            <li><i class="fas fa-check"></i> 500 requests/month</li>
+            <li><i class="fas fa-check"></i> All features</li>
+            <li><i class="fas fa-check"></i> Additional requests at $0.04/ea</li>
+          </ul>
+          <button class="plan-select-btn" data-plan="core">Select Core</button>
+        </div>
+        
+        <div class="plan-card" style="flex: 1; min-width: 215px; border: 1px solid #eee;">
+          <h3 class="plan-name">Elite</h3>
+          <div class="plan-price">$49.99<span>/month</span></div>
+          <ul class="plan-features">
+            <li><i class="fas fa-check"></i> 15,000 requests/month</li>
+            <li><i class="fas fa-check"></i> All features</li>
+            <li><i class="fas fa-check"></i> Additional requests at $0.025/ea</li>
+          </ul>
+          <button class="plan-select-btn" data-plan="elite">Select Elite</button>
+        </div>
+        
+        <div class="plan-card" style="flex: 1; min-width: 215px; border: 1px solid var(--primary); box-shadow: 0 4px 15px rgba(30, 203, 225, 0.15);">
+          <div class="plan-badge">RECOMMENDED</div>
+          <h3 class="plan-name" style="color: var(--primary);">Ultimate</h3>
+          <div class="plan-price">$129.99<span>/month</span></div>
+          <ul class="plan-features">
+            <li><i class="fas fa-check"></i> 75,000 requests/month</li>
+            <li><i class="fas fa-check"></i> All features</li>
+            <li><i class="fas fa-check"></i> Additional requests at $0.015/ea</li>
+          </ul>
+          <button class="plan-select-btn" data-plan="ultimate">Select Ultimate</button>
+        </div>
+      </div>
+      
+      <div id="yearly-plans" style="padding: 30px 20px; display: none; flex-wrap: wrap; justify-content: center; gap: 20px;">
+        <div class="plan-card" style="flex: 1; min-width: 215px; border: 1px solid #eee;">
+          <h3 class="plan-name">Basic</h3>
+          <div class="plan-price">$0<span>/year</span></div>
+          <ul class="plan-features">
+            <li><i class="fas fa-check"></i> 10 requests/month</li>
+            <li><i class="fas fa-check"></i> All features</li>
+            <li><i class="fas fa-times"></i> No additional requests</li>
+          </ul>
+          <button class="plan-select-btn" data-plan="basic-yearly" style="background: #5a6268;">Start Free</button>
+        </div>
+        
+        <div class="plan-card" style="flex: 1; min-width: 215px; border: 1px solid #eee;">
+          <h3 class="plan-name">Core</h3>
+          <div class="plan-price">$161.89<span>/year</span></div>
+          <div class="plan-savings">Save 10% ($17.99)</div>
+          <ul class="plan-features">
+            <li><i class="fas fa-check"></i> 500 requests/month</li>
+            <li><i class="fas fa-check"></i> All features</li>
+            <li><i class="fas fa-check"></i> Additional requests at $0.04/ea</li>
+          </ul>
+          <button class="plan-select-btn" data-plan="core-yearly">Select Core</button>
+        </div>
+        
+        <div class="plan-card" style="flex: 1; min-width: 215px; border: 1px solid #eee;">
+          <h3 class="plan-name">Elite</h3>
+          <div class="plan-price">$499.80<span>/year</span></div>
+          <div class="plan-savings">Save 15% ($88.20)</div>
+          <ul class="plan-features">
+            <li><i class="fas fa-check"></i> 15,000 requests/month</li>
+            <li><i class="fas fa-check"></i> All features</li>
+            <li><i class="fas fa-check"></i> Additional requests at $0.025/ea</li>
+          </ul>
+          <button class="plan-select-btn" data-plan="elite-yearly">Select Elite</button>
+        </div>
+        
+        <div class="plan-card" style="flex: 1; min-width: 215px; border: 1px solid var(--primary); box-shadow: 0 4px 15px rgba(30, 203, 225, 0.15);">
+          <div class="plan-badge">RECOMMENDED</div>
+          <h3 class="plan-name" style="color: var(--primary);">Ultimate</h3>
+          <div class="plan-price">$1,236<span>/year</span></div>
+          <div class="plan-savings">Save 20% ($312)</div>
+          <ul class="plan-features">
+            <li><i class="fas fa-check"></i> 75,000 requests/month</li>
+            <li><i class="fas fa-check"></i> All features</li>
+            <li><i class="fas fa-check"></i> Additional requests at $0.015/ea</li>
+          </ul>
+          <button class="plan-select-btn" data-plan="ultimate-yearly">Select Ultimate</button>
+        </div>
+      </div>
+      
+      <div style="text-align: center; padding: 0 20px 30px; font-size: 0.9rem; color: #666;">
+        <p>All plans include access to the API documentation and free updates. No credit card required for the Basic plan. Basic plan limited to 1-day plans for workouts and meals.</p>
+      </div>
+    </div>
+  </div>
 
-    <script>
-        // Tab Navigation
-        const tabButtons = document.querySelectorAll('.tab-button');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const tabId = button.dataset.tab;
-                
-                // Remove active class from all buttons and contents
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                tabContents.forEach(content => content.classList.remove('active'));
-                
-                // Add active class to clicked button and corresponding content
-                button.classList.add('active');
-                document.getElementById(`${tabId}-tab`).classList.add('active');
-            });
-        });
-    </script>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script src="/fitness/scripts.js" defer></script>
 </body>
 </html>

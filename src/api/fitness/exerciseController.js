@@ -1,27 +1,24 @@
-// controllers/exerciseController.js
-const exerciseService = require('../services/exerciseService');
+// src/api/fitness/exerciseController.js
+const { handleAnthropicRequest } = require('../anthropic');
 
-const getExerciseDetails = (req, res) => {
+const getExerciseDetails = async (req, res) => {
   try {
-    const { exercise_name, lang = 'en' } = req.body;
+    const { exercise_name: exerciseId, include_variations: includeVariations } = req.body;
+    const apiKey = req.headers['x-api-key'];
 
-    // Validate required parameters
-    if (!exercise_name) {
-      return res.status(400).json({ 
-        error: 'Missing required parameter. Please provide exercise_name.' 
-      });
-    }
+    if (!apiKey) return res.status(401).json({ error: 'API key is required' });
+    if (!exerciseId) return res.status(400).json({ error: 'Missing exercise_name' });
 
-    // Get exercise details using the service
-    const exerciseDetails = exerciseService.getExerciseDetails(exercise_name, lang);
-    
-    res.json({ result: exerciseDetails });
+    const result = await handleAnthropicRequest('exerciseDetails', {
+      exerciseId,
+      includeVariations: includeVariations === 'true'
+    });
+
+    res.json({ data: result });
   } catch (error) {
     console.error('Error getting exercise details:', error);
-    res.status(500).json({ error: 'Failed to get exercise details' });
+    res.status(500).json({ error: 'Failed to get exercise details', details: error.message });
   }
 };
 
-module.exports = {
-  getExerciseDetails
-};
+module.exports = { getExerciseDetails };
