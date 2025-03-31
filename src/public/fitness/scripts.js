@@ -12,7 +12,7 @@ const stripe = Stripe('your-real-stripe-public-key-here'); // Example: 'pk_test_
 
 // User profile object
 let userProfile = {
-  plan: 'basic',
+  plan: 'essential',
   role: 'user',
   requestsRemaining: 10
 };
@@ -28,17 +28,27 @@ async function fetchUserProfile(apiKey) {
     if (!response.ok) throw new Error('Failed to validate API key');
     const data = await response.json();
     userProfile = {
-      plan: data.plan || 'basic',
+      plan: data.plan || 'essential',
       role: data.role || 'user',
       requestsRemaining: data.requestsRemaining || 10
     };
     localStorage.setItem('userProfile', JSON.stringify(userProfile));
     updateDropdownOptions();
+    updateRequestCounter();
     console.log('User profile fetched:', userProfile);
   } catch (error) {
     console.error('Error fetching user profile:', error);
-    userProfile = { plan: 'basic', role: 'user', requestsRemaining: 10 };
+    userProfile = { plan: 'essential', role: 'user', requestsRemaining: 10 };
     localStorage.setItem('userProfile', JSON.stringify(userProfile));
+    updateRequestCounter();
+  }
+}
+
+// Update request counter display
+function updateRequestCounter() {
+  const counter = document.getElementById('request-counter');
+  if (counter) {
+    counter.textContent = `Requests Remaining: ${userProfile.requestsRemaining}`;
   }
 }
 
@@ -48,7 +58,7 @@ function updateDropdownOptions() {
   const planDurationWeeks = document.getElementById('plan_duration_weeks');
   const numberOfDays = document.getElementById('days');
 
-  if (userProfile.plan === 'basic' && userProfile.role !== 'admin') {
+  if (userProfile.plan === 'essential' && userProfile.role !== 'admin') {
     daysPerWeek.innerHTML = `
       <option value="">Select days</option>
       <option value="1">1 day</option>
@@ -221,6 +231,7 @@ function formatResult(result, endpoint) {
             ${data.health_insights ? `<p><strong>Health Insights:</strong> ${data.health_insights}</p>` : ''}
             ${data.nutritional_profile ? `<p><strong>Nutritional Profile:</strong> ${data.nutritional_profile}</p>` : ''}
             ${data.commonly_found_in ? `<p><strong>Commonly Found In:</strong> ${data.commonly_found_in}</p>` : ''}
+            ${data.aliases ? `<p><strong>Also Known As:</strong> ${Array.isArray(data.aliases) ? data.aliases.join(', ') : data.aliases}</p>` : ''}
           </div>
         </div>`;
       break;
@@ -343,7 +354,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
 
     if (userProfile.requestsRemaining <= 0 && userProfile.role !== 'admin') {
       resultContainer.classList.add('visible');
-      resultContent.innerHTML = '<p>You have exceeded your monthly request limit. Please upgrade your plan.</p>';
+      resultContent.innerHTML = '<p>You’ve hit your monthly request limit. Upgrade your plan for more!</p><button onclick="window.location.href=\'/fitness/subscribe\'">Upgrade Now</button>';
       statusBadge.textContent = 'Limit Exceeded';
       statusBadge.className = 'status-badge status-error';
       return;
@@ -373,7 +384,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
           let daysPerWeek = formData.get('daysPerWeek');
           let planDurationWeeks = formData.get('planDurationWeeks');
           
-          if (userProfile.plan === 'basic' && userProfile.role !== 'admin') {
+          if (userProfile.plan === 'essential' && userProfile.role !== 'admin') {
             daysPerWeek = '1';
             planDurationWeeks = '1';
           }
@@ -414,7 +425,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
           const allergies = Array.from(form.querySelectorAll('input[name="allergies"]:checked')).map(el => el.value);
           let numberOfDays = formData.get('numberOfDays');
           
-          if (userProfile.plan === 'basic' && userProfile.role !== 'admin') {
+          if (userProfile.plan === 'essential' && userProfile.role !== 'admin') {
             numberOfDays = '1';
           }
           
@@ -474,6 +485,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
       if (userProfile.role !== 'admin') {
         userProfile.requestsRemaining--;
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
+        updateRequestCounter();
       }
       
       if (response.ok && (endpoint === 'nutritionMealPlan' || endpoint === 'analyzeFoodPlate')) {
@@ -669,13 +681,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('.plan-select-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const plan = btn.dataset.plan.split('-')[0];
-      if (plan === 'basic') {
-        userProfile.plan = 'basic';
+      if (plan === 'essential') {
+        userProfile.plan = 'essential';
         userProfile.requestsRemaining = 10;
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
         updateDropdownOptions();
         modal.style.display = 'none';
-        window.location.href = '/fitness/subscribe?plan=basic';
+        window.location.href = '/fitness/subscribe?plan=essential';
       } else {
         try {
           const response = await fetch('/api/create-checkout-session', {

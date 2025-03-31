@@ -13,11 +13,10 @@ const router = require('./routes/router');
 const fitnessRoutes = require('./routes/fitnessRoutes');
 const Stripe = require('stripe');
 
-// Load .env explicitly from project root
+// Load .env explicitly
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
-console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY); // Debug
-console.log('ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY); // Debug - Added
-console.log('Current working directory:', process.cwd()); // Debug
+console.log('Loaded env - OPENAI:', process.env.OPENAI_API_KEY ? 'set' : 'not set');
+console.log('Loaded env - ANTHROPIC:', process.env.ANTHROPIC_API_KEY ? 'set' : 'not set');
 
 // Configuration
 const app = express();
@@ -40,7 +39,7 @@ redisClient.on('connect', () => console.log('Connected to Redis'));
 // Stripe setup
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn('Warning: STRIPE_SECRET_KEY not set in .env. Subscription features will fail.');
+  console.warn('Warning: STRIPE_SECRET_KEY not set in .env');
 }
 
 // Subscription plans
@@ -77,10 +76,10 @@ app.get('/fitness/docs', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'fitness', 'docs.html'));
 });
 
-// Rate limiting
+// Rate limiting (global, not subscription-specific)
 const limiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 hours
-  max: 1000, // Adjust as needed
+  max: 1000,
   store: new RedisStore({ sendCommand: (...args) => redisClient.call(...args), prefix: 'rate-limit:' }),
   skip: (req) => req.path.startsWith('/admin') || req.path === '/',
   message: (req) => ({
@@ -90,9 +89,70 @@ const limiter = rateLimit({
   })
 });
 
+// Middleware to handle API key and subscription limits
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api/fitness')) {
+    req.appKey = req.headers['x-api-key'];
+    if (!req.appKey) return res.status(401).json({ error: 'API key is required' });
+
+    // Validate API key and fetch user profile from Supabase
+    const { data, error } = await supabase
+      .from('users')
+      .select('plan, role')
+      .eq('api_key', req.appKey)
+      .single();
+
+    if (error || !data) return res.status(401).json({ error: 'Invalid API key' });
+    req.user = { plan: data.plan || 'essential', role: data.role || 'user' };
+
+    // Skip subscription limits for admins
+    if (req.user.role === 'admin') return next();
+
+    // Check and enforce subscription limits via Redis
+    const redisKey = `requests:${req.appKey}:${new Date().getFullYear()}-${new Date().getMonth() + 1}`;
+    let requestsRemaining = await redisClient.get(redisKey);
+
+    if (requestsRemaining === null) {
+      const planLimits = subscriptionPlans[req.user.plan].requests;
+      requestsRemaining = planLimits;
+      await redisClient.set(redisKey, planLimits, 'EX', 30 * 24 * 60 * 60); // 30-day expiry
+    } else {
+      requestsRemaining = parseInt(requestsRemaining, 10);
+    }
+
+    if (requestsRemaining <= 0) {
+      return res.status(429).json({
+        error: 'Monthly request limit exceeded',
+        tier_info: { current_tier: req.user.plan, limit: subscriptionPlans[req.user.plan].requests, remaining: 0 },
+        upgrade_options: { next_tier: req.user.plan === 'essential' ? 'core' : 'elite', benefits: ['More requests/month'] }
+      });
+    }
+
+    req.requestsRemaining = requestsRemaining;
+    if (req.path !== '/api/fitness/food-plate') {
+      console.log('Stripping X-API-Key for:', req.path);
+      delete req.headers['x-api-key'];
+    }
+  }
+  next();
+});
+
 // Routes
 app.use('/', router);
 app.use('/api/fitness', limiter, fitnessRoutes);
+
+// Decrement request count on successful response
+app.use((req, res, next) => {
+  const originalJson = res.json;
+  res.json = function (body) {
+    if (req.path.startsWith('/api/fitness') && res.statusCode === 200 && req.user?.role !== 'admin') {
+      const redisKey = `requests:${req.appKey}:${new Date().getFullYear()}-${new Date().getMonth() + 1}`;
+      redisClient.decr(redisKey);
+    }
+    originalJson.call(this, body);
+  };
+  next();
+});
 
 // Start Server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
