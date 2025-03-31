@@ -18,7 +18,7 @@ router.get('/status', (req, res) => {
 });
 
 // Validate API key and return user profile
-router.post('/api/auth/validate', async (req, res) => {
+router.post('/fitness/api/auth/validate', async (req, res) => {
   const { apiKey } = req.body;
   if (!apiKey) return res.status(400).json({ error: 'API key required' });
 
