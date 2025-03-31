@@ -8,7 +8,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "jest",
-    "build": "npm install && node src/server.js"
+    "build": "npm install"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -50,13 +50,5 @@
   "license": "ISC",
   "engines": {
     "node": ">=18.0.0"
-  },
-  "vercel": {
-    "functions": {
-      "src/server.js": {
-        "memory": 1024,
-        "maxDuration": 10
-      }
-    }
   }
 }

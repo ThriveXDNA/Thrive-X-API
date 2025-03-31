@@ -3,15 +3,15 @@ const { handleAnthropicRequest } = require('../anthropic');
 
 const getExerciseDetails = async (req, res) => {
   try {
-    const { exercise_name: exerciseId, include_variations: includeVariations } = req.body;
-    const apiKey = req.headers['x-api-key'];
+    const { exerciseId, includeVariations } = req.body; // Match scripts.js keys
+    const apiKey = req.appKey;
 
     if (!apiKey) return res.status(401).json({ error: 'API key is required' });
     if (!exerciseId) return res.status(400).json({ error: 'Missing exercise_name' });
 
     const result = await handleAnthropicRequest('exerciseDetails', {
       exerciseId,
-      includeVariations: includeVariations === 'true'
+      includeVariations: includeVariations === true // Normalize to boolean
     });
 
     res.json({ data: result });

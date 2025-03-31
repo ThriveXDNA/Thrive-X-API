@@ -17,7 +17,7 @@ const generateMealPlan = async (req, res) => {
       allergies,
       religiousPreferences
     } = req.body;
-    const apiKey = req.headers['x-api-key'];
+    const apiKey = req.appKey; // Use stored app key
 
     if (!apiKey) return res.status(401).json({ error: 'API key is required' });
     if (!goals || !dietType || !mealsPerDay || !numberOfDays) {

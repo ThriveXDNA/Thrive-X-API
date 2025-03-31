@@ -287,6 +287,13 @@ textarea {
   max-height: 600px;
   overflow-y: auto;
 }
+.result-content img { /* Added for image resizing */
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto 1rem;
+  border-radius: 8px;
+}
 .result-card {
   background: white;
   border-radius: 8px;
@@ -900,6 +907,12 @@ textarea {
   .main-container {
     margin-left: 0;
     width: 100%;
+    padding: 1rem; /* Reduced padding for mobile */
+  }
+  
+  .container {
+    width: 100%; /* Full width on mobile */
+    padding: 0 0.5rem;
   }
   
   .tab-navigation {
@@ -909,9 +922,11 @@ textarea {
   .tab-button {
     width: 100%;
     text-align: center;
+    padding: 8px 16px; /* Slightly smaller buttons */
+    font-size: 0.9rem;
   }
   .api-card {
-    padding: 1.5rem;
+    padding: 1rem; /* Reduced padding */
   }
   .pie-chart-container {
     max-width: 100%;
@@ -922,6 +937,14 @@ textarea {
   .result-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+  .result-content {
+    padding: 1rem; /* Reduced padding */
+    max-height: 400px; /* Smaller scroll area on mobile */
+  }
+  .result-content img { /* Mobile-specific image sizing */
+    max-width: 100%;
+    max-height: 300px; /* Cap height for mobile */
   }
   .action-buttons {
     width: 100%;
@@ -935,6 +958,21 @@ textarea {
   
   .sidebar.collapsed {
     display: none;
+  }
+  
+  .page-title {
+    font-size: 1.5rem; /* Smaller title on mobile */
+  }
+  
+  .result-title {
+    font-size: 1.25rem; /* Adjust result title */
+  }
+  
+  .nutrition-table, .result-table {
+    font-size: 0.85rem; /* Smaller text */
+  }
+  .nutrition-table th, .nutrition-table td, .result-table th, .result-table td {
+    padding: 8px; /* Reduced padding */
   }
 }
 .plan-savings {

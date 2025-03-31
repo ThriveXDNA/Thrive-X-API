@@ -4,7 +4,7 @@ const { handleAnthropicRequest } = require('../anthropic');
 const getFoodIngredientDetails = async (req, res) => {
   try {
     const { ingredient } = req.body;
-    const apiKey = req.headers['x-api-key'];
+    const apiKey = req.appKey;
 
     if (!apiKey) return res.status(401).json({ error: 'API key is required' });
     if (!ingredient) return res.status(400).json({ error: 'Missing ingredient' });

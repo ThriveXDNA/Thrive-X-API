@@ -14,10 +14,10 @@ async function analyzeFoodPlate(req, res) {
     if (!apiKey) return res.status(401).json({ error: 'API key is required' });
     if (!req.file) return res.status(400).json({ error: 'No image file uploaded' });
 
-    // Resize image before processing
+    // Resize image for mobile-friendly size
     const resizedImage = await sharp(req.file.path)
-      .resize({ width: 800, height: 800, fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 80 })
+      .resize({ width: 600, height: 600, fit: 'contain', withoutEnlargement: true }) // Smaller size, maintain aspect ratio
+      .jpeg({ quality: 70 }) // Lower quality for smaller file size
       .toBuffer();
     const base64Image = `data:${req.file.mimetype || 'image/jpeg'};base64,${resizedImage.toString('base64')}`;
     const selectedOil = req.body.cooking_oil || 'unknown';
