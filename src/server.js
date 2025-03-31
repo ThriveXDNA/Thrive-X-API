@@ -91,7 +91,7 @@ const limiter = rateLimit({
 
 // Middleware to handle API key and subscription limits
 app.use(async (req, res, next) => {
-  if (req.path.startsWith('/fitness/api/fitness')) {  // Updated to match new route
+  if (req.path.startsWith('/fitness/api/fitness')) {
     req.appKey = req.headers['x-api-key'];
     if (!req.appKey) return res.status(401).json({ error: 'API key is required' });
 
@@ -129,7 +129,7 @@ app.use(async (req, res, next) => {
     }
 
     req.requestsRemaining = requestsRemaining;
-    if (req.path !== '/fitness/api/fitness/food-plate') {  // Updated path
+    if (req.path !== '/fitness/api/fitness/food-plate') {
       console.log('Stripping X-API-Key for:', req.path);
       delete req.headers['x-api-key'];
     }
@@ -138,14 +138,14 @@ app.use(async (req, res, next) => {
 });
 
 // Routes
-app.use('/fitness', router);  // Moved from '/' to '/fitness'
-app.use('/fitness/api/fitness', limiter, fitnessRoutes);  // Moved from '/api/fitness'
+app.use('/fitness', router);
+app.use('/fitness/api/fitness', limiter, fitnessRoutes);
 
 // Decrement request count on successful response
 app.use((req, res, next) => {
   const originalJson = res.json;
   res.json = function (body) {
-    if (req.path.startsWith('/fitness/api/fitness') && res.statusCode === 200 && req.user?.role !== 'admin') {  // Updated path
+    if (req.path.startsWith('/fitness/api/fitness') && res.statusCode === 200 && req.user?.role !== 'admin') {
       const redisKey = `requests:${req.appKey}:${new Date().getFullYear()}-${new Date().getMonth() + 1}`;
       redisClient.decr(redisKey);
     }
