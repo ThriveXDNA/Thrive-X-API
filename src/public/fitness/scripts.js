@@ -20,7 +20,7 @@ let userProfile = {
 // Fetch and validate user profile with API key
 async function fetchUserProfile(apiKey) {
   try {
-    const response = await fetch('/api/auth/validate', {
+    const response = await fetch('/fitness/api/auth/validate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
       body: JSON.stringify({ apiKey })
@@ -370,7 +370,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
       let result;
       
       if (formId === 'food-form') {
-        response = await fetch('/api/fitness/food-plate', {
+        response = await fetch('/fitness/api/fitness/food-plate', {
           method: 'POST',
           headers: { 'X-API-Key': apiKey },
           body: formData
@@ -399,7 +399,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
           jsonData.sessionDuration = parseInt(formData.get('sessionDuration'));
           jsonData.planDurationWeeks = parseInt(planDurationWeeks);
           
-          response = await fetch('/api/fitness/workout', {
+          response = await fetch('/fitness/api/fitness/workout', {
             method: 'POST',
             headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
             body: JSON.stringify(jsonData)
@@ -408,7 +408,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
           jsonData.exerciseId = formData.get('exerciseId');
           jsonData.includeVariations = formData.get('includeVariations') === 'true';
           
-          response = await fetch('/api/fitness/exercise', {
+          response = await fetch('/fitness/api/fitness/exercise', {
             method: 'POST',
             headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
             body: JSON.stringify(jsonData)
@@ -442,7 +442,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
           jsonData.mealsPerDay = parseInt(formData.get('mealsPerDay'));
           jsonData.numberOfDays = parseInt(numberOfDays);
           
-          response = await fetch('/api/fitness/meal-plan', {
+          response = await fetch('/fitness/api/fitness/meal-plan', {
             method: 'POST',
             headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
             body: JSON.stringify(jsonData)
@@ -450,7 +450,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
         } else if (formId === 'food-ingredient-directory-form') {
           jsonData.ingredient = formData.get('ingredient');
           
-          response = await fetch('/api/fitness/food-ingredient', {
+          response = await fetch('/fitness/api/fitness/food-ingredient', {
             method: 'POST',
             headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
             body: JSON.stringify(jsonData)
@@ -459,7 +459,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
           jsonData.symptom = formData.get('symptom');
           jsonData.approach = formData.get('approach');
           
-          response = await fetch('/api/fitness/natural-remedies', {
+          response = await fetch('/fitness/api/fitness/natural-remedies', {
             method: 'POST',
             headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
             body: JSON.stringify(jsonData)
@@ -690,7 +690,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = '/fitness/subscribe?plan=essential';
       } else {
         try {
-          const response = await fetch('/api/create-checkout-session', {
+          const response = await fetch('/fitness/api/create-checkout-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ planId: btn.dataset.plan })
