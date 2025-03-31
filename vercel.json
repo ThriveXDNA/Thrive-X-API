@@ -1,1 +1,0 @@
-{"rewrites":[{"source":"/fitness/api/fitness/:path*","destination":"/fitness/api/fitness/:path*","has":[{"type":"header","key":"x-api-key","value":"my-admin-key-123"}]},{"source":"/:path*","destination":"/:path*"}]}
