@@ -21,6 +21,7 @@ console.log('Loaded env - ANTHROPIC:', process.env.ANTHROPIC_API_KEY ? 'set' : '
 // Configuration
 const app = express();
 const PORT = process.env.PORT || 3000;
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 
 // Supabase setup
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -76,6 +77,15 @@ app.get('/fitness/docs', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'fitness', 'docs.html'));
 });
 
+// Admin API key bypass
+app.use((req, res, next) => {
+  if (req.headers['x-api-key'] === ADMIN_API_KEY) {
+    req.user = { plan: 'ultimate', role: 'admin' };
+    return next();
+  }
+  next();
+});
+
 // Rate limiting (global, not subscription-specific)
 const limiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 hours
@@ -94,6 +104,9 @@ app.use(async (req, res, next) => {
   if (req.path.startsWith('/fitness/api/fitness')) {
     req.appKey = req.headers['x-api-key'];
     if (!req.appKey) return res.status(401).json({ error: 'API key is required' });
+
+    // Skip Supabase check if already admin from ADMIN_API_KEY
+    if (req.user && req.user.role === 'admin') return next();
 
     // Validate API key and fetch user profile from Supabase
     const { data, error } = await supabase
