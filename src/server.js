@@ -77,11 +77,19 @@ app.get('/fitness/docs', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'fitness', 'docs.html'));
 });
 
-// Admin API key bypass
+// Admin API key bypass and Vercel auth check
 app.use((req, res, next) => {
-  if (req.headers['x-api-key'] === ADMIN_API_KEY) {
+  console.log('Headers:', req.headers); // Log all headers to debug Vercel auth
+  const apiKey = req.headers['x-api-key'];
+  if (apiKey === ADMIN_API_KEY) {
+    console.log('Admin key matched:', apiKey);
     req.user = { plan: 'ultimate', role: 'admin' };
     return next();
+  }
+  // Check Vercel auth headers (e.g., x-vercel-id)
+  if (req.headers['x-vercel-id']) {
+    console.log('Vercel auth detected:', req.headers['x-vercel-id']);
+    // Optionally, validate further if Vercel provides user info
   }
   next();
 });
