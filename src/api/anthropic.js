@@ -26,34 +26,63 @@ async function callClaude(prompt, endpoint) {
     try {
       parsedResponse = JSON.parse(jsonContent);
     } catch (parseError) {
-      console.error(`[Anthropic] Error parsing JSON for ${endpoint}:`, parseError);
+      console.error(`[Anthropic] Error parsing JSON for ${endpoint}:`, parseError, 'Raw:', jsonContent);
       throw new Error(`Failed to parse Claude response for ${endpoint}: ${parseError.message}`);
     }
 
+    // Validation with fallback
     switch (endpoint) {
       case 'generateWorkoutPlan':
         if (!parsedResponse.days || !Array.isArray(parsedResponse.days)) {
-          throw new Error('Invalid workout plan structure: missing or invalid "days" array');
+          console.error(`[Anthropic] Invalid workout plan:`, parsedResponse);
+          throw new Error('Invalid workout plan: missing or invalid "days" array');
         }
+        // Ensure all fields are present
+        parsedResponse.goal = parsedResponse.goal || 'unknown';
+        parsedResponse.fitnessLevel = parsedResponse.fitnessLevel || 'unknown';
+        parsedResponse.bodyFocus = parsedResponse.bodyFocus || 'any';
+        parsedResponse.daysPerWeek = parsedResponse.daysPerWeek || 0;
+        parsedResponse.weeks = parsedResponse.weeks || 0;
+        parsedResponse.days.forEach(day => {
+          day.exercises.forEach(ex => {
+            ex.rest = ex.rest || '30s';
+            ex.muscleGroup = ex.muscleGroup || 'unknown';
+          });
+        });
         break;
       case 'exerciseDetails':
-        if (!parsedResponse.name) {
-          throw new Error('Invalid exercise details structure: missing "name"');
+        if (!parsedResponse.name || !parsedResponse.muscle_groups || !Array.isArray(parsedResponse.muscle_groups)) {
+          console.error(`[Anthropic] Invalid exercise details:`, parsedResponse);
+          throw new Error('Invalid exercise details: missing "name" or "muscle_groups"');
         }
+        // Fill missing fields
+        parsedResponse.muscle_groups = parsedResponse.muscle_groups.length ? parsedResponse.muscle_groups : ['unknown'];
+        parsedResponse.equipment_needed = parsedResponse.equipment_needed || ['none'];
+        parsedResponse.steps = parsedResponse.steps || ['Perform the exercise as described'];
+        parsedResponse.tips = parsedResponse.tips || ['No tips available'];
+        parsedResponse.variations = parsedResponse.variations || [];
         break;
       case 'nutritionMealPlan':
-        if (!parsedResponse.macros || !parsedResponse.recommendations || !Array.isArray(parsedResponse.recommendations.mealPlan)) {
-          throw new Error('Invalid nutrition meal plan structure: missing "macros" or "recommendations.mealPlan" array');
+        if (!parsedResponse.macros || !parsedResponse.mealPlan || !Array.isArray(parsedResponse.mealPlan)) {
+          console.error(`[Anthropic] Invalid meal plan:`, parsedResponse);
+          throw new Error('Invalid meal plan: missing "macros" or "mealPlan" array');
         }
+        // Ensure macros are complete
+        parsedResponse.macros.calories = parsedResponse.macros.calories || 0;
+        parsedResponse.macros.protein = parsedResponse.macros.protein || 0;
+        parsedResponse.macros.fat = parsedResponse.macros.fat || 0;
+        parsedResponse.macros.carbs = parsedResponse.macros.carbs || 0;
         break;
       case 'foodIngredientDirectory':
-        if (!parsedResponse.name && (!parsedResponse.ingredients || !Array.isArray(parsedResponse.ingredients))) {
-          throw new Error('Invalid food ingredient directory structure: missing "name" or "ingredients" array');
+        if (!parsedResponse.name || !parsedResponse.definition) {
+          console.error(`[Anthropic] Invalid food ingredient:`, parsedResponse);
+          throw new Error('Invalid food ingredient: missing "name" or "definition"');
         }
         break;
       case 'naturalRemedies':
         if (!parsedResponse.remedies || !Array.isArray(parsedResponse.remedies)) {
-          throw new Error('Invalid natural remedies structure: missing or invalid "remedies" array');
+          console.error(`[Anthropic] Invalid natural remedies:`, parsedResponse);
+          throw new Error('Invalid natural remedies: missing or invalid "remedies" array');
         }
         break;
       default:
@@ -74,23 +103,23 @@ async function handleAnthropicRequest(endpoint, data) {
   switch (endpoint) {
     case 'foodIngredientDirectory':
       const { ingredient } = data;
-      prompt = `Return detailed info as a valid JSON object (no preamble, just the JSON) for "${ingredient}". Include definition, layman_term, production_process (as a detailed, easy-to-understand narrative with extra steps, e.g., for Red 40: "Red 40 starts with petroleum, a thick, black oil drilled from deep underground, the same stuff used for gasoline and plastic bags. In a lab, scientists heat it up in big tanks to separate out the useful bits, then blend those with special chemicals to kick off reactions that turn it bright red. They fine-tune the color to make it just right, filter out any gunk, wash it clean, and boil off extra liquid. After that, it’s dried into crystals, ground into a fine powder, tested to make sure it’s safe, and packed up for adding to food and cosmetics."), example_use, health_insights (start with "While approved for use by the FDA, some studies suggest potential health concerns. Red 40 has been linked to hyperactivity in children, and may cause allergic reactions in sensitive individuals. Some animal studies have raised questions about possible carcinogenic effects, but evidence is limited. It may also trigger immune responses and impact gut health in certain people." and add risks like potential DNA damage, neurological effects, or hormonal disruption), nutritional_profile, commonly_found_in, and aliases (must include all known alternative names, e.g., for Red 40: "Allura Red AC", "FD&C Red No. 40", "E129", "C.I. Food Red 17", "C.I. 16035", "Red No. 40", "Red 40 Lake"). Format: {"name": string, "category": string, "origin": string, "safety_rating": string, "definition": string, "layman_term": string, "production_process": string, "example_use": string, "health_insights": string, "nutritional_profile": string, "commonly_found_in": string, "aliases": [string]}`;
+      prompt = `Return a valid JSON object (no text outside the JSON, all fields required) for "${ingredient}". Include: "name", "definition", "layman_term", "production_process", "example_use", "health_insights", "nutritional_profile", "commonly_found_in", "aliases" (array). Example: {"name": "Red 40", "definition": "Synthetic red dye", "layman_term": "Red coloring", "production_process": "Derived from petroleum", "example_use": "Candies", "health_insights": "FDA-approved, may cause hyperactivity", "nutritional_profile": "No value", "commonly_found_in": "Soda", "aliases": ["Allura Red AC"]}`;
       break;
     case 'exerciseDetails':
       const { exerciseId, includeVariations } = data;
-      prompt = `Return detailed info as a valid JSON object (no preamble, just the JSON) for the exercise "${exerciseId}". Include name, description, muscle_groups (array of strings), equipment_needed (array of strings), difficulty (e.g., "beginner", "intermediate", "advanced"), and steps (array of strings). If includeVariations is ${includeVariations}, also include variations (array of objects with name, description, and difficulty). Format: {"name": string, "description": string, "muscle_groups": [string], "equipment_needed": [string], "difficulty": string, "steps": [string], "variations": [{"name": string, "description": string, "difficulty": string}]}`;
+      prompt = `Return a valid JSON object (no text outside the JSON, all fields required) for "${exerciseId}". Include: "name", "description", "muscle_groups" (array), "equipment_needed" (array), "difficulty", "steps" (array), "tips" (array). If ${includeVariations} is true, add "variations" (array of objects with "name", "description", "difficulty"). Example: {"name": "Squat", "description": "Lower body strength exercise", "muscle_groups": ["quads", "glutes"], "equipment_needed": ["none"], "difficulty": "beginner", "steps": ["Stand with feet apart", "Lower hips"], "tips": ["Keep back straight"], "variations": [{"name": "Goblet Squat", "description": "Hold weight", "difficulty": "intermediate"}]}`;
       break;
     case 'nutritionMealPlan':
-      const { gender, age, weight, heightCm, activityLevel, goals, dietType, calorieTarget, mealsPerDay, numberOfDays, allergies, religiousPreferences } = data;
-      prompt = `Return a nutrition meal plan as a valid JSON object (no preamble, just the JSON) based on: gender="${gender}", age=${age}, weight=${weight}kg, height=${heightCm}cm, activityLevel="${activityLevel}", goals="${goals}", dietType="${dietType}", calorieTarget=${calorieTarget}, mealsPerDay=${mealsPerDay}, numberOfDays=${numberOfDays}, allergies=${JSON.stringify(allergies)}, religiousPreferences="${religiousPreferences}". Include macros (total calories, protein, fat, carbs) and recommendations with a mealPlan array (each day with meals array containing name, ingredients array, and nutrition object with calories, protein, fat, carbs). Format: {"macros": {"calories": number, "protein": number, "fat": number, "carbs": number}, "recommendations": {"mealPlan": [{"day": number, "meals": [{"name": string, "ingredients": [string], "nutrition": {"calories": number, "protein": number, "fat": number, "carbs": number}}]}]}}`;
+      const { gender, age, weight, heightCm, activityLevel, goals: mealGoals, dietType, calorieTarget, mealsPerDay, numberOfDays, allergies, religiousPreferences } = data;
+      prompt = `Return a valid JSON object (no text outside the JSON, all fields required) for a meal plan: gender="${gender}", age=${age}, weight=${weight}kg, height=${heightCm}cm, activityLevel="${activityLevel}", goals="${mealGoals}", dietType="${dietType}", calorieTarget=${calorieTarget}, mealsPerDay=${mealsPerDay}, numberOfDays=${numberOfDays}, allergies=${JSON.stringify(allergies)}, religiousPreferences="${religiousPreferences}". Include: "macros" (with "calories", "protein", "fat", "carbs"), "mealPlan" (array with "day" and "meals" array of "name", "ingredients", "nutrition"). Example: {"macros": {"calories": 2500, "protein": 200, "fat": 100, "carbs": 75}, "mealPlan": [{"day": 1, "meals": [{"name": "Beef Steak", "ingredients": ["beef"], "nutrition": {"calories": 800, "protein": 70, "fat": 50, "carbs": 0}}]}]}`;
       break;
     case 'naturalRemedies':
       const { symptom, approach } = data;
-      prompt = `Return natural remedies as a valid JSON object (no preamble, just the JSON) for symptom "${symptom}" using approach "${approach}". Include remedies (array of objects with name, description, preparation, and benefits). Format: {"remedies": [{"name": string, "description": string, "preparation": string, "benefits": string}]}`;
+      prompt = `Return a valid JSON object (no text outside the JSON, all fields required) for remedies for "${symptom}" using "${approach}". Include: "remedies" (array of objects with "name", "description", "preparation", "benefits"). Example: {"remedies": [{"name": "Honey Tea", "description": "Soothes throat", "preparation": "Mix honey in water", "benefits": "Reduces soreness"}]}`;
       break;
     case 'generateWorkoutPlan':
-      const { fitnessLevel, goals: fitnessGoals, preferences, bodyFocus, muscleGroups, includeWarmupCooldown, daysPerWeek, sessionDuration, planDurationWeeks } = data;
-      prompt = `Return a workout plan as a valid JSON object (no preamble, just the JSON) based on: fitnessLevel="${fitnessLevel}", goals="${fitnessGoals}", preferences=${JSON.stringify(preferences)}, bodyFocus="${bodyFocus}", muscleGroups=${JSON.stringify(muscleGroups)}, includeWarmupCooldown=${includeWarmupCooldown}, daysPerWeek=${daysPerWeek}, sessionDuration=${sessionDuration} minutes, planDurationWeeks=${planDurationWeeks}. Include days (array of objects with day number, exercises array containing name, sets, reps, and rest). If includeWarmupCooldown is true, add warmup and cooldown sections. Format: {"days": [{"day": number, "exercises": [{"name": string, "sets": number, "reps": number, "rest": string}], "warmup": [{"name": string, "duration": string}], "cooldown": [{"name": string, "duration": string}]}]}`;
+      const { fitnessLevel, goals: workoutGoals, preferences, bodyFocus, muscleGroups, includeWarmupCooldown, daysPerWeek, sessionDuration, planDurationWeeks } = data;
+      prompt = `Return a valid JSON object (no text outside the JSON, all fields required) for a workout plan: fitnessLevel="${fitnessLevel}", goals="${workoutGoals}", preferences=${JSON.stringify(preferences)}, bodyFocus="${bodyFocus}", muscleGroups=${JSON.stringify(muscleGroups)}, includeWarmupCooldown=${includeWarmupCooldown}, daysPerWeek=${daysPerWeek}, sessionDuration=${sessionDuration}, planDurationWeeks=${planDurationWeeks}. Include: "goal", "fitnessLevel", "bodyFocus", "daysPerWeek", "weeks", "days" (array with "day", "exercises" array of "name", "sets", "reps", "rest", "muscleGroup"; if ${includeWarmupCooldown}, add "warmup" and "cooldown" arrays). Example: {"goal": "endurance", "fitnessLevel": "advanced", "bodyFocus": "any", "daysPerWeek": 1, "weeks": 1, "days": [{"day": 1, "exercises": [{"name": "Squats", "sets": 4, "reps": 15, "rest": "30s", "muscleGroup": "legs"}], "warmup": [{"name": "Jumping Jacks", "duration": "60s"}], "cooldown": [{"name": "Stretch", "duration": "30s"}]}]}`;
       break;
     default:
       throw new Error(`Unsupported endpoint: ${endpoint}`);

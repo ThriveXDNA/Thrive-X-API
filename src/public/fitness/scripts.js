@@ -110,14 +110,24 @@ function formatResult(result, endpoint) {
     case 'generateWorkoutPlan':
       if (!data.days || !Array.isArray(data.days)) return '<p>Invalid workout plan data structure.</p>';
       html = `<div class="result-card">
-        <h2 class="result-title-large">${data.name || 'Workout Plan'}</h2>
+        <h2 class="result-title-large">${data.goal || 'Workout Plan'}</h2>
         <table class="result-table">
-          <thead><tr><th>Day</th><th>Exercise</th><th>Sets</th><th>Reps</th><th>Rest (s)</th><th>Muscle Group</th></tr></thead>
+          <thead><tr><th>Day</th><th>Exercise</th><th>Sets</th><th>Reps</th><th>Rest</th><th>Muscle Group</th></tr></thead>
           <tbody>`;
       data.days.forEach(day => {
         if (day.exercises && Array.isArray(day.exercises)) {
           day.exercises.forEach(ex => {
-            html += `<tr><td>${day.name || 'Day'}</td><td>${ex.name || 'Exercise'}</td><td>${ex.sets || 'N/A'}</td><td>${ex.reps || 'N/A'}</td><td>${ex.restSeconds || 'N/A'}</td><td>${ex.muscleGroup || 'N/A'}</td></tr>`;
+            html += `<tr><td>${day.day || 'Day'}</td><td>${ex.name || 'Exercise'}</td><td>${ex.sets || 'N/A'}</td><td>${ex.reps || 'N/A'}</td><td>${ex.rest || 'N/A'}</td><td>${ex.muscleGroup || 'N/A'}</td></tr>`;
+          });
+        }
+        if (day.warmup && Array.isArray(day.warmup)) {
+          day.warmup.forEach(w => {
+            html += `<tr><td>${day.day || 'Day'}</td><td>${w.name || 'Warmup'} (Warmup)</td><td colspan="3">${w.duration || 'N/A'}</td><td>${w.muscleGroup || 'N/A'}</td></tr>`;
+          });
+        }
+        if (day.cooldown && Array.isArray(day.cooldown)) {
+          day.cooldown.forEach(c => {
+            html += `<tr><td>${day.day || 'Day'}</td><td>${c.name || 'Cooldown'} (Cooldown)</td><td colspan="3">${c.duration || 'N/A'}</td><td>${c.muscleGroup || 'N/A'}</td></tr>`;
           });
         }
       });
@@ -125,11 +135,11 @@ function formatResult(result, endpoint) {
         <div class="result-summary">
           <h3>Summary</h3>
           <table class="summary-table">
-            <tr><th>Goal</th><td>${data.goals || 'N/A'}</td></tr>
+            <tr><th>Goal</th><td>${data.goal || 'N/A'}</td></tr>
             <tr><th>Fitness Level</th><td>${data.fitnessLevel || 'N/A'}</td></tr>
             <tr><th>Body Focus</th><td>${data.bodyFocus || 'N/A'}</td></tr>
             <tr><th>Days/Week</th><td>${data.daysPerWeek || 'N/A'}</td></tr>
-            <tr><th>Weeks</th><td>${data.planDurationWeeks || 'N/A'}</td></tr>
+            <tr><th>Weeks</th><td>${data.weeks || 'N/A'}</td></tr>
           </table>
         </div></div>`;
       break;
@@ -138,38 +148,35 @@ function formatResult(result, endpoint) {
       if (!data.name) return '<p>Invalid exercise details data structure.</p>';
       html = `<div class="result-card">
         <h2 class="result-title-large">${data.name}</h2>
-        <p><strong>Muscle Groups:</strong> ${Array.isArray(data.muscleGroups) ? data.muscleGroups.join(', ') : (data.muscleGroups || 'N/A')}</p>
-        <p><strong>Equipment:</strong> ${data.equipment || 'N/A'}</p>
-        <p><strong>Instructions:</strong> ${data.instructions || 'N/A'}</p>
+        <p><strong>Muscle Groups:</strong> ${Array.isArray(data.muscle_groups) ? data.muscle_groups.join(', ') : (data.muscle_groups || 'N/A')}</p>
+        <p><strong>Equipment:</strong> ${Array.isArray(data.equipment_needed) ? data.equipment_needed.join(', ') : (data.equipment_needed || 'N/A')}</p>
+        <p><strong>Instructions:</strong> <ol>${Array.isArray(data.steps) ? data.steps.map(step => `<li>${step}</li>`).join('') : (data.steps || 'N/A')}</ol></p>
         <p><strong>Difficulty:</strong> ${data.difficulty || 'N/A'}</p>
         <p><strong>Tips:</strong> <ul>${Array.isArray(data.tips) ? data.tips.map(tip => `<li>${tip}</li>`).join('') : '<li>No tips available</li>'}</ul></p>
-        ${data.variations ? `<p><strong>Variations:</strong> ${Array.isArray(data.variations) ? data.variations.join(', ') : data.variations}</p>` : ''}</div>`;
+        ${data.variations && Array.isArray(data.variations) ? `<p><strong>Variations:</strong> <ul>${data.variations.map(v => `<li>${v.name}: ${v.description} (${v.difficulty})</li>`).join('')}</ul></p>` : ''}</div>`;
       break;
       
     case 'nutritionMealPlan':
-      if (!data.macros || !data.recommendations || !data.recommendations.mealPlan) return '<p>Invalid nutrition meal plan data structure.</p>';
+      if (!data.macros || !data.mealPlan || !Array.isArray(data.mealPlan)) return '<p>Invalid nutrition meal plan data structure.</p>';
       html = `<div class="result-card">
         <h2 class="result-title-large">Nutrition & Meal Plan</h2>
-        <p><strong>Macros:</strong> Protein: ${data.macros.protein || 0}g, Fat: ${data.macros.fat || 0}g, Carbs: ${data.macros.carbs || 0}g, Total: ${data.macros.totalCalories || 0}kcal</p>`;
-      if (Array.isArray(data.recommendations.mealPlan)) {
-        html += data.recommendations.mealPlan.map(day => {
+        <p><strong>Macros:</strong> Protein: ${data.macros.protein || 0}g, Fat: ${data.macros.fat || 0}g, Carbs: ${data.macros.carbs || 0}g, Total: ${data.macros.calories || 0}kcal</p>`;
+      if (Array.isArray(data.mealPlan)) {
+        html += data.mealPlan.map(day => {
           if (!day.meals || !Array.isArray(day.meals)) return '';
           return `<div class="result-table-container">
             <table class="result-table">
-              <thead><tr><th colspan="6">${day.day || 'Day'}</th></tr><tr><th>Meal</th><th>Food</th><th>Calories</th><th>Protein (g)</th><th>Fat (g)</th><th>Carbs (g)</th></tr></thead>
+              <thead><tr><th colspan="6">Day ${day.day || 'N/A'}</th></tr><tr><th>Meal</th><th>Food</th><th>Calories</th><th>Protein (g)</th><th>Fat (g)</th><th>Carbs (g)</th></tr></thead>
               <tbody>
-                ${day.meals.map(meal => {
-                  if (!meal.foods || !Array.isArray(meal.foods)) return '';
-                  return meal.foods.map(food => `
-                    <tr>
-                      <td>${meal.mealName || 'Meal'}</td>
-                      <td>${food.name || 'Food'}</td>
-                      <td>${food.calories || 0}</td>
-                      <td>${food.protein || 0}</td>
-                      <td>${food.fat || 0}</td>
-                      <td>${food.carbs || 0}</td>
-                    </tr>`).join('');
-                }).join('')}
+                ${day.meals.map(meal => `
+                  <tr>
+                    <td>${meal.name || 'Meal'}</td>
+                    <td>${Array.isArray(meal.ingredients) ? meal.ingredients.join(', ') : (meal.ingredients || 'N/A')}</td>
+                    <td>${meal.nutrition?.calories || 0}</td>
+                    <td>${meal.nutrition?.protein || 0}</td>
+                    <td>${meal.nutrition?.fat || 0}</td>
+                    <td>${meal.nutrition?.carbs || 0}</td>
+                  </tr>`).join('')}
               </tbody>
             </table>
           </div>`;
@@ -239,41 +246,30 @@ function formatResult(result, endpoint) {
     case 'naturalRemedies':
       if (!data.remedies || !Array.isArray(data.remedies)) return '<p>Invalid natural remedies data structure.</p>';
       html = `<div class="result-card">
-        <h2 class="result-title-large">Natural Remedies for ${data.symptom || 'Condition'}</h2>
+        <h2 class="result-title-large">Natural Remedies</h2>
         ${data.remedies.map(remedy => {
           if (!remedy) return '';
           return `<div class="remedy-card">
             <div class="remedy-header">
               <div class="remedy-title">${remedy.name || 'Remedy'}</div>
-              <div class="remedy-source">${remedy.source || 'Traditional'}</div>
             </div>
             <div class="remedy-body">
               <div class="remedy-section">
-                <span class="remedy-section-title">Ingredients:</span>
-                <p>${Array.isArray(remedy.ingredients) ? 
-                  remedy.ingredients.map(i => typeof i === 'object' ? `${i.name || 'Ingredient'} (${i.amount || 'as needed'})` : i).join(', ') : 
-                  (remedy.ingredients || 'N/A')}</p>
+                <span class="remedy-section-title">Description:</span>
+                <p>${remedy.description || 'N/A'}</p>
               </div>
               <div class="remedy-section">
                 <span class="remedy-section-title">Preparation:</span>
-                <p>${Array.isArray(remedy.preparation) ? remedy.preparation.join(' ') : (remedy.preparation || 'N/A')}</p>
+                <p>${remedy.preparation || 'N/A'}</p>
               </div>
               <div class="remedy-section">
-                <span class="remedy-section-title">Usage:</span>
-                <p>${remedy.usage || 'N/A'}</p>
+                <span class="remedy-section-title">Benefits:</span>
+                <p>${remedy.benefits || 'N/A'}</p>
               </div>
-              ${remedy.warnings ? `
-                <div class="remedy-warning">
-                  <span class="remedy-warning-title">Warnings:</span>
-                  <p>${Array.isArray(remedy.warnings) ? remedy.warnings.join(', ') : remedy.warnings}</p>
-                </div>` : ''}
-              ${remedy.notes ? `
-                <div class="remedy-notes">
-                  <p><strong>Notes:</strong> ${remedy.notes}</p>
-                </div>` : ''}
             </div>
           </div>`;
         }).join('')}
+        ${data.disclaimer ? `<p class="disclaimer"><strong>Disclaimer:</strong> ${data.disclaimer}</p>` : ''}
       </div>`;
       break;
       
@@ -557,18 +553,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const contents = document.querySelectorAll('.tab-content');
   const sidebarItems = document.querySelectorAll('.tab-trigger');
   
-  console.log('Found tabs:', tabs.length); // Debug: Check number of tab buttons
-  console.log('Found contents:', contents.length); // Debug: Check number of tab contents
+  console.log('Found tabs:', tabs.length);
+  console.log('Found contents:', contents.length);
   
   tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => {
       console.log('Tab clicked:', tab.dataset.tab, 'Index:', index);
       
-      // Remove active class from all tabs and contents
       tabs.forEach(t => t.classList.remove('active'));
       contents.forEach(c => c.classList.remove('active'));
       
-      // Add active class to clicked tab and its content
       tab.classList.add('active');
       const content = document.getElementById(`${tab.dataset.tab}-tab`);
       if (content) {
@@ -578,7 +572,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Content not found for tab:', `${tab.dataset.tab}-tab`);
       }
       
-      // Sync sidebar (optional, keep for consistency)
       sidebarItems.forEach(item => {
         item.classList.remove('active');
         if (item.dataset.tab === tab.dataset.tab) item.classList.add('active');
@@ -586,7 +579,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Sidebar navigation
   sidebarItems.forEach(item => {
     item.addEventListener('click', (e) => {
       e.preventDefault();

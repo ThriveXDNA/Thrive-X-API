@@ -2,21 +2,24 @@
 const { handleAnthropicRequest } = require('../anthropic');
 
 const getExerciseDetails = async (req, res) => {
+  console.log('Inside getExerciseDetails, Body:', req.body, 'User:', req.user);
   try {
-    const { exerciseId, includeVariations } = req.body; // Match scripts.js keys
-    const apiKey = req.appKey;
+    const { exerciseId, includeVariations } = req.body;
 
-    if (!apiKey) return res.status(401).json({ error: 'API key is required' });
-    if (!exerciseId) return res.status(400).json({ error: 'Missing exercise_name' });
+    if (!exerciseId) {
+      console.log('Missing exerciseId in request body');
+      return res.status(400).json({ error: 'Missing exerciseId' });
+    }
 
     const result = await handleAnthropicRequest('exerciseDetails', {
       exerciseId,
-      includeVariations: includeVariations === true // Normalize to boolean
+      includeVariations: includeVariations === true
     });
+    console.log('Anthropic result:', result);
 
     res.json({ data: result });
   } catch (error) {
-    console.error('Error getting exercise details:', error);
+    console.error('Error getting exercise details:', error.message, 'Stack:', error.stack);
     res.status(500).json({ error: 'Failed to get exercise details', details: error.message });
   }
 };

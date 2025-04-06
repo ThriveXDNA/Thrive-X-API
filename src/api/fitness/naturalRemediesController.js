@@ -4,9 +4,7 @@ const { handleAnthropicRequest } = require('../anthropic');
 const getNaturalRemedies = async (req, res) => {
   try {
     const { symptom, approach } = req.body;
-    const apiKey = req.appKey;
 
-    if (!apiKey) return res.status(401).json({ error: 'API key is required' });
     if (!symptom || !approach) {
       return res.status(400).json({ 
         error: 'Missing required parameters: symptom and approach are required' 

@@ -2,6 +2,7 @@
 const { handleAnthropicRequest } = require('../anthropic');
 
 const generateWorkoutPlan = async (req, res) => {
+  console.log('Inside generateWorkoutPlan, Body:', req.body, 'User:', req.user);
   try {
     const {
       fitnessLevel,
@@ -14,10 +15,9 @@ const generateWorkoutPlan = async (req, res) => {
       sessionDuration,
       planDurationWeeks
     } = req.body;
-    const apiKey = req.appKey;
 
-    if (!apiKey) return res.status(401).json({ error: 'API key is required' });
     if (!fitnessLevel || !goals || !daysPerWeek || !sessionDuration || !planDurationWeeks) {
+      console.log('Missing required parameters');
       return res.status(400).json({ 
         error: 'Missing required parameters: fitnessLevel, goals, daysPerWeek, sessionDuration, planDurationWeeks' 
       });
@@ -34,10 +34,11 @@ const generateWorkoutPlan = async (req, res) => {
       sessionDuration: parseInt(sessionDuration),
       planDurationWeeks: parseInt(planDurationWeeks)
     });
+    console.log('Anthropic result:', result);
 
     res.json({ data: result });
   } catch (error) {
-    console.error('Error generating workout plan:', error);
+    console.error('Error generating workout plan:', error.message, 'Stack:', error.stack);
     res.status(500).json({ error: 'Failed to generate workout plan', details: error.message });
   }
 };

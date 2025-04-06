@@ -2,6 +2,7 @@
 const { handleAnthropicRequest } = require('../anthropic');
 
 const generateMealPlan = async (req, res) => {
+  console.log('Inside generateMealPlan, Body:', req.body, 'User:', req.user);
   try {
     const {
       gender,
@@ -17,10 +18,9 @@ const generateMealPlan = async (req, res) => {
       allergies,
       religiousPreferences
     } = req.body;
-    const apiKey = req.appKey; // Use stored app key
 
-    if (!apiKey) return res.status(401).json({ error: 'API key is required' });
     if (!goals || !dietType || !mealsPerDay || !numberOfDays) {
+      console.log('Missing required parameters');
       return res.status(400).json({ 
         error: 'Missing required parameters: goals, dietType, mealsPerDay, numberOfDays' 
       });
@@ -40,10 +40,11 @@ const generateMealPlan = async (req, res) => {
       allergies: allergies || [],
       religiousPreferences
     });
+    console.log('Anthropic result:', result);
 
     res.json({ data: result });
   } catch (error) {
-    console.error('Error generating meal plan:', error);
+    console.error('Error generating meal plan:', error.message, 'Stack:', error.stack);
     res.status(500).json({ error: 'Failed to generate meal plan', details: error.message });
   }
 };

@@ -77,14 +77,14 @@ app.get('/fitness/docs', (req, res) => {
 
 // API key authentication middleware
 const authenticateApiKey = async (req, res, next) => {
-  console.log('Entering authenticateApiKey middleware');
+  console.log('Entering authenticateApiKey middleware for path:', req.path);
   console.log('Request headers:', JSON.stringify(req.headers));
   try {
     const apiKey = req.headers['x-api-key'] || req.headers['X-API-Key'] || req.headers['X-Api-Key'];
-    console.log('Checking API key:', apiKey || 'none provided');
+    console.log('Extracted API key:', apiKey || 'none provided');
 
     if (!apiKey) {
-      console.log('No API key provided in headers');
+      console.log('No API key provided in headers for path:', req.path);
       return res.status(401).json({ error: 'API key is required' });
     }
 
@@ -115,15 +115,15 @@ const authenticateApiKey = async (req, res, next) => {
       return next();
     }
 
-    console.log('Invalid API key:', apiKey);
+    console.log('Invalid API key:', apiKey, 'for path:', req.path);
     return res.status(401).json({ error: 'Invalid API key' });
   } catch (err) {
-    console.error('Auth middleware error:', err.message);
+    console.error('Auth middleware error:', err.message, 'Path:', req.path);
     return res.status(500).json({ error: 'Server error during authentication' });
   }
 };
 
-// Rate limiting (no Redis)
+// Rate limiting
 const limiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000,
   max: 1000,
@@ -139,18 +139,28 @@ const limiter = rateLimit({
 });
 
 // Routes
-app.use('/fitness/api/fitness', authenticateApiKey, limiter, fitnessRoutes);
-app.use('/fitness', router);
+try {
+  app.use('/fitness/api/fitness', authenticateApiKey, limiter, fitnessRoutes);
+  app.use('/fitness', router);
+  console.log('Routes mounted successfully');
+} catch (err) {
+  console.error('Error mounting routes:', err.message);
+  process.exit(1); // Explicitly exit to catch in logs
+}
 
 // Root route
 app.get('/', (req, res) => {
-  res.json({ message: 'API is running', version: 'debug8-2025-04-04' });
+  if (req.headers['x-api-key'] || req.headers['X-API-Key'] || req.headers['X-Api-Key']) {
+    return res.json({ message: 'API is running', version: 'debug8-2025-04-04' });
+  }
+  res.sendFile(path.join(__dirname, 'public', 'fitness', 'index.html'));
 });
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err.message, 'Stack:', err.stack);
+  console.error('Unhandled error:', err.message, 'Stack:', err.stack, 'Path:', req.path);
   res.status(500).json({ error: 'Server error', details: err.message });
 });
 
+console.log('Server setup complete');
 module.exports = app;

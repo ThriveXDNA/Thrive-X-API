@@ -1,23 +1,24 @@
 // src/api/fitness/analyzeFoodPlate.js
-const fs = require('fs');
 const OpenAI = require('openai');
 const crypto = require('crypto');
-const sharp = require('sharp'); // Add for resizing
+const sharp = require('sharp');
 
 async function analyzeFoodPlate(req, res) {
+  console.log('Inside analyzeFoodPlate, Body:', req.body, 'User:', req.user);
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   try {
     const requestId = crypto.randomUUID();
     console.log(`[${requestId}] Starting food plate analysis`);
 
-    const apiKey = req.headers['x-api-key'];
-    if (!apiKey) return res.status(401).json({ error: 'API key is required' });
-    if (!req.file) return res.status(400).json({ error: 'No image file uploaded' });
+    if (!req.file || !req.file.buffer) {
+      console.log('No image file uploaded or invalid file buffer');
+      return res.status(400).json({ error: 'No image file uploaded' });
+    }
 
-    // Resize image for mobile-friendly size
-    const resizedImage = await sharp(req.file.path)
-      .resize({ width: 600, height: 600, fit: 'contain', withoutEnlargement: true }) // Smaller size, maintain aspect ratio
-      .jpeg({ quality: 70 }) // Lower quality for smaller file size
+    // Resize image from buffer
+    const resizedImage = await sharp(req.file.buffer)
+      .resize({ width: 600, height: 600, fit: 'contain', withoutEnlargement: true })
+      .jpeg({ quality: 70 })
       .toBuffer();
     const base64Image = `data:${req.file.mimetype || 'image/jpeg'};base64,${resizedImage.toString('base64')}`;
     const selectedOil = req.body.cooking_oil || 'unknown';
@@ -70,10 +71,9 @@ Include a total nutrition summary and percentage of a 2000-calorie daily plan. R
       max_tokens: 2500
     });
 
-    // Clean the response to extract JSON
     let rawContent = completion.choices[0].message.content.trim();
-    console.log(`[${requestId}] Raw OpenAI response:`, rawContent); // Debug log
-    const jsonMatch = rawContent.match(/{[\s\S]*}/); // Extract JSON block
+    console.log(`[${requestId}] Raw OpenAI response:`, rawContent);
+    const jsonMatch = rawContent.match(/{[\s\S]*}/);
     if (!jsonMatch) throw new Error('No valid JSON found in response');
     const cleanedJson = jsonMatch[0];
     let aiResponse = JSON.parse(cleanedJson);
@@ -104,10 +104,8 @@ Include a total nutrition summary and percentage of a 2000-calorie daily plan. R
 
     res.json({ data: response });
   } catch (error) {
-    console.error('Error analyzing food plate:', error);
+    console.error('Error analyzing food plate:', error.message, 'Stack:', error.stack);
     res.status(500).json({ error: 'Failed to analyze food plate', details: error.message });
-  } finally {
-    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
   }
 }
 
