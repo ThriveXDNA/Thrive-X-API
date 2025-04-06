@@ -8,7 +8,7 @@ const IN_TO_CM = 2.54;
 const unitSystemSelect = document.getElementById('unit-system');
 
 // Stripe initialization (replace with your real Stripe public key)
-const stripe = Stripe('your-real-stripe-public-key-here'); // Example: 'pk_test_51xxxxx'
+const stripe = Stripe('pk_test_51xxxxx'); // Replace with your actual Stripe public key
 
 // User profile object
 let userProfile = {
@@ -682,7 +682,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = '/fitness/subscribe?plan=essential';
       } else {
         try {
-          const response = await fetch('/fitness/api/create-checkout-session', {
+          const response = await fetch('/fitness/api/fitness/create-checkout-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ planId: btn.dataset.plan })

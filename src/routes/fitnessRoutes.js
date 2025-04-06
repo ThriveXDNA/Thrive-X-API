@@ -4,7 +4,7 @@ const router = express.Router();
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const Stripe = require('stripe');
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // Ensure STRIPE_SECRET_KEY is set in Vercel env
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // Must be set in Vercel env
 
 // Import controllers from src/api/fitness/
 const { generateWorkoutPlan } = require('../api/fitness/workoutController');
@@ -14,7 +14,7 @@ const { analyzeFoodPlate } = require('../api/fitness/analyzeFoodPlate');
 const { getFoodIngredientDetails } = require('../api/fitness/foodIngredientController');
 const { getNaturalRemedies } = require('../api/fitness/naturalRemediesController');
 
-// Subscription plans (copied from server.js for reference)
+// Subscription plans
 const subscriptionPlans = {
   essential: { id: 'essential', name: 'Essential', price: 0, priceId: null, description: '10 requests/month', requests: 10 },
   'essential-yearly': { id: 'essential-yearly', name: 'Essential', price: 0, priceId: null, description: '10 requests/month', requests: 10 },

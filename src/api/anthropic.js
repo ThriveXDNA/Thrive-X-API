@@ -20,7 +20,7 @@ async function callClaude(prompt, endpoint) {
     });
 
     const jsonContent = response.content[0].text.trim();
-    console.log(`[Anthropic] Raw response for ${endpoint}: ${jsonContent.substring(0, 100)}...`);
+    console.log(`[Anthropic] Raw response for ${endpoint}: ${jsonContent.substring(0, 200)}...`); // Extended log for visibility
 
     let parsedResponse;
     try {
@@ -37,7 +37,6 @@ async function callClaude(prompt, endpoint) {
           console.error(`[Anthropic] Invalid workout plan:`, parsedResponse);
           throw new Error('Invalid workout plan: missing or invalid "days" array');
         }
-        // Ensure all fields are present
         parsedResponse.goal = parsedResponse.goal || 'unknown';
         parsedResponse.fitnessLevel = parsedResponse.fitnessLevel || 'unknown';
         parsedResponse.bodyFocus = parsedResponse.bodyFocus || 'any';
@@ -55,7 +54,6 @@ async function callClaude(prompt, endpoint) {
           console.error(`[Anthropic] Invalid exercise details:`, parsedResponse);
           throw new Error('Invalid exercise details: missing "name" or "muscle_groups"');
         }
-        // Fill missing fields
         parsedResponse.muscle_groups = parsedResponse.muscle_groups.length ? parsedResponse.muscle_groups : ['unknown'];
         parsedResponse.equipment_needed = parsedResponse.equipment_needed || ['none'];
         parsedResponse.steps = parsedResponse.steps || ['Perform the exercise as described'];
@@ -67,7 +65,6 @@ async function callClaude(prompt, endpoint) {
           console.error(`[Anthropic] Invalid meal plan:`, parsedResponse);
           throw new Error('Invalid meal plan: missing "macros" or "mealPlan" array');
         }
-        // Ensure macros are complete
         parsedResponse.macros.calories = parsedResponse.macros.calories || 0;
         parsedResponse.macros.protein = parsedResponse.macros.protein || 0;
         parsedResponse.macros.fat = parsedResponse.macros.fat || 0;
@@ -78,6 +75,17 @@ async function callClaude(prompt, endpoint) {
           console.error(`[Anthropic] Invalid food ingredient:`, parsedResponse);
           throw new Error('Invalid food ingredient: missing "name" or "definition"');
         }
+        // Add fallbacks for all fields
+        parsedResponse.category = parsedResponse.category || 'N/A';
+        parsedResponse.origin = parsedResponse.origin || 'N/A';
+        parsedResponse.safety_rating = parsedResponse.safety_rating || 'N/A';
+        parsedResponse.layman_term = parsedResponse.layman_term || 'N/A';
+        parsedResponse.production_process = parsedResponse.production_process || 'N/A';
+        parsedResponse.example_use = parsedResponse.example_use || 'N/A';
+        parsedResponse.health_insights = parsedResponse.health_insights || 'N/A';
+        parsedResponse.nutritional_profile = parsedResponse.nutritional_profile || 'N/A';
+        parsedResponse.commonly_found_in = parsedResponse.commonly_found_in || 'N/A';
+        parsedResponse.aliases = Array.isArray(parsedResponse.aliases) ? parsedResponse.aliases : [];
         break;
       case 'naturalRemedies':
         if (!parsedResponse.remedies || !Array.isArray(parsedResponse.remedies)) {
@@ -89,7 +97,7 @@ async function callClaude(prompt, endpoint) {
         console.warn(`[Anthropic] Unrecognized endpoint: ${endpoint}`);
     }
 
-    console.log(`[Anthropic] Successfully parsed response for ${endpoint}`);
+    console.log(`[Anthropic] Successfully parsed response for ${endpoint}:`, parsedResponse);
     return parsedResponse;
   } catch (error) {
     console.error(`[Anthropic] Error calling Claude for ${endpoint}:`, error);
@@ -103,7 +111,33 @@ async function handleAnthropicRequest(endpoint, data) {
   switch (endpoint) {
     case 'foodIngredientDirectory':
       const { ingredient } = data;
-      prompt = `Return a valid JSON object (no text outside the JSON, all fields required) for "${ingredient}". Include: "name", "definition", "layman_term", "production_process", "example_use", "health_insights", "nutritional_profile", "commonly_found_in", "aliases" (array). Example: {"name": "Red 40", "definition": "Synthetic red dye", "layman_term": "Red coloring", "production_process": "Derived from petroleum", "example_use": "Candies", "health_insights": "FDA-approved, may cause hyperactivity", "nutritional_profile": "No value", "commonly_found_in": "Soda", "aliases": ["Allura Red AC"]}`;
+      prompt = `Return a valid JSON object (no text outside the JSON, all fields mandatory) containing detailed information about the food ingredient "${ingredient}". Include exactly these fields with comprehensive, accurate details:
+        - "name": The ingredient's name (e.g., "Red 40")
+        - "category": The type of ingredient (e.g., "food coloring")
+        - "origin": Source or raw material (e.g., "synthetic, derived from petroleum")
+        - "safety_rating": Regulatory status (e.g., "Approved by the FDA with noted concerns")
+        - "definition": A precise, technical description (e.g., "A synthetic azo dye utilized as a colorant in food, drugs, and cosmetics")
+        - "layman_term": A simple explanation (e.g., "Artificial red food coloring")
+        - "production_process": A detailed, step-by-step scientific explanation of its manufacturing process using technical terms, followed by a simple 5th-grade-level explanation in parentheses (e.g., "Red 40 is synthesized through a multi-stage chemical process. First, aromatic hydrocarbons are extracted from petroleum via fractional distillation. These are then sulfonated with sulfuric acid to form naphthalene sulfonic acids. Next, the acids undergo diazotization by reacting with sodium nitrite and hydrochloric acid at low temperatures to produce a diazonium salt. Finally, this salt is coupled with 6-hydroxy-2-naphthalenesulfonic acid in an alkaline solution, yielding the azo dye compound known as Red 40. (In a factory, they take oil, break it into pieces, mix it with strong stuff to make new pieces, add more chemicals to turn it red, and finish it up to make the dye.)")
+        - "example_use": Specific uses in food (e.g., "Coloring candies, soft drinks, fruit snacks, desserts, and baked goods")
+        - "health_insights": Detailed health effects or concerns (e.g., "Approved by the FDA for use in food, drugs, and cosmetics. However, some studies suggest potential links to hyperactivity in children and allergic reactions in sensitive individuals. It may also cause intolerance symptoms in people with pre-existing digestive conditions.")
+        - "nutritional_profile": Nutritional impact (e.g., "As a synthetic additive, Red 40 provides no nutritional value and does not contribute calories, vitamins, or minerals to food products")
+        - "commonly_found_in": Common products (e.g., "Soft drinks, fruit-flavored candies, popsicles, gelatin desserts, puddings, salad dressings, processed snacks, and breakfast cereals")
+        - "aliases": Alternative names as an array (e.g., ["Allura Red AC", "FD&C Red No. 40", "E129", "CI 16035", "INS No. 129", "C.I. Food Red 17", "Disodium 6-hydroxy-5-((2-methoxy-5-methyl-4-sulfophenyl)azo)-2-naphthalenesulfonate"])
+      Ensure every field is populated with meaningful, detailed data (no "N/A" unless truly unknown). For "production_process", provide a thorough, technical breakdown of at least 50 words with chemical processes and steps, followed by a clear, simple explanation in parentheses suitable for a 5th grader. Example: {
+        "name": "Red 40",
+        "category": "food coloring",
+        "origin": "synthetic, derived from petroleum",
+        "safety_rating": "Approved by the FDA with noted concerns",
+        "definition": "A synthetic azo dye utilized as a colorant in food, drugs, and cosmetics",
+        "layman_term": "Artificial red food coloring",
+        "production_process": "Red 40 is synthesized through a multi-stage chemical process. First, aromatic hydrocarbons are extracted from petroleum via fractional distillation. These are then sulfonated with sulfuric acid to form naphthalene sulfonic acids. Next, the acids undergo diazotization by reacting with sodium nitrite and hydrochloric acid at low temperatures to produce a diazonium salt. Finally, this salt is coupled with 6-hydroxy-2-naphthalenesulfonic acid in an alkaline solution, yielding the azo dye compound known as Red 40. (In a factory, they take oil, break it into pieces, mix it with strong stuff to make new pieces, add more chemicals to turn it red, and finish it up to make the dye.)",
+        "example_use": "Coloring candies, soft drinks, fruit snacks, desserts, and baked goods",
+        "health_insights": "Approved by the FDA for use in food, drugs, and cosmetics. However, some studies suggest potential links to hyperactivity in children and allergic reactions in sensitive individuals. It may also cause intolerance symptoms in people with pre-existing digestive conditions.",
+        "nutritional_profile": "As a synthetic additive, Red 40 provides no nutritional value and does not contribute calories, vitamins, or minerals to food products",
+        "commonly_found_in": "Soft drinks, fruit-flavored candies, popsicles, gelatin desserts, puddings, salad dressings, processed snacks, and breakfast cereals",
+        "aliases": ["Allura Red AC", "FD&C Red No. 40", "E129", "CI 16035", "INS No. 129", "C.I. Food Red 17", "Disodium 6-hydroxy-5-((2-methoxy-5-methyl-4-sulfophenyl)azo)-2-naphthalenesulfonate"]
+      }`;
       break;
     case 'exerciseDetails':
       const { exerciseId, includeVariations } = data;
