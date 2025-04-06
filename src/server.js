@@ -6,7 +6,6 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const dotenv = require('dotenv');
 const { rateLimit } = require('express-rate-limit');
-const Redis = require('ioredis'); // Add ioredis
 const { createClient } = require('@supabase/supabase-js');
 const router = require('./routes/router');
 const fitnessRoutes = require('./routes/fitnessRoutes');
@@ -25,18 +24,6 @@ console.log('Loaded env - ADMIN_API_KEY:', process.env.ADMIN_API_KEY ? 'set' : '
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (Vercel)
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
-
-// Redis setup
-let redis;
-try {
-  if (!process.env.REDIS_URL) {
-    throw new Error('REDIS_URL must be set in .env');
-  }
-  redis = new Redis(process.env.REDIS_URL);
-  console.log('Redis client initialized');
-} catch (err) {
-  console.error('Redis setup failed:', err.message);
-}
 
 // Supabase setup
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -136,24 +123,17 @@ const authenticateApiKey = async (req, res, next) => {
   }
 };
 
-// Rate limiting with Redis
+// Rate limiting (no Redis)
 const limiter = rateLimit({
-  windowMs: 24 * 60 * 60 * 1000, // 24 hours
-  max: async (req) => {
-    const plan = req.user?.plan || 'essential';
-    return subscriptionPlans[plan]?.requests || 10; // Default to 10 if plan not found
-  },
-  store: redis ? new (require('rate-limit-redis'))({
-    redis: redis,
-    prefix: 'rate-limit:'
-  }) : undefined, // Fallback to memory if Redis fails
+  windowMs: 24 * 60 * 60 * 1000,
+  max: 1000,
   skip: (req) => {
     console.log('Rate limit check - Path:', req.path, 'User:', req.user);
     return req.path.startsWith('/admin') || req.path === '/' || (req.user && req.user.role === 'admin');
   },
   message: (req) => ({
     error: 'Rate limit exceeded',
-    tier_info: { current_tier: req.user?.plan || 'essential', limit: subscriptionPlans[req.user?.plan || 'essential'].requests, current_count: req.rateLimit?.current || 0, reset_after: Math.max(0, (req.rateLimit?.resetTime || 0) - Date.now()) / 1000 },
+    tier_info: { current_tier: 'free', limit: 1000, current_count: req.rateLimit?.current || 0, reset_after: Math.max(0, (req.rateLimit?.resetTime || 0) - Date.now()) / 1000 },
     upgrade_options: { next_tier: 'core', benefits: ['500 requests/month'] }
   })
 });
