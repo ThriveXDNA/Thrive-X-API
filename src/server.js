@@ -5,42 +5,60 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const dotenv = require('dotenv');
-const Redis = require('ioredis');
 const { rateLimit } = require('express-rate-limit');
-const { RedisStore } = require('rate-limit-redis');
+const Redis = require('ioredis'); // Add ioredis
 const { createClient } = require('@supabase/supabase-js');
 const router = require('./routes/router');
 const fitnessRoutes = require('./routes/fitnessRoutes');
 const Stripe = require('stripe');
 
-// Load .env explicitly
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+// Load .env
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 console.log('Loaded env - OPENAI:', process.env.OPENAI_API_KEY ? 'set' : 'not set');
 console.log('Loaded env - ANTHROPIC:', process.env.ANTHROPIC_API_KEY ? 'set' : 'not set');
+console.log('Loaded env - SUPABASE_URL:', process.env.SUPABASE_URL ? 'set' : 'not set');
+console.log('Loaded env - SUPABASE_KEY:', process.env.SUPABASE_KEY ? 'set' : 'not set');
+console.log('Loaded env - REDIS_URL:', process.env.REDIS_URL ? process.env.REDIS_URL : 'not set');
+console.log('Loaded env - ADMIN_API_KEY:', process.env.ADMIN_API_KEY ? 'set' : 'not set');
 
 // Configuration
 const app = express();
-const PORT = process.env.PORT || 3000;
+app.set('trust proxy', 1); // Trust first proxy (Vercel)
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
+
+// Redis setup
+let redis;
+try {
+  if (!process.env.REDIS_URL) {
+    throw new Error('REDIS_URL must be set in .env');
+  }
+  redis = new Redis(process.env.REDIS_URL);
+  console.log('Redis client initialized');
+} catch (err) {
+  console.error('Redis setup failed:', err.message);
+}
 
 // Supabase setup
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Error: SUPABASE_URL and SUPABASE_KEY must be set in .env');
-  process.exit(1);
+let supabase;
+try {
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('SUPABASE_URL and SUPABASE_KEY must be set in .env');
+  }
+  supabase = createClient(supabaseUrl, supabaseKey);
+  console.log('Supabase client initialized');
+} catch (err) {
+  console.error('Supabase setup failed:', err.message);
 }
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Redis setup
-const redisClient = new Redis();
-redisClient.on('error', (err) => console.log('Redis Client Error', err));
-redisClient.on('connect', () => console.log('Connected to Redis'));
 
 // Stripe setup
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn('Warning: STRIPE_SECRET_KEY not set in .env');
+let stripe;
+try {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  console.log('Stripe initialized');
+} catch (err) {
+  console.error('Stripe setup failed:', err.message);
 }
 
 // Subscription plans
@@ -56,14 +74,7 @@ const subscriptionPlans = {
 };
 
 // Middleware
-const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:3000'];
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error('CORS policy violation'));
-  },
-  credentials: true
-}));
+app.use(cors({ origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:3000'], credentials: true }));
 app.use(cookieParser());
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
@@ -77,105 +88,89 @@ app.get('/fitness/docs', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'fitness', 'docs.html'));
 });
 
-// Admin API key bypass and Vercel auth check
-app.use((req, res, next) => {
-  console.log('Headers:', req.headers); // Log all headers to debug Vercel auth
-  const apiKey = req.headers['x-api-key'];
-  if (apiKey === ADMIN_API_KEY) {
-    console.log('Admin key matched:', apiKey);
-    req.user = { plan: 'ultimate', role: 'admin' };
-    return next();
-  }
-  // Check Vercel auth headers (e.g., x-vercel-id)
-  if (req.headers['x-vercel-id']) {
-    console.log('Vercel auth detected:', req.headers['x-vercel-id']);
-    // Optionally, validate further if Vercel provides user info
-  }
-  next();
-});
+// API key authentication middleware
+const authenticateApiKey = async (req, res, next) => {
+  console.log('Entering authenticateApiKey middleware');
+  console.log('Request headers:', JSON.stringify(req.headers));
+  try {
+    const apiKey = req.headers['x-api-key'] || req.headers['X-API-Key'] || req.headers['X-Api-Key'];
+    console.log('Checking API key:', apiKey || 'none provided');
 
-// Rate limiting (global, not subscription-specific)
+    if (!apiKey) {
+      console.log('No API key provided in headers');
+      return res.status(401).json({ error: 'API key is required' });
+    }
+
+    if (!supabase) {
+      console.log('Supabase not initialized');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+
+    console.log('Querying Supabase for API key:', apiKey);
+    const { data, error } = await supabase
+      .from('users')
+      .select('plan, role')
+      .eq('api_key', apiKey)
+      .single();
+
+    console.log('Supabase response:', { data: data || 'none', error: error?.message || 'none' });
+
+    if (data && !error) {
+      req.user = { plan: data.plan || 'essential', role: data.role || 'user' };
+      console.log('User authenticated:', req.user);
+      return next();
+    }
+
+    console.log('Checking ADMIN_API_KEY:', ADMIN_API_KEY ? 'set' : 'not set');
+    if (apiKey === ADMIN_API_KEY) {
+      req.user = { plan: 'ultimate', role: 'admin' };
+      console.log('Admin authenticated via ADMIN_API_KEY');
+      return next();
+    }
+
+    console.log('Invalid API key:', apiKey);
+    return res.status(401).json({ error: 'Invalid API key' });
+  } catch (err) {
+    console.error('Auth middleware error:', err.message);
+    return res.status(500).json({ error: 'Server error during authentication' });
+  }
+};
+
+// Rate limiting with Redis
 const limiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 hours
-  max: 1000,
-  store: new RedisStore({ sendCommand: (...args) => redisClient.call(...args), prefix: 'rate-limit:' }),
-  skip: (req) => req.path.startsWith('/admin') || req.path === '/',
+  max: async (req) => {
+    const plan = req.user?.plan || 'essential';
+    return subscriptionPlans[plan]?.requests || 10; // Default to 10 if plan not found
+  },
+  store: redis ? new (require('rate-limit-redis'))({
+    redis: redis,
+    prefix: 'rate-limit:'
+  }) : undefined, // Fallback to memory if Redis fails
+  skip: (req) => {
+    console.log('Rate limit check - Path:', req.path, 'User:', req.user);
+    return req.path.startsWith('/admin') || req.path === '/' || (req.user && req.user.role === 'admin');
+  },
   message: (req) => ({
     error: 'Rate limit exceeded',
-    tier_info: { current_tier: 'free', limit: 1000, current_count: req.rateLimit.current, reset_after: Math.max(0, req.rateLimit.resetTime - Date.now()) / 1000 },
+    tier_info: { current_tier: req.user?.plan || 'essential', limit: subscriptionPlans[req.user?.plan || 'essential'].requests, current_count: req.rateLimit?.current || 0, reset_after: Math.max(0, (req.rateLimit?.resetTime || 0) - Date.now()) / 1000 },
     upgrade_options: { next_tier: 'core', benefits: ['500 requests/month'] }
   })
 });
 
-// Middleware to handle API key and subscription limits
-app.use(async (req, res, next) => {
-  if (req.path.startsWith('/fitness/api/fitness')) {
-    req.appKey = req.headers['x-api-key'];
-    if (!req.appKey) return res.status(401).json({ error: 'API key is required' });
-
-    // Skip Supabase check if already admin from ADMIN_API_KEY
-    if (req.user && req.user.role === 'admin') return next();
-
-    // Validate API key and fetch user profile from Supabase
-    const { data, error } = await supabase
-      .from('users')
-      .select('plan, role')
-      .eq('api_key', req.appKey)
-      .single();
-
-    if (error || !data) return res.status(401).json({ error: 'Invalid API key' });
-    req.user = { plan: data.plan || 'essential', role: data.role || 'user' };
-
-    // Skip subscription limits for admins
-    if (req.user.role === 'admin') return next();
-
-    // Check and enforce subscription limits via Redis
-    const redisKey = `requests:${req.appKey}:${new Date().getFullYear()}-${new Date().getMonth() + 1}`;
-    let requestsRemaining = await redisClient.get(redisKey);
-
-    if (requestsRemaining === null) {
-      const planLimits = subscriptionPlans[req.user.plan].requests;
-      requestsRemaining = planLimits;
-      await redisClient.set(redisKey, planLimits, 'EX', 30 * 24 * 60 * 60); // 30-day expiry
-    } else {
-      requestsRemaining = parseInt(requestsRemaining, 10);
-    }
-
-    if (requestsRemaining <= 0) {
-      return res.status(429).json({
-        error: 'Monthly request limit exceeded',
-        tier_info: { current_tier: req.user.plan, limit: subscriptionPlans[req.user.plan].requests, remaining: 0 },
-        upgrade_options: { next_tier: req.user.plan === 'essential' ? 'core' : 'elite', benefits: ['More requests/month'] }
-      });
-    }
-
-    req.requestsRemaining = requestsRemaining;
-    if (req.path !== '/fitness/api/fitness/food-plate') {
-      console.log('Stripping X-API-Key for:', req.path);
-      delete req.headers['x-api-key'];
-    }
-  }
-  next();
-});
-
 // Routes
+app.use('/fitness/api/fitness', authenticateApiKey, limiter, fitnessRoutes);
 app.use('/fitness', router);
-app.use('/fitness/api/fitness', limiter, fitnessRoutes);
 
-// Decrement request count on successful response
-app.use((req, res, next) => {
-  const originalJson = res.json;
-  res.json = function (body) {
-    if (req.path.startsWith('/fitness/api/fitness') && res.statusCode === 200 && req.user?.role !== 'admin') {
-      const redisKey = `requests:${req.appKey}:${new Date().getFullYear()}-${new Date().getMonth() + 1}`;
-      redisClient.decr(redisKey);
-    }
-    originalJson.call(this, body);
-  };
-  next();
+// Root route
+app.get('/', (req, res) => {
+  res.json({ message: 'API is running', version: 'debug8-2025-04-04' });
 });
 
-// Start Server
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err.message, 'Stack:', err.stack);
+  res.status(500).json({ error: 'Server error', details: err.message });
+});
 
 module.exports = app;
