@@ -1,16 +1,12 @@
 // src/routes/router.js
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
-const Redis = require('ioredis');
 
 const router = express.Router();
 const fitnessRoutes = require('./fitnessRoutes');
 
-// Supabase setup
+// Supabase setup (using environment variables from server.js)
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-
-// Redis setup
-const redisClient = new Redis();
 
 // Health check endpoint
 router.get('/status', (req, res) => {
@@ -31,24 +27,8 @@ router.post('/fitness/api/auth/validate', async (req, res) => {
 
   if (error || !data) return res.status(401).json({ error: 'Invalid API key' });
 
-  // Get or set request count from Redis
-  const redisKey = `requests:${apiKey}:${new Date().getFullYear()}-${new Date().getMonth() + 1}`;
-  let requestsRemaining = await redisClient.get(redisKey);
-  const planLimits = {
-    essential: 10, 'essential-yearly': 10,
-    core: 500, 'core-yearly': 500,
-    elite: 2000, 'elite-yearly': 2000,
-    ultimate: 5000, 'ultimate-yearly': 5000
-  };
-
-  if (requestsRemaining === null) {
-    requestsRemaining = planLimits[data.plan || 'essential'];
-    await redisClient.set(redisKey, requestsRemaining, 'EX', 30 * 24 * 60 * 60); // 30-day expiry
-  } else {
-    requestsRemaining = parseInt(requestsRemaining, 10);
-  }
-
-  res.json({ plan: data.plan || 'essential', role: data.role || 'user', requestsRemaining });
+  // Return user profile without Redis-based request counting
+  res.json({ plan: data.plan || 'essential', role: data.role || 'user' });
 });
 
 // Mount fitness-specific routes at /api/fitness
