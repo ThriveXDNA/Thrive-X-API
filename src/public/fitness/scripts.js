@@ -682,9 +682,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = '/fitness/subscribe?plan=essential';
       } else {
         try {
+          const apiKey = localStorage.getItem('apiKey');
+          if (!apiKey) throw new Error('No API key found in localStorage');
           const response = await fetch('/fitness/api/fitness/create-checkout-session', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-API-Key': apiKey
+            },
             body: JSON.stringify({ planId: btn.dataset.plan })
           });
           if (!response.ok) throw new Error('Failed to create checkout session');
