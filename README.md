@@ -45,9 +45,11 @@ Payment: Powered by Stripe for secure, hassle-free transactions.
 ## Quick Start
 
 ### 1. Install the package
-```bash
-npm install @thrivex/api
 
 Contact
 Support: Reach out to support@thrivexdna.com for assistance.
 Issues: Report bugs or suggest features at GitHub Issues.
+
+```bash
+npm install @thrivex/api
+
