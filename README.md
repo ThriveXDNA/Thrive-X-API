@@ -23,25 +23,37 @@ SOFTWARE.
 Tabs and Features
 The ThriveX API powers a rich user experience at thrive-x-api.vercel.app, with the following key features accessible via the interface:
 
-Generate Workout Plan: Create personalized workout plans based on user goals, fitness level, and subscription tier. Higher tiers unlock more detailed and varied plans.
-Exercise Details: Access a comprehensive database of exercises with descriptions, instructions, and visuals (where available), scaled by plan request limits.
-Nutrition & Meal Plan: Generate tailored meal plans with nutritional breakdowns, available to Core tier and above, with increased customization for Elite and Ultimate users.
-Analyze Food Plate: Upload a photo or input food items to analyze nutritional content, exclusive to Elite and Ultimate plans due to processing demands.
-Food Ingredient Directory: Explore a searchable directory of ingredients with nutritional data, accessible across all plans with request limits applied.
-Natural Remedies: Discover natural health remedies and supplements tied to fitness and nutrition goals, fully unlocked for Ultimate plan users.
-These features integrate with the API to provide a seamless fitness and nutrition ecosystem, with access levels determined by your subscription plan.
+# ThriveX API Subscription Plans
 
-Subscription Plans
+## All Features Included, Only API Request Limits Vary
 
-Plan	Price (Monthly)	Price (Yearly)	Requests/Month	Description
+| Plan | Monthly Price | Annual Price | Annual Savings | API Requests/Month | 
+|------|--------------|--------------|----------------|-------------------|
+| **Essential** | Free | Free | — | 10 | 
+| **Core** | $14.99 | $149.90 | $30 (17%) | 500 | 
+| **Elite** | $49.99 | $479.90 | $120 (20%) | 2,000 | 
+| **Ultimate** | $129.99 | $1,169.90 | $390 (25%) | 5,000 |
 
-Essential	Free	Free	10	Basic fitness access
+*All annual plans are billed once yearly. Prices shown in USD.*
 
-Core	$14.99	$161.89	500	Core fitness features
+## Features Available Across All Plans
 
-Elite	$49.99	$509.90	2,000	Advanced capabilities
+| Feature | Description | Available On |
+|---------|-------------|-------------|
+| **Generate Workout Plan** | Create personalized workout plans based on user goals and fitness level | All Plans |
+| **Exercise Details** | Access a comprehensive database of exercises with descriptions, instructions, and visuals | All Plans |
+| **Nutrition & Meal Plan** | Generate tailored meal plans with nutritional breakdowns | All Plans |
+| **Analyze Food Plate** | Upload a photo or input food items to analyze nutritional content | All Plans |
+| **Food Ingredient Directory** | Explore a searchable directory of ingredients with nutritional data | All Plans |
+| **Natural Remedies** | Discover natural health remedies and supplements tied to fitness and nutrition goals | All Plans |
 
-Ultimate	$129.99	$1,247.90	5,000	Full feature access
+### API Usage Notes
+
+- All features are accessible on every plan through the ThriveX API at thrive-x-api.vercel.app
+- Your subscription tier determines your monthly API request limit
+- Higher tiers allow for more API calls, enabling more frequent use of all features
+- Request limits reset at the beginning of each billing cycle
+- Additional API requests beyond your plan limit require an upgrade or will be unavailable until the next cycle
 
 Get Started: Sign up at thrive-x-api.vercel.app to select a plan and generate your API key.
 Payment: Powered by Stripe for secure, hassle-free transactions.
