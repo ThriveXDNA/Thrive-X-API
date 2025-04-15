@@ -32,11 +32,17 @@ Natural Remedies: Discover natural health remedies and supplements tied to fitne
 These features integrate with the API to provide a seamless fitness and nutrition ecosystem, with access levels determined by your subscription plan.
 
 Subscription Plans
+
 Plan	Price (Monthly)	Price (Yearly)	Requests/Month	Description
+
 Essential	Free	Free	10	Basic fitness access
+
 Core	$14.99	$161.89	500	Core fitness features
+
 Elite	$49.99	$509.90	2,000	Advanced capabilities
+
 Ultimate	$129.99	$1,247.90	5,000	Full feature access
+
 Get Started: Sign up at thrive-x-api.vercel.app to select a plan and generate your API key.
 Payment: Powered by Stripe for secure, hassle-free transactions.
 
