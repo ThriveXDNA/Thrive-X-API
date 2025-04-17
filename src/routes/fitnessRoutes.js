@@ -16,14 +16,14 @@ const { getNaturalRemedies } = require('../api/fitness/naturalRemediesController
 
 // Subscription plans
 const subscriptionPlans = {
-  essential: { id: 'essential', name: 'Essential', price: 0, priceId: null, description: '10 requests/month', requests: 10 },
-  'essential-yearly': { id: 'essential-yearly', name: 'Essential', price: 0, priceId: null, description: '10 requests/month', requests: 10 },
-  core: { id: 'core', name: 'Core', price: 14.99, priceId: process.env.STRIPE_PRICE_CORE, description: '500 requests/month', requests: 500 },
-  'core-yearly': { id: 'core-yearly', name: 'Core', price: 161.89, priceId: process.env.STRIPE_PRICE_CORE_YEARLY, description: '500 requests/month', requests: 500 },
-  elite: { id: 'elite', name: 'Elite', price: 49.99, priceId: process.env.STRIPE_PRICE_ELITE, description: '2,000 requests/month', requests: 2000 },
-  'elite-yearly': { id: 'elite-yearly', name: 'Elite', price: 509.90, priceId: process.env.STRIPE_PRICE_ELITE_YEARLY, description: '2,000 requests/month', requests: 2000 },
-  ultimate: { id: 'ultimate', name: 'Ultimate', price: 129.99, priceId: process.env.STRIPE_PRICE_ULTIMATE, description: '5,000 requests/month', requests: 5000 },
-  'ultimate-yearly': { id: 'ultimate-yearly', name: 'Ultimate', price: 1247.90, priceId: process.env.STRIPE_PRICE_ULTIMATE_YEARLY, description: '5,000 requests/month', requests: 5000 }
+  'basic': { id: 'basic', name: 'Basic', price: 0, priceId: 'your_basic_price_id', description: '10 requests/month', requests: 10 },
+  'basic-yearly': { id: 'basic-yearly', name: 'Basic', price: 0, priceId: 'your_basic_yearly_price_id', description: '10 requests/month', requests: 10 },
+  'core': { id: 'core', name: 'Core', price: 14.99, priceId: 'your_core_price_id', description: '500 requests/month', requests: 500 },
+  'core-yearly': { id: 'core-yearly', name: 'Core', price: 161.89, priceId: 'your_core_yearly_price_id', description: '500 requests/month', requests: 500 },
+  'elite': { id: 'elite', name: 'Elite', price: 49.99, priceId: 'your_elite_price_id', description: '2,000 requests/month', requests: 2000 },
+  'elite-yearly': { id: 'elite-yearly', name: 'Elite', price: 509.90, priceId: 'your_elite_yearly_price_id', description: '2,000 requests/month', requests: 2000 },
+  'ultimate': { id: 'ultimate', name: 'Ultimate', price: 129.99, priceId: 'your_ultimate_price_id', description: '5,000 requests/month', requests: 5000 },
+  'ultimate-yearly': { id: 'ultimate-yearly', name: 'Ultimate', price: 1247.90, priceId: 'your_ultimate_yearly_price_id', description: '5,000 requests/month', requests: 5000 }
 };
 
 // Define routes with debug
@@ -72,12 +72,11 @@ router.post('/create-checkout-session', async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{
-        price: plan.priceId,
-        quantity: 1,
+        price: plan.priceId
       }],
       mode: 'subscription',
       success_url: `${req.headers.origin}/fitness/subscribe?success=true`,
-      cancel_url: `${req.headers.origin}/fitness/subscribe?canceled=true`,
+      cancel_url: `${req.headers.origin}/fitness/subscribe?canceled=true`
     });
     console.log('Checkout session created:', session.id);
     res.json({ id: session.id });
