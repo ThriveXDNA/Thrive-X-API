@@ -14,6 +14,9 @@ const { analyzeFoodPlate } = require('../api/fitness/analyzeFoodPlate');
 const { getFoodIngredientDetails } = require('../api/fitness/foodIngredientController');
 const { getNaturalRemedies } = require('../api/fitness/naturalRemediesController');
 
+// Frontend URL for Stripe redirects
+const FRONTEND_URL = 'https://thrivexdna.com/fitness';
+
 // Subscription plans
 const subscriptionPlans = {
   'essential': { id: 'essential', name: 'Essential', price: 0, priceId: process.env.STRIPE_PRICE_ESSENTIAL, description: '10 requests/month', requests: 10 },
@@ -75,8 +78,8 @@ router.post('/create-checkout-session', async (req, res) => {
         price: plan.priceId
       }],
       mode: 'subscription',
-      success_url: `${req.headers.origin}/fitness/subscribe?success=true`,
-      cancel_url: `${req.headers.origin}/fitness/subscribe?canceled=true`
+      success_url: `${req.headers.origin || FRONTEND_URL}/subscribe?success=true`,
+      cancel_url: `${req.headers.origin || FRONTEND_URL}/subscribe?canceled=true`
     });
     console.log('Checkout session created:', session.id);
     res.json({ id: session.id });
