@@ -16,14 +16,14 @@ const { getNaturalRemedies } = require('../api/fitness/naturalRemediesController
 
 // Subscription plans
 const subscriptionPlans = {
-  'basic': { id: 'basic', name: 'Basic', price: 0, priceId: process.env.STRIPE_PRICE_ESSENTIAL, description: '10 requests/month', requests: 10 },
-  'basic-yearly': { id: 'basic-yearly', name: 'Basic', price: 0, priceId: process.env.STRIPE_PRICE_ESSENTIAL_YEARLY, description: '10 requests/month', requests: 10 },
+  'essential': { id: 'essential', name: 'Essential', price: 0, priceId: process.env.STRIPE_PRICE_ESSENTIAL, description: '10 requests/month', requests: 10 },
+  'essential-yearly': { id: 'essential-yearly', name: 'Essential', price: 0, priceId: process.env.STRIPE_PRICE_ESSENTIAL_YEARLY, description: '10 requests/month', requests: 10 },
   'core': { id: 'core', name: 'Core', price: 14.99, priceId: process.env.STRIPE_PRICE_CORE, description: '500 requests/month', requests: 500 },
-  'core-yearly': { id: 'core-yearly', name: 'Core', price: 161.89, priceId: process.env.STRIPE_PRICE_CORE_YEARLY, description: '500 requests/month', requests: 500 },
+  'core-yearly': { id: 'core-yearly', name: 'Core', price: 149.90, priceId: process.env.STRIPE_PRICE_CORE_YEARLY, description: '500 requests/month', requests: 500 },
   'elite': { id: 'elite', name: 'Elite', price: 49.99, priceId: process.env.STRIPE_PRICE_ELITE, description: '2,000 requests/month', requests: 2000 },
-  'elite-yearly': { id: 'elite-yearly', name: 'Elite', price: 509.90, priceId: process.env.STRIPE_PRICE_ELITE_YEARLY, description: '2,000 requests/month', requests: 2000 },
+  'elite-yearly': { id: 'elite-yearly', name: 'Elite', price: 479.90, priceId: process.env.STRIPE_PRICE_ELITE_YEARLY, description: '2,000 requests/month', requests: 2000 },
   'ultimate': { id: 'ultimate', name: 'Ultimate', price: 129.99, priceId: process.env.STRIPE_PRICE_ULTIMATE, description: '5,000 requests/month', requests: 5000 },
-  'ultimate-yearly': { id: 'ultimate-yearly', name: 'Ultimate', price: 1247.90, priceId: process.env.STRIPE_PRICE_ULTIMATE_YEARLY, description: '5,000 requests/month', requests: 5000 }
+  'ultimate-yearly': { id: 'ultimate-yearly', name: 'Ultimate', price: 1169.90, priceId: process.env.STRIPE_PRICE_ULTIMATE_YEARLY, description: '5,000 requests/month', requests: 5000 }
 };
 
 // Define routes with debug
