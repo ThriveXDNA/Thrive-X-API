@@ -40,14 +40,14 @@ router.post('/create-checkout-session', authenticateApiKey, async (req, res) => 
   // Rate limit check (simplified)
   console.log('Rate limit check - Path: /create-checkout-session User:', req.user);
 
-  // Map planId to Stripe Price IDs
+  // Map planId to Stripe Price IDs from .env
   const planPriceIds = {
-    'core': 'price_1xxxxx', // Replace with actual Price ID from Stripe Dashboard
-    'elite': 'price_1xxxxx',
-    'ultimate': 'price_1xxxxx',
-    'core-yearly': 'price_1xxxxx',
-    'elite-yearly': 'price_1xxxxx',
-    'ultimate-yearly': 'price_1xxxxx'
+    'core': process.env.STRIPE_PRICE_CORE,
+    'elite': process.env.STRIPE_PRICE_ELITE,
+    'ultimate': process.env.STRIPE_PRICE_ULTIMATE,
+    'core-yearly': process.env.STRIPE_PRICE_CORE_YEARLY,
+    'elite-yearly': process.env.STRIPE_PRICE_ELITE_YEARLY,
+    'ultimate-yearly': process.env.STRIPE_PRICE_ULTIMATE_YEARLY
   };
 
   if (!planPriceIds[planId]) {
