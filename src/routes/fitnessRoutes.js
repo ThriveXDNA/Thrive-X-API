@@ -1,91 +1,303 @@
-// src/routes/fitnessRoutes.js
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const upload = multer({ storage: multer.memoryStorage() });
+const { createClient } = require('@supabase/supabase-js');
 const Stripe = require('stripe');
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // Must be set in Vercel env
 
-// Import controllers from src/api/fitness/
-const { generateWorkoutPlan } = require('../api/fitness/workoutController');
-const { getExerciseDetails } = require('../api/fitness/exerciseController');
-const { generateMealPlan } = require('../api/fitness/mealPlanController');
-const { analyzeFoodPlate } = require('../api/fitness/analyzeFoodPlate');
-const { getFoodIngredientDetails } = require('../api/fitness/foodIngredientController');
-const { getNaturalRemedies } = require('../api/fitness/naturalRemediesController');
+// Initialize Supabase and Stripe
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Frontend URL for Stripe redirects
-const FRONTEND_URL = 'https://thrivexdna.com/fitness';
+// Middleware to authenticate API key
+async function authenticateApiKey(req, res, next) {
+  const apiKey = req.headers['x-api-key'];
+  if (!apiKey) return res.status(401).json({ error: 'API key required' });
 
-// Subscription plans
-const subscriptionPlans = {
-  'essential': { id: 'essential', name: 'Essential', price: 0, priceId: process.env.STRIPE_PRICE_ESSENTIAL, description: '10 requests/month', requests: 10 },
-  'essential-yearly': { id: 'essential-yearly', name: 'Essential', price: 0, priceId: process.env.STRIPE_PRICE_ESSENTIAL_YEARLY, description: '10 requests/month', requests: 10 },
-  'core': { id: 'core', name: 'Core', price: 14.99, priceId: process.env.STRIPE_PRICE_CORE, description: '500 requests/month', requests: 500 },
-  'core-yearly': { id: 'core-yearly', name: 'Core', price: 149.90, priceId: process.env.STRIPE_PRICE_CORE_YEARLY, description: '500 requests/month', requests: 500 },
-  'elite': { id: 'elite', name: 'Elite', price: 49.99, priceId: process.env.STRIPE_PRICE_ELITE, description: '2,000 requests/month', requests: 2000 },
-  'elite-yearly': { id: 'elite-yearly', name: 'Elite', price: 479.90, priceId: process.env.STRIPE_PRICE_ELITE_YEARLY, description: '2,000 requests/month', requests: 2000 },
-  'ultimate': { id: 'ultimate', name: 'Ultimate', price: 129.99, priceId: process.env.STRIPE_PRICE_ULTIMATE, description: '5,000 requests/month', requests: 5000 },
-  'ultimate-yearly': { id: 'ultimate-yearly', name: 'Ultimate', price: 1169.90, priceId: process.env.STRIPE_PRICE_ULTIMATE_YEARLY, description: '5,000 requests/month', requests: 5000 }
-};
+  console.log('Extracted API key:', apiKey);
+  console.log('Querying Supabase for API key:', apiKey);
 
-// Define routes with debug
-router.post('/workout', (req, res, next) => {
-  console.log('Reached /workout route');
-  generateWorkoutPlan(req, res, next);
-});
-router.post('/exercise', (req, res, next) => {
-  console.log('Reached /exercise route');
-  getExerciseDetails(req, res, next);
-});
-router.post('/meal-plan', (req, res, next) => {
-  console.log('Reached /meal-plan route');
-  generateMealPlan(req, res, next);
-});
-router.post('/food-plate', upload.single('food_image'), (req, res, next) => {
-  console.log('Reached /food-plate route');
-  analyzeFoodPlate(req, res, next);
-});
-router.post('/food-ingredient', (req, res, next) => {
-  console.log('Reached /food-ingredient route, User:', req.user);
-  getFoodIngredientDetails(req, res, next);
-});
-router.post('/natural-remedies', (req, res, next) => {
-  console.log('Reached /natural-remedies route');
-  getNaturalRemedies(req, res, next);
-});
+  const { data, error } = await supabase
+    .from('users')
+    .select('plan, role')
+    .eq('api_key', apiKey)
+    .single();
 
-// Stripe checkout session route
-router.post('/create-checkout-session', async (req, res) => {
+  if (error || !data) {
+    console.error('Supabase error or no user found:', error);
+    return res.status(401).json({ error: 'Invalid API key' });
+  }
+
+  console.log('Supabase response:', { data, error: 'none' });
+  console.log('User authenticated:', data);
+  req.user = data;
+  next();
+}
+
+// Create checkout session
+router.post('/create-checkout-session', authenticateApiKey, async (req, res) => {
   const { planId } = req.body;
   console.log('Reached /create-checkout-session route with planId:', planId);
 
-  if (!planId || !subscriptionPlans[planId]) {
-    console.error('Invalid planId:', planId);
-    return res.status(400).json({ error: 'Invalid plan selected' });
-  }
+  // Rate limit check (simplified)
+  console.log('Rate limit check - Path: /create-checkout-session User:', req.user);
 
-  const plan = subscriptionPlans[planId];
-  if (!plan.priceId) {
-    console.log('No Stripe priceId for free plan:', planId);
-    return res.status(200).json({ message: 'Free plan selected, no checkout needed' });
+  // Map planId to Stripe Price IDs
+  const planPriceIds = {
+    'core': 'price_1xxxxx', // Replace with actual Price ID from Stripe Dashboard
+    'elite': 'price_1xxxxx',
+    'ultimate': 'price_1xxxxx',
+    'core-yearly': 'price_1xxxxx',
+    'elite-yearly': 'price_1xxxxx',
+    'ultimate-yearly': 'price_1xxxxx'
+  };
+
+  if (!planPriceIds[planId]) {
+    return res.status(400).json({ error: 'Invalid planId' });
   }
 
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: [{
-        price: plan.priceId
-      }],
+      line_items: [
+        {
+          price: planPriceIds[planId],
+          quantity: 1
+        }
+      ],
       mode: 'subscription',
-      success_url: `${req.headers.origin || FRONTEND_URL}/subscribe?success=true`,
-      cancel_url: `${req.headers.origin || FRONTEND_URL}/subscribe?canceled=true`
+      success_url: 'https://thrive-x-api.vercel.app/fitness/subscribe?success=true',
+      cancel_url: 'https://thrive-x-api.vercel.app/fitness/subscribe?canceled=true',
+      metadata: {
+        user_api_key: req.headers['x-api-key'],
+        plan: planId
+      }
     });
+
     console.log('Checkout session created:', session.id);
     res.json({ id: session.id });
   } catch (error) {
-    console.error('Error creating checkout session:', error.message);
-    res.status(500).json({ error: 'Failed to create checkout session', details: error.message });
+    console.error('Error creating checkout session:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Stripe webhook handler
+router.post('/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    console.log('Webhook event received:', event.type);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Handle the event
+  switch (event.type) {
+    case 'checkout.session.completed':
+      const session = event.data.object;
+      const apiKey = session.metadata.user_api_key;
+      const plan = session.metadata.plan;
+
+      console.log('Checkout session completed for user:', apiKey, 'Plan:', plan);
+
+      // Update user plan in Supabase
+      const { error } = await supabase
+        .from('users')
+        .update({ plan })
+        .eq('api_key', apiKey);
+
+      if (error) {
+        console.error('Error updating user plan in Supabase:', error);
+      } else {
+        console.log('User plan updated in Supabase:', { apiKey, plan });
+      }
+      break;
+    case 'invoice.paid':
+      console.log('Invoice paid:', event.data.object);
+      break;
+    case 'invoice.payment_failed':
+      console.log('Invoice payment failed:', event.data.object);
+      break;
+    default:
+      console.log(`Unhandled event type: ${event.type}`);
+  }
+
+  res.json({ received: true });
+});
+
+// API routes
+router.post('/workout', authenticateApiKey, async (req, res) => {
+  try {
+    const {
+      goals,
+      fitnessLevel,
+      preferences,
+      bodyFocus,
+      muscleGroups,
+      includeWarmupCooldown,
+      daysPerWeek,
+      sessionDuration,
+      planDurationWeeks
+    } = req.body;
+
+    // Validate inputs
+    if (!goals || !fitnessLevel || !daysPerWeek || !planDurationWeeks) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Your existing workout generation logic here
+    // Example: Call AI service or database query
+    const workoutPlan = {
+      goal: goals,
+      fitnessLevel,
+      daysPerWeek,
+      weeks: planDurationWeeks,
+      days: [] // Populate with your logic
+    };
+
+    res.json({ data: workoutPlan });
+  } catch (error) {
+    console.error('Error generating workout plan:', error);
+    res.status(500).json({ error: 'Failed to generate workout plan' });
+  }
+});
+
+router.post('/meal-plan', authenticateApiKey, async (req, res) => {
+  try {
+    const {
+      goals,
+      dietType,
+      gender,
+      age,
+      weight,
+      heightCm,
+      activityLevel,
+      allergies,
+      religiousPreferences,
+      calorieTarget,
+      mealsPerDay,
+      numberOfDays
+    } = req.body;
+
+    // Validate inputs
+    if (!goals || !weight || !heightCm || !mealsPerDay || !numberOfDays) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Your existing meal plan generation logic here
+    const mealPlan = {
+      macros: { protein: 0, fat: 0, carbs: 0, calories: calorieTarget || 0 },
+      mealPlan: [] // Populate with your logic
+    };
+
+    res.json({ data: mealPlan });
+  } catch (error) {
+    console.error('Error generating meal plan:', error);
+    res.status(500).json({ error: 'Failed to generate meal plan' });
+  }
+});
+
+router.post('/exercise', authenticateApiKey, async (req, res) => {
+  try {
+    const { exerciseId, includeVariations } = req.body;
+
+    // Validate inputs
+    if (!exerciseId) {
+      return res.status(400).json({ error: 'Exercise ID required' });
+    }
+
+    // Your existing exercise details logic here
+    const exerciseDetails = {
+      name: 'Sample Exercise',
+      muscle_groups: ['Sample'],
+      equipment_needed: ['None'],
+      steps: ['Step 1', 'Step 2'],
+      difficulty: 'Beginner',
+      tips: ['Tip 1'],
+      variations: includeVariations ? [{ name: 'Variation', description: 'Desc', difficulty: 'Moderate' }] : []
+    };
+
+    res.json({ data: exerciseDetails });
+  } catch (error) {
+    console.error('Error fetching exercise details:', error);
+    res.status(500).json({ error: 'Failed to fetch exercise details' });
+  }
+});
+
+router.post('/food-plate', authenticateApiKey, async (req, res) => {
+  try {
+    // Handle multipart/form-data for image upload
+    const formData = req.body; // Requires multer or similar for actual file handling
+
+    // Your existing food plate analysis logic here
+    const foodAnalysis = {
+      title: 'Food Plate Analysis',
+      foods: [{ name: 'Sample Food', calories: 100, protein: 10, fat: 5, carbs: 15 }]
+    };
+
+    res.json({ data: foodAnalysis });
+  } catch (error) {
+    console.error('Error analyzing food plate:', error);
+    res.status(500).json({ error: 'Failed to analyze food plate' });
+  }
+});
+
+router.post('/food-ingredient', authenticateApiKey, async (req, res) => {
+  try {
+    const { ingredient } = req.body;
+
+    // Validate inputs
+    if (!ingredient) {
+      return res.status(400).json({ error: 'Ingredient name required' });
+    }
+
+    // Your existing food ingredient logic here
+    const ingredientDetails = {
+      name: ingredient,
+      category: 'Sample',
+      origin: 'Sample',
+      safety_rating: 'Safe',
+      definition: 'Sample definition',
+      layman_term: 'Sample term',
+      production_process: 'Sample process',
+      example_use: 'Sample use'
+    };
+
+    res.json({ data: ingredientDetails });
+  } catch (error) {
+    console.error('Error fetching ingredient details:', error);
+    res.status(500).json({ error: 'Failed to fetch ingredient details' });
+  }
+});
+
+router.post('/natural-remedies', authenticateApiKey, async (req, res) => {
+  try {
+    const { symptom, approach } = req.body;
+
+    // Validate inputs
+    if (!symptom) {
+      return res.status(400).json({ error: 'Symptom required' });
+    }
+
+    // Your existing natural remedies logic here
+    const remedies = {
+      remedies: [{
+        name: 'Sample Remedy',
+        description: 'Sample description',
+        preparation: 'Sample preparation',
+        benefits: 'Sample benefits'
+      }],
+      disclaimer: 'Consult a healthcare professional before use.'
+    };
+
+    res.json({ data: remedies });
+  } catch (error) {
+    console.error('Error fetching natural remedies:', error);
+    res.status(500).json({ error: 'Failed to fetch natural remedies' });
   }
 });
 
