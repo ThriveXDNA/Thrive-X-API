@@ -7,8 +7,8 @@ const IN_TO_CM = 2.54;
 // DOM elements
 const unitSystemSelect = document.getElementById('unit-system');
 
-// Stripe initialization (replace with your real Stripe public key)
-const stripe = Stripe('pk_test_51xxxxx'); // Replace with your actual Stripe public key
+// Stripe initialization (replace with your real Stripe LIVE public key)
+const stripe = Stripe('pk_live_51xxxxx'); // Replace with your actual LIVE Stripe public key
 
 // User profile object
 let userProfile = {
