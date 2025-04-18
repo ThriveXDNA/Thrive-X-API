@@ -25,7 +25,7 @@ async function fetchUserProfile(apiKey) {
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
       body: JSON.stringify({ apiKey })
     });
-    if (!response.ok) throw new Error('Failed to validate API key');
+    if (!response.ok) throw new Error(`Failed to validate API key: ${response.status}`);
     const data = await response.json();
     userProfile = {
       plan: data.plan || 'essential',
@@ -40,6 +40,7 @@ async function fetchUserProfile(apiKey) {
     console.error('Error fetching user profile:', error);
     userProfile = { plan: 'essential', role: 'user', requestsRemaining: 10 };
     localStorage.setItem('userProfile', JSON.stringify(userProfile));
+    updateDropdownOptions();
     updateRequestCounter();
   }
 }
@@ -98,7 +99,7 @@ function updateDropdownOptions() {
   }
 }
 
-// Format API response into HTML
+// Format API response into HTML (unchanged)
 function formatResult(result, endpoint) {
   if (!result) return '<p>No valid data returned.</p>';
   const data = result.data || result;
@@ -279,7 +280,7 @@ function formatResult(result, endpoint) {
   return html;
 }
 
-// Render pie charts for nutrition and food plate results
+// Render pie charts for nutrition and food plate results (unchanged)
 function renderCharts(result, endpoint, container) {
   if (!result) return;
   const data = result.data || result;
@@ -329,7 +330,7 @@ function renderCharts(result, endpoint, container) {
   }
 }
 
-// Handle form submissions
+// Handle form submissions (unchanged)
 async function handleFormSubmit(formId, resultId, endpoint) {
   const form = document.getElementById(formId);
   const resultContainer = document.getElementById(resultId);
@@ -496,7 +497,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
   });
 }
 
-// Copy result to clipboard
+// Copy result to clipboard (unchanged)
 function copyResult(resultId) {
   const content = document.getElementById(resultId).querySelector('.result-content').innerText;
   navigator.clipboard.writeText(content).then(() => {
@@ -506,7 +507,7 @@ function copyResult(resultId) {
   });
 }
 
-// Print result
+// Print result (unchanged)
 function printResult(resultId) {
   const content = document.getElementById(resultId).querySelector('.result-content').innerHTML;
   const printWindow = window.open('', '_blank');
@@ -536,7 +537,7 @@ function printResult(resultId) {
   printWindow.print();
 }
 
-// Initialize form listeners
+// Initialize form listeners (unchanged)
 handleFormSubmit('workout-form', 'workout-result', 'generateWorkoutPlan');
 handleFormSubmit('exercise-form', 'exercise-result', 'exerciseDetails');
 handleFormSubmit('nutrition-meal-form', 'nutrition-meal-result', 'nutritionMealPlan');
@@ -548,7 +549,7 @@ handleFormSubmit('natural-remedies-form', 'natural-remedies-result', 'naturalRem
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM fully loaded and scripts initialized');
   
-  // Tab navigation setup
+  // Tab navigation setup (unchanged)
   const tabs = document.querySelectorAll('.tab-button');
   const contents = document.querySelectorAll('.tab-content');
   const sidebarItems = document.querySelectorAll('.tab-trigger');
@@ -672,10 +673,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.querySelectorAll('.plan-select-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const plan = btn.dataset.plan.split('-')[0];
-      console.log('Plan selected:', btn.dataset.plan, 'Base plan:', plan);
+      const planId = btn.dataset.plan;
+      console.log('Plan selected:', planId);
 
-      if (plan === 'essential') {
+      if (planId.startsWith('essential')) {
         userProfile.plan = 'essential';
         userProfile.requestsRemaining = 10;
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
@@ -693,11 +694,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       async function attemptCheckout(attempt = 1) {
         try {
-          const apiKey = localStorage.getItem('apiKey') || 'rees-admin-key-789';
+          const apiKey = localStorage.getItem('apiKey');
+          if (!apiKey) {
+            throw new Error('No API key found. Please save an API key in the settings.');
+          }
           console.log(`Attempt ${attempt} - Using API key:`, apiKey);
 
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+          const timeoutId = setTimeout(() => controller.abort(), 15000); // Increased to 15s
 
           const response = await fetch('/fitness/api/fitness/create-checkout-session', {
             method: 'POST',
@@ -705,7 +709,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               'Content-Type': 'application/json',
               'x-api-key': apiKey
             },
-            body: JSON.stringify({ planId: btn.dataset.plan }),
+            body: JSON.stringify({ planId }),
             signal: controller.signal
           });
 
@@ -713,20 +717,32 @@ document.addEventListener('DOMContentLoaded', async () => {
           console.log(`Attempt ${attempt} - Fetch response status:`, response.status);
 
           if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Failed to create checkout session: ${response.status} ${errorText}`);
+            let errorText;
+            try {
+              const errorData = await response.json();
+              errorText = errorData.error || await response.text();
+            } catch {
+              errorText = await response.text();
+            }
+            if (response.status === 401) {
+              throw new Error('Invalid API key. Please check your API key and try again.');
+            } else if (response.status === 400) {
+              throw new Error(`Invalid request: ${errorText}`);
+            } else {
+              throw new Error(`Server error: ${response.status} - ${errorText}`);
+            }
           }
 
           const data = await response.json();
           console.log(`Attempt ${attempt} - Checkout session response:`, data);
 
           if (!data.id) {
-            throw new Error('No session ID in response');
+            throw new Error('No session ID returned from server');
           }
 
           const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
           if (error) {
-            throw new Error(`Stripe redirect error: ${JSON.stringify(error)}`);
+            throw new Error(`Stripe redirect error: ${error.message} (Code: ${error.code || 'N/A'})`);
           }
         } catch (error) {
           console.error(`Attempt ${attempt} - Error creating checkout session:`, error);
@@ -734,7 +750,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('Retrying checkout session creation...');
             return attemptCheckout(2);
           }
-          alert(`Failed to initiate subscription: ${error.message}. Please check your network and try again.`);
+          let userMessage = 'Failed to initiate subscription. ';
+          if (error.name === 'AbortError') {
+            userMessage += 'Request timed out. Please check your network and try again.';
+          } else if (error.message.includes('Invalid API key')) {
+            userMessage += 'Invalid API key. Please update your API key in the settings.';
+          } else if (error.message.includes('Invalid request')) {
+            userMessage += `Invalid plan selection: ${error.message}. Please try another plan.`;
+          } else if (error.message.includes('Stripe redirect error')) {
+            userMessage += `Payment provider error: ${error.message}. Please try again later.`;
+          } else {
+            userMessage += 'An unexpected error occurred. Please try again or contact support.';
+          }
+          alert(userMessage);
         }
       }
 
@@ -763,6 +791,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log('Subscription modal opened via retry button');
     } else {
       console.warn('Subscription modal not found, redirecting to /fitness');
+      window.location.href = '/fitness';
     }
   });
 });

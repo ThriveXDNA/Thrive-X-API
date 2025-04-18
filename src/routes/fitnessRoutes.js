@@ -50,18 +50,34 @@ router.post('/create-checkout-session', authenticateApiKey, async (req, res) => 
     'ultimate-yearly': process.env.STRIPE_PRICE_ULTIMATE_YEARLY
   };
 
-  if (!planPriceIds[planId]) {
+  const priceId = planPriceIds[planId];
+  if (!priceId) {
+    console.error('Invalid planId:', planId);
     return res.status(400).json({ error: 'Invalid planId' });
   }
 
   try {
+    // Validate price ID exists in Stripe
+    console.log('Validating price ID:', priceId);
+    const price = await stripe.prices.retrieve(priceId);
+    if (!price) {
+      console.error('Price ID does not exist:', priceId);
+      return res.status(400).json({ error: 'Invalid price ID' });
+    }
+
+    // Configure line_items based on billing type
+    const lineItem = {
+      price: priceId
+    };
+
+    // For non-metered billing, explicitly set quantity to 1
+    if (price.type !== 'metered') {
+      lineItem.quantity = 1;
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price: planPriceIds[planId]
-        }
-      ],
+      line_items: [lineItem],
       mode: 'subscription',
       success_url: 'https://thrive-x-api.vercel.app/fitness/subscribe?success=true',
       cancel_url: 'https://thrive-x-api.vercel.app/fitness/subscribe?canceled=true',
@@ -128,7 +144,7 @@ router.post('/stripe-webhook', express.raw({ type: 'application/json' }), async 
   res.json({ received: true });
 });
 
-// API routes
+// API routes (unchanged)
 router.post('/workout', authenticateApiKey, async (req, res) => {
   try {
     const {
@@ -149,13 +165,12 @@ router.post('/workout', authenticateApiKey, async (req, res) => {
     }
 
     // Your existing workout generation logic here
-    // Example: Call AI service or database query
     const workoutPlan = {
       goal: goals,
       fitnessLevel,
       daysPerWeek,
       weeks: planDurationWeeks,
-      days: [] // Populate with your logic
+      days: []
     };
 
     res.json({ data: workoutPlan });
@@ -190,7 +205,7 @@ router.post('/meal-plan', authenticateApiKey, async (req, res) => {
     // Your existing meal plan generation logic here
     const mealPlan = {
       macros: { protein: 0, fat: 0, carbs: 0, calories: calorieTarget || 0 },
-      mealPlan: [] // Populate with your logic
+      mealPlan: []
     };
 
     res.json({ data: mealPlan });
