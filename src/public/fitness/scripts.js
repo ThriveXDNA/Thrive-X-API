@@ -22,7 +22,7 @@ async function fetchUserProfile(apiKey) {
   try {
     const response = await fetch('/fitness/api/auth/validate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
       body: JSON.stringify({ apiKey })
     });
     if (!response.ok) throw new Error('Failed to validate API key');
@@ -344,7 +344,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     console.log('Form submitted:', formId);
-    const apiKey = localStorage.getItem('apiKey') || 'your-real-api-key-here';
+    const apiKey = localStorage.getItem('apiKey') || 'rees-admin-key-789';
     const formData = new FormData(form);
     const unitSystem = unitSystemSelect.value;
 
@@ -368,7 +368,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
       if (formId === 'food-form') {
         response = await fetch('/fitness/api/fitness/food-plate', {
           method: 'POST',
-          headers: { 'X-API-Key': apiKey },
+          headers: { 'x-api-key': apiKey },
           body: formData
         });
       } else {
@@ -397,7 +397,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
           
           response = await fetch('/fitness/api/fitness/workout', {
             method: 'POST',
-            headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+            headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' },
             body: JSON.stringify(jsonData)
           });
         } else if (formId === 'exercise-form') {
@@ -406,7 +406,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
           
           response = await fetch('/fitness/api/fitness/exercise', {
             method: 'POST',
-            headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+            headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' },
             body: JSON.stringify(jsonData)
           });
         } else if (formId === 'nutrition-meal-form') {
@@ -440,7 +440,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
           
           response = await fetch('/fitness/api/fitness/meal-plan', {
             method: 'POST',
-            headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+            headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' },
             body: JSON.stringify(jsonData)
           });
         } else if (formId === 'food-ingredient-directory-form') {
@@ -448,7 +448,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
           
           response = await fetch('/fitness/api/fitness/food-ingredient', {
             method: 'POST',
-            headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+            headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' },
             body: JSON.stringify(jsonData)
           });
         } else if (formId === 'natural-remedies-form') {
@@ -457,7 +457,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
           
           response = await fetch('/fitness/api/fitness/natural-remedies', {
             method: 'POST',
-            headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+            headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' },
             body: JSON.stringify(jsonData)
           });
         }
@@ -673,6 +673,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('.plan-select-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const plan = btn.dataset.plan.split('-')[0];
+      console.log('Plan selected:', btn.dataset.plan, 'Base plan:', plan);
+
       if (plan === 'essential') {
         userProfile.plan = 'essential';
         userProfile.requestsRemaining = 10;
@@ -680,25 +682,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateDropdownOptions();
         modal.style.display = 'none';
         window.location.href = '/fitness/subscribe?plan=essential';
-      } else {
-        try {
-          const apiKey = localStorage.getItem('apiKey');
-          if (!apiKey) throw new Error('No API key found in localStorage');
-          const response = await fetch('/fitness/api/fitness/create-checkout-session', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'X-API-Key': apiKey
-            },
-            body: JSON.stringify({ planId: btn.dataset.plan })
-          });
-          if (!response.ok) throw new Error('Failed to create checkout session');
-          const { id } = await response.json();
-          stripe.redirectToCheckout({ sessionId: id });
-        } catch (error) {
-          console.error('Error creating checkout session:', error);
-          alert('Failed to initiate subscription. Please try again.');
+        return;
+      }
+
+      if (typeof stripe === 'undefined') {
+        console.error('Stripe.js not loaded');
+        alert('Payment system failed to load. Please disable ad blockers and try again.');
+        return;
+      }
+
+      try {
+        const apiKey = localStorage.getItem('apiKey') || 'rees-admin-key-789'; // Fallback for testing
+        console.log('Using API key:', apiKey);
+
+        const response = await fetch('/fitness/api/fitness/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey // Lowercase header
+          },
+          body: JSON.stringify({ planId: btn.dataset.plan })
+        });
+
+        console.log('Fetch response status:', response.status);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to create checkout session: ${response.status} ${errorText}`);
         }
+
+        const data = await response.json();
+        console.log('Checkout session response:', data);
+
+        if (!data.id) {
+          throw new Error('No session ID in response');
+        }
+
+        const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
+        if (error) {
+          throw new Error(`Stripe redirect error: ${error.message}`);
+        }
+      } catch (error) {
+        console.error('Error creating checkout session:', error);
+        alert(`Failed to initiate subscription: ${error.message}. Please try again.`);
       }
     });
   });
