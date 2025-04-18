@@ -59,8 +59,7 @@ router.post('/create-checkout-session', authenticateApiKey, async (req, res) => 
       payment_method_types: ['card'],
       line_items: [
         {
-          price: planPriceIds[planId],
-          quantity: 1
+          price: planPriceIds[planId]
         }
       ],
       mode: 'subscription',
