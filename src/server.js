@@ -1,4 +1,4 @@
-// Fixed Stripe subscription plans to use Essential and env variables
+// Fixed Stripe plans, added /fitness/subscribe route, and corrected limiter typo
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -73,6 +73,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Add route for /fitness/docs
 app.get('/fitness/docs', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'fitness', 'docs.html'));
+});
+
+// Add route for /fitness/subscribe
+app.get('/fitness/subscribe', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'fitness', 'subscribe.html'));
 });
 
 // API key authentication middleware

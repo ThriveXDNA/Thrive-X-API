@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thrive X Fitness API - Subscription Status</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    :root {
+      --primary: #1ECBE1;
+      --highlight: #E1341E;
+      --dark: #333333;
+      --light: #f8f9fa;
+      --sidebar-width: 260px;
+      --shadow: 0 4px 15px rgba(0,0,0,0.2);
+      --gradient-bg: linear-gradient(135deg, #1ECBE1, #0da8bc);
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--dark);
+      line-height: 1.6;
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: var(--sidebar-width);
+      background-color: var(--light);
+      border-right: 1px solid #ddd;
+      padding: 20px 0;
+      height: 100vh;
+      position: fixed;
+      overflow-y: auto;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 0 20px;
+    }
+    .sidebar-logo h1 {
+      font-size: 1.5rem;
+      color: var(--primary);
+      margin-top: 10px;
+    }
+    .sidebar-section {
+      margin-bottom: 20px;
+    }
+    .sidebar-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      color: #777;
+      padding: 0 20px;
+      margin-bottom: 10px;
+    }
+    .sidebar-item {
+      display: block;
+      padding: 10px 20px;
+      color: var(--dark);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+    }
+    .sidebar-item:hover, .sidebar-item.active {
+      background-color: rgba(30, 203, 225, 0.1);
+      border-left-color: var(--primary);
+      color: var(--primary);
+    }
+    .highlight-item {
+      color: var(--highlight);
+    }
+    .highlight-item.active {
+      background-color: rgba(225, 52, 30, 0.1);
+      border-left-color: var(--highlight);
+      color: var(--highlight);
+    }
+    .content-area {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      padding: 30px;
+      width: calc(100% - var(--sidebar-width));
+    }
+    .content-header {
+      margin-bottom: 30px;
+    }
+    .content-header h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: var(--primary);
+    }
+    .tab-navigation {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    .tab-button {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #777;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tab-button:hover {
+      color: var(--primary);
+    }
+    .tab-button.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .message-box {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .success-box {
+      background-color: rgba(30, 203, 225, 0.1);
+      border: 1px solid var(--primary);
+    }
+    .cancel-box {
+      background-color: rgba(225, 52, 30, 0.1);
+      border: 1px solid var(--highlight);
+    }
+    .menu-toggle {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: var(--primary);
+      color: white;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border: none;
+      cursor: pointer;
+      z-index: 100;
+    }
+    @media (max-width: 992px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        transform: none;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 10px;
+      }
+      .sidebar.collapsed {
+        display: none;
+      }
+      .content-area {
+        margin-left: 0;
+        width: 100%;
+      }
+      .menu-toggle {
+        display: flex;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <h1>Thrive X Fitness API</h1>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Navigation</div>
+      <a href="/fitness" class="sidebar-item">Home</a>
+      <a href="/fitness/docs" class="sidebar-item">API Documentation</a>
+      <a href="https://thrivexdna.com" class="sidebar-item">Thrive X DNA Website</a>
+      <a href="/fitness/subscribe" id="sidebar-subscribe-btn" class="sidebar-item highlight-item active">Subscribe to API</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">API Endpoints</div>
+      <a href="/fitness" class="sidebar-item tab-trigger" data-tab="workout">Generate Workout Plan</a>
+      <a href="/fitness" class="sidebar-item tab-trigger" data-tab="exercise">Exercise Details</a>
+      <a href="/fitness" class="sidebar-item tab-trigger" data-tab="nutrition-meal">Nutrition & Meal Plan</a>
+      <a href="/fitness" class="sidebar-item tab-trigger" data-tab="food">Analyze Food Plate</a>
+      <a href="/fitness" class="sidebar-item tab-trigger" data-tab="food-ingredient-directory">Food Ingredient Directory</a>
+      <a href="/fitness" class="sidebar-item tab-trigger" data-tab="natural-remedies">Natural Remedies</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Legal Information</div>
+      <a href="/fitness/docs#terms-of-service" class="sidebar-item">Terms of Service</a>
+      <a href="/fitness/docs#privacy-policy" class="sidebar-item">Privacy Policy</a>
+      <a href="/fitness/docs#subscription-terms" class="sidebar-item">Subscription Terms</a>
+      <a href="/fitness/docs#medical-disclaimer" class="sidebar-item">Medical Disclaimer</a>
+    </div>
+  </aside>
+
+  <!-- Mobile menu toggle -->
+  <button class="menu-toggle" id="menu-toggle">☰</button>
+
+  <!-- Main Content Area -->
+  <main class="content-area">
+    <div class="content-header">
+      <h1>Thrive X Fitness API Interface</h1>
+    </div>
+    <div class="tab-navigation">
+      <button class="tab-button" data-tab="workout">Generate Workout Plan</button>
+      <button class="tab-button" data-tab="exercise">Exercise Details</button>
+      <button class="tab-button" data-tab="nutrition-meal">Nutrition & Meal Plan</button>
+      <button class="tab-button" data-tab="food">Analyze Food Plate</button>
+      <button class="tab-button" data-tab="food-ingredient-directory">Food Ingredient Directory</button>
+      <button class="tab-button" data-tab="natural-remedies">Natural Remedies</button>
+      <button class="tab-button active" data-tab="subscription-status">Subscription Status</button>
+    </div>
+    <div id="workout-tab" class="tab-content">
+      <div class="message-box">
+        <p class="text-gray-600">Please visit the <a href="/fitness" class="text-[var(--primary)] hover:underline">Home page</a> to use the Generate Workout Plan feature.</p>
+      </div>
+    </div>
+    <div id="exercise-tab" class="tab-content">
+      <div class="message-box">
+        <p class="text-gray-600">Please visit the <a href="/fitness" class="text-[var(--primary)] hover:underline">Home page</a> to use the Exercise Details feature.</p>
+      </div>
+    </div>
+    <div id="nutrition-meal-tab" class="tab-content">
+      <div class="message-box">
+        <p class="text-gray-600">Please visit the <a href="/fitness" class="text-[var(--primary)] hover:underline">Home page</a> to use the Nutrition & Meal Plan feature.</p>
+      </div>
+    </div>
+    <div id="food-tab" class="tab-content">
+      <div class="message-box">
+        <p class="text-gray-600">Please visit the <a href="/fitness" class="text-[var(--primary)] hover:underline">Home page</a> to use the Analyze Food Plate feature.</p>
+      </div>
+    </div>
+    <div id="food-ingredient-directory-tab" class="tab-content">
+      <div class="message-box">
+        <p class="text-gray-600">Please visit the <a href="/fitness" class="text-[var(--primary)] hover:underline">Home page</a> to use the Food Ingredient Directory feature.</p>
+      </div>
+    </div>
+    <div id="natural-remedies-tab" class="tab-content">
+      <div class="message-box">
+        <p class="text-gray-600">Please visit the <a href="/fitness" class="text-[var(--primary)] hover:underline">Home page</a> to use the Natural Remedies feature.</p>
+      </div>
+    </div>
+    <div id="subscription-status-tab" class="tab-content active">
+      <!-- Success Message -->
+      <div id="success-message" class="message-box success-box hidden">
+        <h2 class="text-xl font-bold text-[var(--primary)] mb-4">Subscription Successful!</h2>
+        <p class="text-gray-600 mb-6">Thank you for subscribing to Thrive X Fitness API! Your plan is now active, and you can start using your API requests.</p>
+        <a href="/fitness/dashboard" class="inline-block bg-[var(--primary)] text-white px-6 py-2 rounded hover:bg-[#0da8bc]">
+          <i class="fas fa-tachometer-alt mr-2"></i>Go to Dashboard
+        </a>
+      </div>
+      <!-- Cancel Message -->
+      <div id="cancel-message" class="message-box cancel-box hidden">
+        <h2 class="text-xl font-bold text-[var(--highlight)] mb-4">Subscription Canceled</h2>
+        <p class="text-gray-600 mb-6">Your subscription was not completed. Would you like to try again or return to the homepage?</p>
+        <div class="flex justify-center gap-4">
+          <a href="/fitness/subscribe" class="inline-block bg-[var(--highlight)] text-white px-6 py-2 rounded hover:bg-[#c12b18]">
+            <i class="fas fa-redo-alt mr-2"></i>Try Again
+          </a>
+          <a href="/fitness" class="inline-block bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">
+            <i class="fas fa-home mr-2"></i>Return Home
+          </a>
+        </div>
+      </div>
+      <!-- Fallback Message -->
+      <div id="fallback-message" class="message-box">
+        <h2 class="text-xl font-bold text-gray-600 mb-4">Invalid Request</h2>
+        <p class="text-gray-600 mb-6">No subscription status provided. Please return to the homepage.</p>
+        <a href="/fitness" class="inline-block bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">
+          <i class="fas fa-home mr-2"></i>Return Home
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <script src="/fitness/scripts.js" defer></script>
+  <script>
+    // Mobile menu toggle
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      menuToggle.textContent = sidebar.classList.contains('collapsed') ? '☰' : '✕';
+    });
+
+    // Tab navigation and query parameter handling
+    document.addEventListener('DOMContentLoaded', () => {
+      const tabButtons = document.querySelectorAll('.tab-button');
+      const tabContents = document.querySelectorAll('.tab-content');
+
+      // Handle tab switching
+      tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          tabButtons.forEach(btn => btn.classList.remove('active'));
+          tabContents.forEach(content => content.classList.remove('active'));
+          button.classList.add('active');
+          document.getElementById(`${button.dataset.tab}-tab`).classList.add('active');
+        });
+      });
+
+      // Show success or cancel message based on query parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const isSuccess = urlParams.get('success') === 'true';
+      const isCanceled = urlParams.get('canceled') === 'true';
+
+      const successMessage = document.getElementById('success-message');
+      const cancelMessage = document.getElementById('cancel-message');
+      const fallbackMessage = document.getElementById('fallback-message');
+
+      if (isSuccess) {
+        successMessage.classList.remove('hidden');
+        fallbackMessage.classList.add('hidden');
+      } else if (isCanceled) {
+        cancelMessage.classList.remove('hidden');
+        fallbackMessage.classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
