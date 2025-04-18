@@ -691,40 +691,54 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      try {
-        const apiKey = localStorage.getItem('apiKey') || 'rees-admin-key-789'; // Fallback for testing
-        console.log('Using API key:', apiKey);
+      async function attemptCheckout(attempt = 1) {
+        try {
+          const apiKey = localStorage.getItem('apiKey') || 'rees-admin-key-789';
+          console.log(`Attempt ${attempt} - Using API key:`, apiKey);
 
-        const response = await fetch('/fitness/api/fitness/create-checkout-session', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey // Lowercase header
-          },
-          body: JSON.stringify({ planId: btn.dataset.plan })
-        });
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-        console.log('Fetch response status:', response.status);
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Failed to create checkout session: ${response.status} ${errorText}`);
+          const response = await fetch('/fitness/api/fitness/create-checkout-session', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey
+            },
+            body: JSON.stringify({ planId: btn.dataset.plan }),
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+          console.log(`Attempt ${attempt} - Fetch response status:`, response.status);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to create checkout session: ${response.status} ${errorText}`);
+          }
+
+          const data = await response.json();
+          console.log(`Attempt ${attempt} - Checkout session response:`, data);
+
+          if (!data.id) {
+            throw new Error('No session ID in response');
+          }
+
+          const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
+          if (error) {
+            throw new Error(`Stripe redirect error: ${JSON.stringify(error)}`);
+          }
+        } catch (error) {
+          console.error(`Attempt ${attempt} - Error creating checkout session:`, error);
+          if (attempt === 1 && error.name !== 'AbortError') {
+            console.log('Retrying checkout session creation...');
+            return attemptCheckout(2);
+          }
+          alert(`Failed to initiate subscription: ${error.message}. Please check your network and try again.`);
         }
-
-        const data = await response.json();
-        console.log('Checkout session response:', data);
-
-        if (!data.id) {
-          throw new Error('No session ID in response');
-        }
-
-        const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
-        if (error) {
-          throw new Error(`Stripe redirect error: ${error.message}`);
-        }
-      } catch (error) {
-        console.error('Error creating checkout session:', error);
-        alert(`Failed to initiate subscription: ${error.message}. Please try again.`);
       }
+
+      await attemptCheckout();
     });
   });
 
@@ -738,6 +752,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       reader.readAsDataURL(file);
     } else {
       foodImagePreview.innerHTML = '';
+    }
+  });
+
+  // Handle retry subscription from /fitness/subscribe
+  document.addEventListener('openSubscriptionModal', () => {
+    const modal = document.getElementById('subscription-modal');
+    if (modal) {
+      modal.style.display = 'block';
+      console.log('Subscription modal opened via retry button');
+    } else {
+      console.warn('Subscription modal not found, redirecting to /fitness');
     }
   });
 });

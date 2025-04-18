@@ -253,7 +253,7 @@
     </div>
     <div id="natural-remedies-tab" class="tab-content">
       <div class="message-box">
-        <p class="text-gray-600">Please visitëm; the <a href="/fitness" class="text-[var(--primary)] hover:underline">Home page</a> to use the Natural Remedies feature.</p>
+        <p class="text-gray-600">Please visit the <a href="/fitness" class="text-[var(--primary)] hover:underline">Home page</a> to use the Natural Remedies feature.</p>
       </div>
     </div>
     <div id="subscription-status-tab" class="tab-content active">
@@ -270,7 +270,7 @@
         <h2 class="text-xl font-bold text-[var(--highlight)] mb-4">Subscription Canceled</h2>
         <p class="text-gray-600 mb-6">Your subscription was not completed. Would you like to try again or return to the homepage?</p>
         <div class="flex justify-center gap-4">
-          <a href="#" id="retry-subscribe-btn" class="inline-block bg-[var(--highlight)] text-white px-6 py-2 rounded hover:bg-[#c12b18]">
+          <a href="/fitness" id="retry-subscribe-btn" class="inline-block bg-[var(--highlight)] text-white px-6 py-2 rounded hover:bg-[#c12b18]">
             <i class="fas fa-redo-alt mr-2"></i>Try Again
           </a>
           <a href="/fitness" class="inline-block bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">
@@ -303,6 +303,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       const tabButtons = document.querySelectorAll('.tab-button');
       const tabContents = document.querySelectorAll('.tab-content');
+      const retrySubscribeBtn = document.getElementById('retry-subscribe-btn');
 
       // Handle tab switching
       tabButtons.forEach(button => {
@@ -330,6 +331,20 @@
         cancelMessage.classList.remove('hidden');
         fallbackMessage.classList.add('hidden');
       }
+
+      // Handle retry button to trigger subscription modal
+      retrySubscribeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        // Dispatch custom event to open subscription modal
+        const event = new Event('openSubscriptionModal');
+        document.dispatchEvent(event);
+        // Fallback: redirect to /fitness if modal doesn't open
+        setTimeout(() => {
+          if (!document.getElementById('subscription-modal')?.style.display === 'block') {
+            window.location.href = '/fitness';
+          }
+        }, 500);
+      });
     });
   </script>
 </body>
