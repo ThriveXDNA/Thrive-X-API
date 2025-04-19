@@ -19,6 +19,7 @@ console.log('Loaded env - SUPABASE_URL:', process.env.SUPABASE_URL ? 'set' : 'no
 console.log('Loaded env - SUPABASE_KEY:', process.env.SUPABASE_KEY ? 'set' : 'not set');
 console.log('Loaded env - REDIS_URL:', process.env.REDIS_URL ? process.env.REDIS_URL : 'not set');
 console.log('Loaded env - ADMIN_API_KEY:', process.env.ADMIN_API_KEY ? 'set' : 'not set');
+console.log('Loaded env - STRIPE_PRICE_ESSENTIAL:', process.env.STRIPE_PRICE_ESSENTIAL ? 'set' : 'not set');
 
 // Configuration
 const app = express();
@@ -83,9 +84,8 @@ app.get('/fitness/subscribe', (req, res) => {
 // API key authentication middleware
 const authenticateApiKey = async (req, res, next) => {
   console.log('Entering authenticateApiKey middleware for path:', req.path);
-  console.log('Request headers:', JSON.stringify(req.headers));
   try {
-    const apiKey = req.headers['x-api-key'] || req.headers['X-API-Key'] || req.headers['X-Api-Key'];
+    const apiKey = req.headers['x-api-key'] || req.headers['X-API-Key'] || req.headers['x-api-key'] || req.headers['X-Api-Key'];
     console.log('Extracted API key:', apiKey || 'none provided');
 
     if (!apiKey) {
@@ -146,12 +146,19 @@ const limiter = rateLimit({
 // Routes
 try {
   app.use('/fitness/api/fitness', authenticateApiKey, limiter, fitnessRoutes);
+  app.use('/fitness/api/auth', fitnessRoutes); // Explicitly mount /auth routes
   app.use('/fitness', router);
-  console.log('Routes mounted successfully');
+  console.log('Routes mounted successfully - /fitness/api/fitness and /fitness/api/auth');
 } catch (err) {
   console.error('Error mounting routes:', err.message);
-  process.exit(1); // Explicitly exit to catch in logs
+  process.exit(1);
 }
+
+// Debug route for /auth/validate
+app.post('/fitness/api/auth/validate', (req, res) => {
+  console.log('Debug: /fitness/api/auth/validate route hit');
+  res.status(200).json({ message: 'Debug: /auth/validate route is registered' });
+});
 
 // Root route
 app.get('/', (req, res) => {
