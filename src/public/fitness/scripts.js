@@ -25,7 +25,11 @@ async function fetchUserProfile(apiKey) {
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
       body: JSON.stringify({ apiKey })
     });
-    if (!response.ok) throw new Error(`Failed to validate API key: ${response.status}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to validate API key: ${response.status}, ${errorText}`);
+      throw new Error(`Failed to validate API key: ${response.status}`);
+    }
     const data = await response.json();
     userProfile = {
       plan: data.plan || 'essential',
@@ -673,8 +677,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.querySelectorAll('.plan-select-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const planId = btn.dataset.plan;
+      const planId = btn.dataset.plan.toLowerCase(); // Ensure lowercase
       console.log('Plan selected:', planId);
+
+      const validPlans = ['essential', 'essential-yearly', 'core', 'core-yearly', 'elite', 'elite-yearly', 'ultimate', 'ultimate-yearly'];
+      if (!validPlans.includes(planId)) {
+        console.error(`Invalid plan: ${planId}`);
+        alert(`Invalid plan: ${planId}. Please select a valid plan.`);
+        return;
+      }
 
       if (planId.startsWith('essential')) {
         userProfile.plan = 'essential';
@@ -694,16 +705,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       async function attemptCheckout(attempt = 1) {
         try {
-          const apiKey = localStorage.getItem('apiKey');
+          const apiKey = localStorage.getItem('apiKey') || 'rees-admin-key-789';
           if (!apiKey) {
             throw new Error('No API key found. Please save an API key in the settings.');
           }
           console.log(`Attempt ${attempt} - Using API key:`, apiKey);
 
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000); // Increased to 15s
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-          const response = await fetch('/fitness/api/fitness/create-checkout-session', {
+          const response = await fetch('https://thrive-x-api.vercel.app/fitness/api/fitness/create-checkout-session', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -714,26 +725,26 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
 
           clearTimeout(timeoutId);
-          console.log(`Attempt ${attempt} - Fetch response status:`, response.status);
+          const responseText = await response.text();
+          console.log(`Attempt ${attempt} - Fetch response: ${response.status}, ${responseText}`);
 
           if (!response.ok) {
-            let errorText;
+            let errorData;
             try {
-              const errorData = await response.json();
-              errorText = errorData.error || await response.text();
+              errorData = JSON.parse(responseText);
             } catch {
-              errorText = await response.text();
+              throw new Error(`Server error: ${response.status}, ${responseText}`);
             }
             if (response.status === 401) {
               throw new Error('Invalid API key. Please check your API key and try again.');
             } else if (response.status === 400) {
-              throw new Error(`Invalid request: ${errorText}`);
+              throw new Error(`Invalid request: ${errorData.error || responseText}`);
             } else {
-              throw new Error(`Server error: ${response.status} - ${errorText}`);
+              throw new Error(`Server error: ${response.status}, ${errorData.error || responseText}`);
             }
           }
 
-          const data = await response.json();
+          const data = JSON.parse(responseText);
           console.log(`Attempt ${attempt} - Checkout session response:`, data);
 
           if (!data.id) {
@@ -746,9 +757,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         } catch (error) {
           console.error(`Attempt ${attempt} - Error creating checkout session:`, error);
-          if (attempt === 1 && error.name !== 'AbortError') {
-            console.log('Retrying checkout session creation...');
-            return attemptCheckout(2);
+          if (attempt < 3 && error.name !== 'AbortError' && !error.message.includes('Invalid API key')) {
+            console.log(`Retrying checkout session creation (attempt ${attempt + 1})...`);
+            return attemptCheckout(attempt + 1);
           }
           let userMessage = 'Failed to initiate subscription. ';
           if (error.name === 'AbortError') {
@@ -756,9 +767,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           } else if (error.message.includes('Invalid API key')) {
             userMessage += 'Invalid API key. Please update your API key in the settings.';
           } else if (error.message.includes('Invalid request')) {
-            userMessage += `Invalid plan selection: ${error.message}. Please try another plan.`;
+            userMessage += `Invalid plan selection: ${error.message}. Please try another plan or contact support.`;
           } else if (error.message.includes('Stripe redirect error')) {
-            userMessage += `Payment provider error: ${error.message}. Please try again later.`;
+            userMessage += `Payment provider error: ${error.message}. Please try again later or disable ad blockers.`;
           } else {
             userMessage += 'An unexpected error occurred. Please try again or contact support.';
           }
