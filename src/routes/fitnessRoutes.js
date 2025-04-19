@@ -93,15 +93,10 @@ router.post('/create-checkout-session', authenticateApiKey, async (req, res) => 
       return res.status(400).json({ error: 'Invalid price ID' });
     }
 
-    // Configure line_items based on billing type
+    // All plans are metered, so only set price without quantity
     const lineItem = {
       price: priceId
     };
-
-    // Only set quantity for non-metered billing
-    if (price.type !== 'metered') {
-      lineItem.quantity = 1;
-    }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
