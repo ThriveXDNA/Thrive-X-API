@@ -10,7 +10,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // Middleware to authenticate API key
 async function authenticateApiKey(req, res, next) {
   const apiKey = req.headers['x-api-key'];
-  if (!apiKey) return res.status(401).json({ error: 'API key required' });
+  if (!apiKey) {
+    console.error('No API key provided');
+    return res.status(401).json({ error: 'API key required' });
+  }
 
   console.log('Extracted API key:', apiKey);
   console.log('Querying Supabase for API key:', apiKey);
@@ -31,6 +34,31 @@ async function authenticateApiKey(req, res, next) {
   req.user = data;
   next();
 }
+
+// Validate API key
+router.post('/auth/validate', async (req, res) => {
+  const apiKey = req.headers['x-api-key'];
+  if (!apiKey) {
+    console.error('No API key provided for /auth/validate');
+    return res.status(401).json({ error: 'API key required' });
+  }
+
+  console.log('Validating API key:', apiKey);
+
+  const { data, error } = await supabase
+    .from('users')
+    .select('plan, role')
+    .eq('api_key', apiKey)
+    .single();
+
+  if (error || !data) {
+    console.error('Supabase error or no user found for /auth/validate:', error);
+    return res.status(401).json({ error: 'Invalid API key' });
+  }
+
+  console.log('API key validated:', data);
+  res.json({ plan: data.plan, role: data.role });
+});
 
 // Create checkout session
 router.post('/create-checkout-session', authenticateApiKey, async (req, res) => {
@@ -70,7 +98,7 @@ router.post('/create-checkout-session', authenticateApiKey, async (req, res) => 
       price: priceId
     };
 
-    // For non-metered billing, explicitly set quantity to 1
+    // Only set quantity for non-metered billing
     if (price.type !== 'metered') {
       lineItem.quantity = 1;
     }
