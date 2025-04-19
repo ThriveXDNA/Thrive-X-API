@@ -75,13 +75,14 @@ router.post('/create-checkout-session', authenticateApiKey, async (req, res) => 
     'ultimate': process.env.STRIPE_PRICE_ULTIMATE,
     'core-yearly': process.env.STRIPE_PRICE_CORE_YEARLY,
     'elite-yearly': process.env.STRIPE_PRICE_ELITE_YEARLY,
-    'ultimate-yearly': process.env.STRIPE_PRICE_ULTIMATE_YEARLY
+    'ultimate-yearly': process.env.STRIPE_PRICE_ULTIMATE_YEARLY,
+    'essential': process.env.STRIPE_PRICE_ESSENTIAL // Added essential plan
   };
 
   const priceId = planPriceIds[planId];
   if (!priceId) {
     console.error('Invalid planId:', planId);
-    return res.status(400).json({ error: 'Invalid planId' });
+    return res.status(400).json({ error: `Invalid planId: ${planId}` });
   }
 
   try {
