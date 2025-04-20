@@ -4,6 +4,12 @@
 const LB_TO_KG = 0.45359237;
 const IN_TO_CM = 2.54;
 
+// Disposable email domains
+const disposableEmailDomains = [
+  'mailinator.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com',
+  'sharklasers.com', 'throwawaymail.com', 'yopmail.com', 'dispostable.com'
+];
+
 // DOM elements
 const unitSystemSelect = document.getElementById('unit-system');
 
@@ -16,6 +22,62 @@ let userProfile = {
   role: 'user',
   requestsRemaining: 10
 };
+
+// Prompt email verification
+async function promptEmailVerification(email) {
+  const verificationModal = document.createElement('div');
+  verificationModal.innerHTML = `
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+      <div style="background: white; padding: 20px; border-radius: 8px; max-width: 400px;">
+        <h2>Verify Your Email</h2>
+        <p>A verification code was sent to ${email}.</p>
+        <input type="text" id="verification-code" placeholder="Enter 6-digit code" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+        <button id="verify-btn" style="padding: 8px 16px;">Verify</button>
+        <button id="resend-btn" style="padding: 8px 16px; margin-left: 10px;">Resend Code</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(verificationModal);
+
+  // Send initial code
+  await fetch('https://thrive-x-api.vercel.app/fitness/api/fitness/send-verification-code', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+
+  document.getElementById('verify-btn').addEventListener('click', async () => {
+    const code = document.getElementById('verification-code').value.trim();
+    if (!code.match(/^\d{6}$/)) {
+      alert('Please enter a valid 6-digit code.');
+      return;
+    }
+
+    const response = await fetch('https://thrive-x-api.vercel.app/fitness/api/fitness/verify-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      alert(`Verification failed: ${errorText}`);
+      return;
+    }
+
+    verificationModal.remove();
+    console.log('Email verified for:', email);
+  });
+
+  document.getElementById('resend-btn').addEventListener('click', async () => {
+    await fetch('https://thrive-x-api.vercel.app/fitness/api/fitness/send-verification-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    alert('New verification code sent.');
+  });
+}
 
 // Fetch and validate user profile with API key
 async function fetchUserProfile(apiKey) {
@@ -103,7 +165,7 @@ function updateDropdownOptions() {
   }
 }
 
-// Format API response into HTML (unchanged)
+// Format API response into HTML
 function formatResult(result, endpoint) {
   if (!result) return '<p>No valid data returned.</p>';
   const data = result.data || result;
@@ -284,7 +346,7 @@ function formatResult(result, endpoint) {
   return html;
 }
 
-// Render pie charts for nutrition and food plate results (unchanged)
+// Render pie charts for nutrition and food plate results
 function renderCharts(result, endpoint, container) {
   if (!result) return;
   const data = result.data || result;
@@ -334,7 +396,7 @@ function renderCharts(result, endpoint, container) {
   }
 }
 
-// Handle form submissions (unchanged)
+// Handle form submissions
 async function handleFormSubmit(formId, resultId, endpoint) {
   const form = document.getElementById(formId);
   const resultContainer = document.getElementById(resultId);
@@ -501,7 +563,7 @@ async function handleFormSubmit(formId, resultId, endpoint) {
   });
 }
 
-// Copy result to clipboard (unchanged)
+// Copy result to clipboard
 function copyResult(resultId) {
   const content = document.getElementById(resultId).querySelector('.result-content').innerText;
   navigator.clipboard.writeText(content).then(() => {
@@ -511,7 +573,7 @@ function copyResult(resultId) {
   });
 }
 
-// Print result (unchanged)
+// Print result
 function printResult(resultId) {
   const content = document.getElementById(resultId).querySelector('.result-content').innerHTML;
   const printWindow = window.open('', '_blank');
@@ -541,7 +603,7 @@ function printResult(resultId) {
   printWindow.print();
 }
 
-// Initialize form listeners (unchanged)
+// Initialize form listeners
 handleFormSubmit('workout-form', 'workout-result', 'generateWorkoutPlan');
 handleFormSubmit('exercise-form', 'exercise-result', 'exerciseDetails');
 handleFormSubmit('nutrition-meal-form', 'nutrition-meal-result', 'nutritionMealPlan');
@@ -553,7 +615,7 @@ handleFormSubmit('natural-remedies-form', 'natural-remedies-result', 'naturalRem
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM fully loaded and scripts initialized');
   
-  // Tab navigation setup (unchanged)
+  // Tab navigation setup
   const tabs = document.querySelectorAll('.tab-button');
   const contents = document.querySelectorAll('.tab-content');
   const sidebarItems = document.querySelectorAll('.tab-trigger');
@@ -615,8 +677,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   const foodImagePreview = document.getElementById('food-image-preview');
 
   const savedApiKey = localStorage.getItem('apiKey');
-  if (savedApiKey) {
-    apiKeyInput.value = savedApiKey;
+  const savedEmail = localStorage.getItem('userEmail');
+  if (savedApiKey && savedEmail) {
+    // Check email verification
+    const response = await fetch('https://thrive-x-api.vercel.app/fitness/api/fitness/check-email-verified', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': savedApiKey },
+      body: JSON.stringify({ email: savedEmail })
+    });
+
+    if (response.ok) {
+      const { verified } = await response.json();
+      if (!verified) {
+        await promptEmailVerification(savedEmail);
+      } else {
+        await fetchUserProfile(savedApiKey);
+      }
+    } else {
+      console.error('Error checking email verification:', await response.text());
+      await promptEmailVerification(savedEmail);
+    }
+  } else if (savedApiKey) {
     await fetchUserProfile(savedApiKey);
   }
 
@@ -677,7 +758,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.querySelectorAll('.plan-select-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const planId = btn.dataset.plan.toLowerCase(); // Ensure lowercase
+      const planId = btn.dataset.plan.toLowerCase();
       console.log('Plan selected:', planId);
 
       const validPlans = ['essential', 'essential-yearly', 'core', 'core-yearly', 'elite', 'elite-yearly', 'ultimate', 'ultimate-yearly'];
@@ -687,13 +768,49 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
+      const emailInput = document.getElementById('user-email');
+      const email = emailInput.value.trim();
+      if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
+        alert('Please enter a valid email address.');
+        return;
+      }
+      if (disposableEmailDomains.some(domain => email.toLowerCase().endsWith(`@${domain}`))) {
+        alert('Disposable email addresses are not allowed. Please use a permanent email.');
+        return;
+      }
+
       if (planId.startsWith('essential')) {
-        userProfile.plan = 'essential';
-        userProfile.requestsRemaining = 10;
-        localStorage.setItem('userProfile', JSON.stringify(userProfile));
-        updateDropdownOptions();
-        modal.style.display = 'none';
-        window.location.href = '/fitness/subscribe?plan=essential';
+        try {
+          const response = await fetch('https://thrive-x-api.vercel.app/fitness/api/fitness/activate-free-plan', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ planId, email })
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to activate free plan: ${response.status}, ${errorText}`);
+          }
+
+          const data = await response.json();
+          localStorage.setItem('apiKey', data.apiKey);
+          userProfile.plan = data.plan || 'essential';
+          userProfile.requestsRemaining = data.requestsRemaining || 10;
+          userProfile.role = data.role || 'user';
+          localStorage.setItem('userProfile', JSON.stringify(userProfile));
+          localStorage.setItem('userEmail', email);
+          updateDropdownOptions();
+          updateRequestCounter();
+          modal.style.display = 'none';
+          console.log('Essential plan activated:', data);
+          await promptEmailVerification(email);
+          window.location.href = '/fitness/subscribe?plan=essential';
+        } catch (error) {
+          console.error('Error activating essential plan:', error);
+          alert(`Failed to activate Essential plan: ${error.message}`);
+        }
         return;
       }
 
@@ -705,22 +822,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       async function attemptCheckout(attempt = 1) {
         try {
-          const apiKey = localStorage.getItem('apiKey') || 'rees-admin-key-789';
-          if (!apiKey) {
-            throw new Error('No API key found. Please save an API key in the settings.');
-          }
-          console.log(`Attempt ${attempt} - Using API key:`, apiKey);
-
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 15000);
 
           const response = await fetch('https://thrive-x-api.vercel.app/fitness/api/fitness/create-checkout-session', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': apiKey
+              'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ planId }),
+            body: JSON.stringify({ planId, email }),
             signal: controller.signal
           });
 
@@ -735,9 +845,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch {
               throw new Error(`Server error: ${response.status}, ${responseText}`);
             }
-            if (response.status === 401) {
-              throw new Error('Invalid API key. Please check your API key and try again.');
-            } else if (response.status === 400) {
+            if (response.status === 400) {
               throw new Error(`Invalid request: ${errorData.error || responseText}`);
             } else {
               throw new Error(`Server error: ${response.status}, ${errorData.error || responseText}`);
@@ -753,23 +861,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
           if (error) {
-            throw new Error(`Stripe redirect error: ${error.message} (Code: ${error.code || 'N/A'})`);
+            console.error('Stripe redirect error details:', error);
+            throw new Error(`Stripe redirect error: ${error.message} (Code: ${error.code || 'N/A'}, Type: ${error.type || 'N/A'})`);
           }
         } catch (error) {
           console.error(`Attempt ${attempt} - Error creating checkout session:`, error);
-          if (attempt < 3 && error.name !== 'AbortError' && !error.message.includes('Invalid API key')) {
+          if (attempt < 3 && error.name !== 'AbortError') {
             console.log(`Retrying checkout session creation (attempt ${attempt + 1})...`);
             return attemptCheckout(attempt + 1);
           }
-          let userMessage = 'Failed to initiate subscription. ';
+          let userMessage = 'Something went wrong. ';
           if (error.name === 'AbortError') {
             userMessage += 'Request timed out. Please check your network and try again.';
-          } else if (error.message.includes('Invalid API key')) {
-            userMessage += 'Invalid API key. Please update your API key in the settings.';
           } else if (error.message.includes('Invalid request')) {
             userMessage += `Invalid plan selection: ${error.message}. Please try another plan or contact support.`;
           } else if (error.message.includes('Stripe redirect error')) {
-            userMessage += `Payment provider error: ${error.message}. Please try again later or disable ad blockers.`;
+            userMessage += `Payment provider error: ${error.message}. Please disable ad blockers, ensure a stable network, and try again.`;
           } else {
             userMessage += 'An unexpected error occurred. Please try again or contact support.';
           }

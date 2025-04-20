@@ -19,7 +19,8 @@ console.log('Loaded env - SUPABASE_URL:', process.env.SUPABASE_URL ? 'set' : 'no
 console.log('Loaded env - SUPABASE_KEY:', process.env.SUPABASE_KEY ? 'set' : 'not set');
 console.log('Loaded env - REDIS_URL:', process.env.REDIS_URL ? process.env.REDIS_URL : 'not set');
 console.log('Loaded env - ADMIN_API_KEY:', process.env.ADMIN_API_KEY ? 'set' : 'not set');
-console.log('Loaded env - STRIPE_PRICE_ESSENTIAL:', process.env.STRIPE_PRICE_ESSENTIAL ? 'set' : 'not set');
+console.log('Loaded env - EMAIL_USER:', process.env.EMAIL_USER ? 'set' : 'not set');
+console.log('Loaded env - EMAIL_PASS:', process.env.EMAIL_PASS ? 'set' : 'not set');
 
 // Configuration
 const app = express();
@@ -51,8 +52,8 @@ try {
 
 // Subscription plans
 const subscriptionPlans = {
-  'essential': { id: 'essential', name: 'Essential', price: 0, priceId: process.env.STRIPE_PRICE_ESSENTIAL, description: '10 requests/month', requests: 10 },
-  'essential-yearly': { id: 'essential-yearly', name: 'Essential', price: 0, priceId: process.env.STRIPE_PRICE_ESSENTIAL_YEARLY, description: '10 requests/month', requests: 10 },
+  'essential': { id: 'essential', name: 'Essential', price: 0, description: '10 requests/month', requests: 10 },
+  'essential-yearly': { id: 'essential-yearly', name: 'Essential', price: 0, description: '10 requests/month', requests: 10 },
   'core': { id: 'core', name: 'Core', price: 14.99, priceId: process.env.STRIPE_PRICE_CORE, description: '500 requests/month', requests: 500 },
   'core-yearly': { id: 'core-yearly', name: 'Core', price: 149.90, priceId: process.env.STRIPE_PRICE_CORE_YEARLY, description: '500 requests/month', requests: 500 },
   'elite': { id: 'elite', name: 'Elite', price: 49.99, priceId: process.env.STRIPE_PRICE_ELITE, description: '2,000 requests/month', requests: 2000 },
@@ -145,8 +146,8 @@ const limiter = rateLimit({
 
 // Routes
 try {
-  app.use('/fitness/api/fitness', authenticateApiKey, limiter, fitnessRoutes);
-  app.use('/fitness/api/auth', fitnessRoutes); // Explicitly mount /auth routes
+  app.use('/fitness/api/fitness', limiter, fitnessRoutes);
+  app.use('/fitness/api/auth', fitnessRoutes);
   app.use('/fitness', router);
   console.log('Routes mounted successfully - /fitness/api/fitness and /fitness/api/auth');
 } catch (err) {

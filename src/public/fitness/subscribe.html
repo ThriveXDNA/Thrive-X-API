@@ -134,6 +134,10 @@
       background-color: rgba(225, 52, 30, 0.1);
       border: 1px solid var(--highlight);
     }
+    .essential-box {
+      background-color: rgba(30, 203, 225, 0.1);
+      border: 1px solid var(--primary);
+    }
     .menu-toggle {
       display: none;
       position: fixed;
@@ -260,7 +264,7 @@
       <!-- Success Message -->
       <div id="success-message" class="message-box success-box hidden">
         <h2 class="text-xl font-bold text-[var(--primary)] mb-4">Subscription Successful!</h2>
-        <p class="text-gray-600 mb-6">Thank you for subscribing to Thrive X Fitness API! Your plan is now active, and you can start using your API requests.</p>
+        <p class="text-gray-600 mb-6">Thank you for subscribing to Thrive X Fitness API! Your plan is now active. Please check your email for your API key and verification instructions.</p>
         <a href="/fitness/dashboard" class="inline-block bg-[var(--primary)] text-white px-6 py-2 rounded hover:bg-[#0da8bc]">
           <i class="fas fa-tachometer-alt mr-2"></i>Go to Dashboard
         </a>
@@ -277,6 +281,14 @@
             <i class="fas fa-home mr-2"></i>Return Home
           </a>
         </div>
+      </div>
+      <!-- Essential Plan Message -->
+      <div id="essential-message" class="message-box essential-box hidden">
+        <h2 class="text-xl font-bold text-[var(--primary)] mb-4">Essential Plan Activated!</h2>
+        <p class="text-gray-600 mb-6">Your Essential plan has been activated. Please check your email for your API key and verification instructions to start using the API.</p>
+        <a href="/fitness/dashboard" class="inline-block bg-[var(--primary)] text-white px-6 py-2 rounded hover:bg-[#0da8bc]">
+          <i class="fas fa-tachometer-alt mr-2"></i>Go to Dashboard
+        </a>
       </div>
       <!-- Fallback Message -->
       <div id="fallback-message" class="message-box">
@@ -315,21 +327,37 @@
         });
       });
 
-      // Show success or cancel message based on query parameter
+      // Show success, cancel, or essential message based on query parameter
       const urlParams = new URLSearchParams(window.location.search);
       const isSuccess = urlParams.get('success') === 'true';
       const isCanceled = urlParams.get('canceled') === 'true';
+      const isEssential = urlParams.get('plan') === 'essential';
 
       const successMessage = document.getElementById('success-message');
       const cancelMessage = document.getElementById('cancel-message');
+      const essentialMessage = document.getElementById('essential-message');
       const fallbackMessage = document.getElementById('fallback-message');
 
       if (isSuccess) {
         successMessage.classList.remove('hidden');
+        cancelMessage.classList.add('hidden');
+        essentialMessage.classList.add('hidden');
         fallbackMessage.classList.add('hidden');
       } else if (isCanceled) {
         cancelMessage.classList.remove('hidden');
+        successMessage.classList.add('hidden');
+        essentialMessage.classList.add('hidden');
         fallbackMessage.classList.add('hidden');
+      } else if (isEssential) {
+        essentialMessage.classList.remove('hidden');
+        successMessage.classList.add('hidden');
+        cancelMessage.classList.add('hidden');
+        fallbackMessage.classList.add('hidden');
+      } else {
+        fallbackMessage.classList.remove('hidden');
+        successMessage.classList.add('hidden');
+        cancelMessage.classList.add('hidden');
+        essentialMessage.classList.add('hidden');
       }
 
       // Handle retry button to trigger subscription modal
