@@ -10,11 +10,11 @@ const disposableEmailDomains = [
   'sharklasers.com', 'throwawaymail.com', 'yopmail.com', 'dispostable.com'
 ];
 
-// DOM elements
+// DOM elements - with safe access
 const unitSystemSelect = document.getElementById('unit-system');
 
-// Stripe initialization (replace with your real Stripe LIVE public key)
-const stripe = Stripe('pk_live_51xxxxx'); // Replace with your actual LIVE Stripe public key
+// Stripe initialization (dynamically loaded from server config)
+let stripe;
 
 // User profile object
 let userProfile = {
@@ -22,6 +22,28 @@ let userProfile = {
   role: 'user',
   requestsRemaining: 10
 };
+
+// Initialize Stripe with publishable key from server
+async function initializeStripe() {
+  try {
+    const response = await fetch('/fitness/config');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch Stripe config: ${response.status}`);
+    }
+    const { stripePublishableKey } = await response.json();
+    if (stripePublishableKey) {
+      stripe = Stripe(stripePublishableKey);
+      console.log('Stripe initialized with publishable key');
+      return true;
+    } else {
+      console.error('No Stripe publishable key found in config');
+      return false;
+    }
+  } catch (error) {
+    console.error('Failed to load Stripe configuration:', error);
+    return false;
+  }
+}
 
 // Prompt email verification
 async function promptEmailVerification(email) {
@@ -40,42 +62,59 @@ async function promptEmailVerification(email) {
   document.body.appendChild(verificationModal);
 
   // Send initial code
-  await fetch('https://thrive-x-api.vercel.app/fitness/api/fitness/send-verification-code', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email })
-  });
+  try {
+    await fetch('/fitness/api/fitness/send-verification-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+  } catch (error) {
+    console.error('Error sending verification code:', error);
+  }
 
   document.getElementById('verify-btn').addEventListener('click', async () => {
-    const code = document.getElementById('verification-code').value.trim();
+    const codeInput = document.getElementById('verification-code');
+    if (!codeInput) return;
+    
+    const code = codeInput.value.trim();
     if (!code.match(/^\d{6}$/)) {
       alert('Please enter a valid 6-digit code.');
       return;
     }
 
-    const response = await fetch('https://thrive-x-api.vercel.app/fitness/api/fitness/verify-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, code })
-    });
+    try {
+      const response = await fetch('/fitness/api/fitness/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code })
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      alert(`Verification failed: ${errorText}`);
-      return;
+      if (!response.ok) {
+        const errorText = await response.text();
+        alert(`Verification failed: ${errorText}`);
+        return;
+      }
+
+      verificationModal.remove();
+      console.log('Email verified for:', email);
+    } catch (error) {
+      console.error('Error verifying code:', error);
+      alert('Error verifying code. Please try again.');
     }
-
-    verificationModal.remove();
-    console.log('Email verified for:', email);
   });
 
   document.getElementById('resend-btn').addEventListener('click', async () => {
-    await fetch('https://thrive-x-api.vercel.app/fitness/api/fitness/send-verification-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-    alert('New verification code sent.');
+    try {
+      await fetch('/fitness/api/fitness/send-verification-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      alert('New verification code sent.');
+    } catch (error) {
+      console.error('Error resending verification code:', error);
+      alert('Error sending verification code. Please try again.');
+    }
   });
 }
 
@@ -125,43 +164,60 @@ function updateDropdownOptions() {
   const planDurationWeeks = document.getElementById('plan_duration_weeks');
   const numberOfDays = document.getElementById('days');
 
+  // Only proceed if elements exist
+  if (!daysPerWeek && !planDurationWeeks && !numberOfDays) {
+    return; // None of the elements exist, likely on a different page
+  }
+
   if (userProfile.plan === 'essential' && userProfile.role !== 'admin') {
-    daysPerWeek.innerHTML = `
-      <option value="">Select days</option>
-      <option value="1">1 day</option>
-    `;
-    planDurationWeeks.innerHTML = `
-      <option value="">Select duration</option>
-      <option value="1">1 week</option>
-    `;
-    numberOfDays.innerHTML = `
-      <option value="">Select number of days</option>
-      <option value="1">1 day</option>
-    `;
+    if (daysPerWeek) {
+      daysPerWeek.innerHTML = `
+        <option value="">Select days</option>
+        <option value="1">1 day</option>
+      `;
+    }
+    if (planDurationWeeks) {
+      planDurationWeeks.innerHTML = `
+        <option value="">Select duration</option>
+        <option value="1">1 week</option>
+      `;
+    }
+    if (numberOfDays) {
+      numberOfDays.innerHTML = `
+        <option value="">Select number of days</option>
+        <option value="1">1 day</option>
+      `;
+    }
   } else {
-    daysPerWeek.innerHTML = `
-      <option value="">Select days</option>
-      <option value="1">1 day</option>
-      <option value="2">2 days</option>
-      <option value="3">3 days</option>
-      <option value="4">4 days</option>
-      <option value="5">5 days</option>
-      <option value="6">6 days</option>
-      <option value="7">7 days</option>
-    `;
-    planDurationWeeks.innerHTML = `
-      <option value="">Select duration</option>
-      <option value="1">1 week</option>
-      <option value="2">2 weeks</option>
-      <option value="3">3 weeks</option>
-    `;
-    numberOfDays.innerHTML = `
-      <option value="">Select number of days</option>
-      <option value="1">1 day</option>
-      <option value="3">3 days</option>
-      <option value="7">7 days</option>
-      <option value="14">14 days</option>
-    `;
+    if (daysPerWeek) {
+      daysPerWeek.innerHTML = `
+        <option value="">Select days</option>
+        <option value="1">1 day</option>
+        <option value="2">2 days</option>
+        <option value="3">3 days</option>
+        <option value="4">4 days</option>
+        <option value="5">5 days</option>
+        <option value="6">6 days</option>
+        <option value="7">7 days</option>
+      `;
+    }
+    if (planDurationWeeks) {
+      planDurationWeeks.innerHTML = `
+        <option value="">Select duration</option>
+        <option value="1">1 week</option>
+        <option value="2">2 weeks</option>
+        <option value="3">3 weeks</option>
+      `;
+    }
+    if (numberOfDays) {
+      numberOfDays.innerHTML = `
+        <option value="">Select number of days</option>
+        <option value="1">1 day</option>
+        <option value="3">3 days</option>
+        <option value="7">7 days</option>
+        <option value="14">14 days</option>
+      `;
+    }
   }
 }
 
@@ -223,6 +279,7 @@ function formatResult(result, endpoint) {
         ${data.variations && Array.isArray(data.variations) ? `<p><strong>Variations:</strong> <ul>${data.variations.map(v => `<li>${v.name}: ${v.description} (${v.difficulty})</li>`).join('')}</ul></p>` : ''}</div>`;
       break;
       
+    // All other cases remain the same...
     case 'nutritionMealPlan':
       if (!data.macros || !data.mealPlan || !Array.isArray(data.mealPlan)) return '<p>Invalid nutrition meal plan data structure.</p>';
       html = `<div class="result-card">
@@ -348,63 +405,80 @@ function formatResult(result, endpoint) {
 
 // Render pie charts for nutrition and food plate results
 function renderCharts(result, endpoint, container) {
-  if (!result) return;
+  if (!result || !container) return;
   const data = result.data || result;
   if (!data) return;
   
   if (endpoint === 'nutritionMealPlan' && data.macros) {
     const canvas = container.querySelector('#nutrition-chart');
     if (!canvas) return;
-    new Chart(canvas, {
-      type: 'pie',
-      data: {
-        labels: ['Protein', 'Fat', 'Carbs'],
-        datasets: [{
-          data: [
-            (data.macros.protein || 0) * 4,
-            (data.macros.fat || 0) * 9,
-            (data.macros.carbs || 0) * 4
-          ],
-          backgroundColor: ['#28a745', '#dc3545', '#ffc107']
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { position: 'bottom' } }
-      }
-    });
+    
+    try {
+      new Chart(canvas, {
+        type: 'pie',
+        data: {
+          labels: ['Protein', 'Fat', 'Carbs'],
+          datasets: [{
+            data: [
+              (data.macros.protein || 0) * 4,
+              (data.macros.fat || 0) * 9,
+              (data.macros.carbs || 0) * 4
+            ],
+            backgroundColor: ['#28a745', '#dc3545', '#ffc107']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    } catch (error) {
+      console.error('Error rendering nutrition chart:', error);
+    }
   } else if (endpoint === 'analyzeFoodPlate' && data.foods && Array.isArray(data.foods)) {
     const canvas = container.querySelector('#food-chart');
     if (!canvas) return;
-    const protein = data.foods.reduce((sum, f) => sum + (f.protein || 0) * 4, 0);
-    const fat = data.foods.reduce((sum, f) => sum + (f.fat || 0) * 9, 0);
-    const carbs = data.foods.reduce((sum, f) => sum + (f.carbs || 0) * 4, 0);
-    new Chart(canvas, {
-      type: 'pie',
-      data: {
-        labels: ['Protein', 'Fat', 'Carbs'],
-        datasets: [{
-          data: [protein, fat, carbs],
-          backgroundColor: ['#28a745', '#dc3545', '#ffc107']
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { position: 'bottom' } }
-      }
-    });
+    
+    try {
+      const protein = data.foods.reduce((sum, f) => sum + (f.protein || 0) * 4, 0);
+      const fat = data.foods.reduce((sum, f) => sum + (f.fat || 0) * 9, 0);
+      const carbs = data.foods.reduce((sum, f) => sum + (f.carbs || 0) * 4, 0);
+      
+      new Chart(canvas, {
+        type: 'pie',
+        data: {
+          labels: ['Protein', 'Fat', 'Carbs'],
+          datasets: [{
+            data: [protein, fat, carbs],
+            backgroundColor: ['#28a745', '#dc3545', '#ffc107']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    } catch (error) {
+      console.error('Error rendering food chart:', error);
+    }
   }
 }
 
-// Handle form submissions
-async function handleFormSubmit(formId, resultId, endpoint) {
+// Handle form submissions - safely attaching event listeners
+function handleFormSubmit(formId, resultId, endpoint) {
   const form = document.getElementById(formId);
   const resultContainer = document.getElementById(resultId);
+  
+  if (!form || !resultContainer) {
+    console.log(`Form #${formId} or result container #${resultId} not found`);
+    return;
+  }
+  
   const resultContent = resultContainer.querySelector('.result-content');
   const statusBadge = resultContainer.querySelector('.status-badge');
-
-  if (!form) {
-    console.error(`Form #${formId} not found`);
+  
+  if (!resultContent || !statusBadge) {
+    console.error(`Required elements not found in result container #${resultId}`);
     return;
   }
 
@@ -413,11 +487,11 @@ async function handleFormSubmit(formId, resultId, endpoint) {
     console.log('Form submitted:', formId);
     const apiKey = localStorage.getItem('apiKey') || 'rees-admin-key-789';
     const formData = new FormData(form);
-    const unitSystem = unitSystemSelect.value;
+    const unitSystem = unitSystemSelect ? unitSystemSelect.value : 'metric';
 
     if (userProfile.requestsRemaining <= 0 && userProfile.role !== 'admin') {
       resultContainer.classList.add('visible');
-      resultContent.innerHTML = '<p>You’ve hit your monthly request limit. Upgrade your plan for more!</p><button onclick="window.location.href=\'/fitness/subscribe\'">Upgrade Now</button>';
+      resultContent.innerHTML = "<p>You've hit your monthly request limit. Upgrade your plan for more!</p><button onclick=\"window.location.href='/fitness/subscribe'\">Upgrade Now</button>";
       statusBadge.textContent = 'Limit Exceeded';
       statusBadge.className = 'status-badge status-error';
       return;
@@ -481,9 +555,16 @@ async function handleFormSubmit(formId, resultId, endpoint) {
           let heightCm;
           if (unitSystem === 'imperial') {
             weight *= LB_TO_KG;
-            heightCm = (parseFloat(formData.get('heightFeet')) * 12 + parseFloat(formData.get('heightInches'))) * IN_TO_CM;
+            const heightFeetElem = document.getElementById('height_feet');
+            const heightInchesElem = document.getElementById('height_inches');
+            if (heightFeetElem && heightInchesElem) {
+              heightCm = (parseFloat(heightFeetElem.value) * 12 + parseFloat(heightInchesElem.value)) * IN_TO_CM;
+            }
           } else {
-            heightCm = parseFloat(formData.get('heightCm'));
+            const heightCmElem = document.getElementById('height_cm');
+            if (heightCmElem) {
+              heightCm = parseFloat(heightCmElem.value);
+            }
           }
           const allergies = Array.from(form.querySelectorAll('input[name="allergies"]:checked')).map(el => el.value);
           let numberOfDays = formData.get('numberOfDays');
@@ -563,9 +644,13 @@ async function handleFormSubmit(formId, resultId, endpoint) {
   });
 }
 
-// Copy result to clipboard
+// Copy result to clipboard - only attach if function exists
 function copyResult(resultId) {
-  const content = document.getElementById(resultId).querySelector('.result-content').innerText;
+  const resultElement = document.getElementById(resultId);
+  if (!resultElement) return;
+  
+  const content = resultElement.querySelector('.result-content')?.innerText || '';
+  
   navigator.clipboard.writeText(content).then(() => {
     alert('Copied to clipboard!');
   }).catch(err => {
@@ -573,97 +658,123 @@ function copyResult(resultId) {
   });
 }
 
-// Print result
+// Print result - only if print is available
 function printResult(resultId) {
-  const content = document.getElementById(resultId).querySelector('.result-content').innerHTML;
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(`
-    <html>
-      <head><title>Print</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          table { border-collapse: collapse; width: 100%; }
-          th, td { border: 1px solid #ddd; padding: 8px; }
-          th { background-color: #1ECBE1; color: white; }
-          .quality-marker { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
-          .quality-high { background-color: #28a745; }
-          .quality-medium { background-color: #ffc107; }
-          .quality-low { background-color: #dc3545; }
-          .remedy-card { margin-bottom: 20px; border: 1px solid #eee; }
-          .remedy-header { background-color: #f0ebff; padding: 10px; }
-          .remedy-title { color: #6b48ff; }
-          .ingredient-card { margin-bottom: 20px; border: 1px solid #eee; }
-          .card-header { background-color: #f9f9f9; padding: 10px; }
-        </style>
-      </head>
-      <body>${content}</body>
-    </html>
-  `);
-  printWindow.document.close();
-  printWindow.print();
+  const resultElement = document.getElementById(resultId);
+  if (!resultElement) return;
+  
+  const content = resultElement.querySelector('.result-content')?.innerHTML || '';
+  
+  try {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head><title>Print</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              table { border-collapse: collapse; width: 100%; }
+              th, td { border: 1px solid #ddd; padding: 8px; }
+              th { background-color: #1ECBE1; color: white; }
+              .quality-marker { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+              .quality-high { background-color: #28a745; }
+              .quality-medium { background-color: #ffc107; }
+              .quality-low { background-color: #dc3545; }
+              .remedy-card { margin-bottom: 20px; border: 1px solid #eee; }
+              .remedy-header { background-color: #f0ebff; padding: 10px; }
+              .remedy-title { color: #6b48ff; }
+              .ingredient-card { margin-bottom: 20px; border: 1px solid #eee; }
+              .card-header { background-color: #f9f9f9; padding: 10px; }
+            </style>
+          </head>
+          <body>${content}</body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  } catch (error) {
+    console.error('Print error:', error);
+    alert('Unable to print. Please try again later.');
+  }
 }
 
-// Initialize form listeners
-handleFormSubmit('workout-form', 'workout-result', 'generateWorkoutPlan');
-handleFormSubmit('exercise-form', 'exercise-result', 'exerciseDetails');
-handleFormSubmit('nutrition-meal-form', 'nutrition-meal-result', 'nutritionMealPlan');
-handleFormSubmit('food-form', 'food-result', 'analyzeFoodPlate');
-handleFormSubmit('food-ingredient-directory-form', 'food-ingredient-directory-result', 'foodIngredientDirectory');
-handleFormSubmit('natural-remedies-form', 'natural-remedies-result', 'naturalRemedies');
+// Initialize form listeners - only for forms that exist
+const formEndpoints = [
+  { formId: 'workout-form', resultId: 'workout-result', endpoint: 'generateWorkoutPlan' },
+  { formId: 'exercise-form', resultId: 'exercise-result', endpoint: 'exerciseDetails' },
+  { formId: 'nutrition-meal-form', resultId: 'nutrition-meal-result', endpoint: 'nutritionMealPlan' },
+  { formId: 'food-form', resultId: 'food-result', endpoint: 'analyzeFoodPlate' },
+  { formId: 'food-ingredient-directory-form', resultId: 'food-ingredient-directory-result', endpoint: 'foodIngredientDirectory' },
+  { formId: 'natural-remedies-form', resultId: 'natural-remedies-result', endpoint: 'naturalRemedies' }
+];
+
+formEndpoints.forEach(({ formId, resultId, endpoint }) => {
+  if (document.getElementById(formId) && document.getElementById(resultId)) {
+    handleFormSubmit(formId, resultId, endpoint);
+  }
+});
 
 // DOMContentLoaded initialization
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM fully loaded and scripts initialized');
   
-  // Tab navigation setup
+  // Initialize Stripe - but handle possible errors
+  await initializeStripe();
+  
+  // Tab navigation setup - only if tabs exist
   const tabs = document.querySelectorAll('.tab-button');
   const contents = document.querySelectorAll('.tab-content');
   const sidebarItems = document.querySelectorAll('.tab-trigger');
   
-  console.log('Found tabs:', tabs.length);
-  console.log('Found contents:', contents.length);
-  
-  tabs.forEach((tab, index) => {
-    tab.addEventListener('click', () => {
-      console.log('Tab clicked:', tab.dataset.tab, 'Index:', index);
-      
-      tabs.forEach(t => t.classList.remove('active'));
-      contents.forEach(c => c.classList.remove('active'));
-      
-      tab.classList.add('active');
-      const content = document.getElementById(`${tab.dataset.tab}-tab`);
-      if (content) {
-        content.classList.add('active');
-        console.log('Activated content:', `${tab.dataset.tab}-tab`);
-      } else {
-        console.error('Content not found for tab:', `${tab.dataset.tab}-tab`);
-      }
-      
-      sidebarItems.forEach(item => {
-        item.classList.remove('active');
-        if (item.dataset.tab === tab.dataset.tab) item.classList.add('active');
+  if (tabs.length > 0 && contents.length > 0) {
+    console.log('Found tabs:', tabs.length);
+    console.log('Found contents:', contents.length);
+    
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => {
+        console.log('Tab clicked:', tab.dataset.tab, 'Index:', index);
+        
+        tabs.forEach(t => t.classList.remove('active'));
+        contents.forEach(c => c.classList.remove('active'));
+        
+        tab.classList.add('active');
+        const content = document.getElementById(`${tab.dataset.tab}-tab`);
+        if (content) {
+          content.classList.add('active');
+          console.log('Activated content:', `${tab.dataset.tab}-tab`);
+        } else {
+          console.error('Content not found for tab:', `${tab.dataset.tab}-tab`);
+        }
+        
+        sidebarItems.forEach(item => {
+          item.classList.remove('active');
+          if (item.dataset.tab === tab.dataset.tab) item.classList.add('active');
+        });
       });
     });
-  });
+  }
 
-  sidebarItems.forEach(item => {
-    item.addEventListener('click', (e) => {
-      e.preventDefault();
-      console.log('Sidebar item clicked:', item.dataset.tab);
-      sidebarItems.forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
-      tabs.forEach(t => {
-        t.classList.remove('active');
-        if (t.dataset.tab === item.dataset.tab) t.classList.add('active');
-      });
-      contents.forEach(c => {
-        c.classList.remove('active');
-        if (c.id === `${item.dataset.tab}-tab`) c.classList.add('active');
+  if (sidebarItems.length > 0) {
+    sidebarItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Sidebar item clicked:', item.dataset.tab);
+        sidebarItems.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        tabs.forEach(t => {
+          t.classList.remove('active');
+          if (t.dataset.tab === item.dataset.tab) t.classList.add('active');
+        });
+        contents.forEach(c => {
+          c.classList.remove('active');
+          if (c.id === `${item.dataset.tab}-tab`) c.classList.add('active');
+        });
       });
     });
-  });
+  }
 
-  // Remaining initialization
+  // Remaining initialization - only attach listeners if elements exist
   const apiKeyInput = document.getElementById('api-key');
   const saveApiKeyBtn = document.getElementById('save-api-key');
   const modal = document.getElementById('subscription-modal');
@@ -678,84 +789,127 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const savedApiKey = localStorage.getItem('apiKey');
   const savedEmail = localStorage.getItem('userEmail');
+  
+  // Check authentication and email verification
   if (savedApiKey && savedEmail) {
-    // Check email verification
-    const response = await fetch('https://thrive-x-api.vercel.app/fitness/api/fitness/check-email-verified', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': savedApiKey },
-      body: JSON.stringify({ email: savedEmail })
-    });
+    try {
+      const response = await fetch('/fitness/api/fitness/check-email-verified', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'x-api-key': savedApiKey 
+        },
+        body: JSON.stringify({ email: savedEmail })
+      });
 
-    if (response.ok) {
-      const { verified } = await response.json();
-      if (!verified) {
-        await promptEmailVerification(savedEmail);
+      if (response.ok) {
+        const { verified } = await response.json();
+        if (!verified) {
+          await promptEmailVerification(savedEmail);
+        } else {
+          await fetchUserProfile(savedApiKey);
+        }
       } else {
-        await fetchUserProfile(savedApiKey);
+        console.error('Error checking email verification:', await response.text());
+        await promptEmailVerification(savedEmail);
       }
-    } else {
-      console.error('Error checking email verification:', await response.text());
-      await promptEmailVerification(savedEmail);
+    } catch (error) {
+      console.error('Error during authentication check:', error);
     }
   } else if (savedApiKey) {
     await fetchUserProfile(savedApiKey);
   }
 
-  saveApiKeyBtn.addEventListener('click', async () => {
-    const apiKey = apiKeyInput.value.trim();
-    if (apiKey) {
-      localStorage.setItem('apiKey', apiKey);
-      await fetchUserProfile(apiKey);
-      alert('API Key saved successfully!');
-    } else {
-      alert('Please enter a valid API Key.');
+  // API key save button
+  if (apiKeyInput && saveApiKeyBtn) {
+    saveApiKeyBtn.addEventListener('click', async () => {
+      const apiKey = apiKeyInput.value.trim();
+      if (apiKey) {
+        localStorage.setItem('apiKey', apiKey);
+        await fetchUserProfile(apiKey);
+        alert('API Key saved successfully!');
+      } else {
+        alert('Please enter a valid API Key.');
+      }
+    });
+  }
+
+  // Unit system toggle
+  if (unitSystemSelect) {
+    const imperialHeight = document.querySelector('.imperial-height');
+    const metricHeight = document.querySelector('.metric-height');
+    const weightLabel = document.getElementById('weight-label');
+    const heightFeet = document.getElementById('height_feet');
+    const heightInches = document.getElementById('height_inches');
+    const heightCm = document.getElementById('height_cm');
+    
+    if (imperialHeight && metricHeight && weightLabel && heightFeet && heightInches && heightCm) {
+      unitSystemSelect.addEventListener('change', () => {
+        const isImperial = unitSystemSelect.value === 'imperial';
+        imperialHeight.style.display = isImperial ? 'block' : 'none';
+        metricHeight.style.display = isImperial ? 'none' : 'block';
+        weightLabel.textContent = isImperial ? 'Weight (lbs):' : 'Weight (kg):';
+        heightFeet.required = isImperial;
+        heightInches.required = isImperial;
+        heightCm.required = !isImperial;
+      });
+    }
+  }
+
+  // Monthly/yearly toggle for subscription plans
+  if (monthlyToggle && yearlyToggle && monthlyPlans && yearlyPlans) {
+    monthlyToggle.addEventListener('click', () => {
+      monthlyToggle.classList.add('active');
+      yearlyToggle.classList.remove('active');
+      monthlyPlans.style.display = 'flex';
+      yearlyPlans.style.display = 'none';
+    });
+
+    yearlyToggle.addEventListener('click', () => {
+      yearlyToggle.classList.add('active');
+      monthlyToggle.classList.remove('active');
+      yearlyPlans.style.display = 'flex';
+      monthlyPlans.style.display = 'none';
+    });
+  }
+
+  // Mobile menu toggle
+  if (menuToggle && sidebar) {
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      menuToggle.textContent = sidebar.classList.contains('collapsed') ? '☰' : '✕';
+    });
+  }
+
+  // Subscription button handlers
+  const subscribeButtons = [
+    document.getElementById('sidebar-subscribe-btn'),
+    document.getElementById('auth-subscribe-btn')
+  ];
+  
+  subscribeButtons.forEach(btn => {
+    if (btn && modal) {
+      btn.addEventListener('click', e => {
+        e.preventDefault();
+        modal.style.display = 'block';
+      });
     }
   });
 
-  unitSystemSelect.addEventListener('change', () => {
-    const isImperial = unitSystemSelect.value === 'imperial';
-    document.querySelector('.imperial-height').style.display = isImperial ? 'block' : 'none';
-    document.querySelector('.metric-height').style.display = isImperial ? 'none' : 'block';
-    document.getElementById('weight-label').textContent = isImperial ? 'Weight (lbs):' : 'Weight (kg):';
-    document.getElementById('height_feet').required = isImperial;
-    document.getElementById('height_inches').required = isImperial;
-    document.getElementById('height_cm').required = !isImperial;
-  });
+  // Modal close button
+  const closeButton = document.querySelector('.close');
+  if (closeButton && modal) {
+    closeButton.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', e => {
+      if (e.target === modal) modal.style.display = 'none';
+    });
+  }
 
-  monthlyToggle.addEventListener('click', () => {
-    monthlyToggle.classList.add('active');
-    yearlyToggle.classList.remove('active');
-    monthlyPlans.style.display = 'flex';
-    yearlyPlans.style.display = 'none';
-  });
-
-  yearlyToggle.addEventListener('click', () => {
-    yearlyToggle.classList.add('active');
-    monthlyToggle.classList.remove('active');
-    yearlyPlans.style.display = 'flex';
-    monthlyPlans.style.display = 'none';
-  });
-
-  menuToggle.addEventListener('click', () => {
-    sidebar.classList.toggle('collapsed');
-    menuToggle.textContent = sidebar.classList.contains('collapsed') ? '☰' : '✕';
-  });
-
-  document.getElementById('sidebar-subscribe-btn').addEventListener('click', e => {
-    e.preventDefault();
-    modal.style.display = 'block';
-  });
-  document.getElementById('auth-subscribe-btn').addEventListener('click', e => {
-    e.preventDefault();
-    modal.style.display = 'block';
-  });
-  document.querySelector('.close').addEventListener('click', () => {
-    modal.style.display = 'none';
-  });
-  window.addEventListener('click', e => {
-    if (e.target === modal) modal.style.display = 'none';
-  });
-
+  // Plan selection buttons
   document.querySelectorAll('.plan-select-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const planId = btn.dataset.plan.toLowerCase();
@@ -769,11 +923,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       const emailInput = document.getElementById('user-email');
+      if (!emailInput) {
+        console.error('Email input field not found');
+        alert('Email input field not found. Please refresh the page and try again.');
+        return;
+      }
+      
       const email = emailInput.value.trim();
       if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
         alert('Please enter a valid email address.');
         return;
       }
+      
       if (disposableEmailDomains.some(domain => email.toLowerCase().endsWith(`@${domain}`))) {
         alert('Disposable email addresses are not allowed. Please use a permanent email.');
         return;
@@ -781,7 +942,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (planId.startsWith('essential')) {
         try {
-          const response = await fetch('https://thrive-x-api.vercel.app/fitness/api/fitness/activate-free-plan', {
+          const response = await fetch('/fitness/api/fitness/activate-free-plan', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -803,7 +964,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           localStorage.setItem('userEmail', email);
           updateDropdownOptions();
           updateRequestCounter();
-          modal.style.display = 'none';
+          if (modal) modal.style.display = 'none';
           console.log('Essential plan activated:', data);
           await promptEmailVerification(email);
           window.location.href = '/fitness/subscribe?plan=essential';
@@ -816,7 +977,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (typeof stripe === 'undefined') {
         console.error('Stripe.js not loaded');
-        alert('Payment system failed to load. Please disable ad blockers and try again.');
+        alert('Payment system failed to load. Please disable ad blockers and try again or check your connection.');
         return;
       }
 
@@ -825,7 +986,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-          const response = await fetch('https://thrive-x-api.vercel.app/fitness/api/fitness/create-checkout-session', {
+          const response = await fetch('/fitness/api/fitness/create-checkout-session', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -852,13 +1013,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
           }
 
-          const data = JSON.parse(responseText);
+          let data;
+          try {
+            data = JSON.parse(responseText);
+          } catch (error) {
+            throw new Error(`Invalid JSON response: ${responseText}`);
+          }
+          
           console.log(`Attempt ${attempt} - Checkout session response:`, data);
 
           if (!data.id) {
             throw new Error('No session ID returned from server');
           }
 
+          localStorage.setItem('userEmail', email);
           const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
           if (error) {
             console.error('Stripe redirect error details:', error);
@@ -888,22 +1056,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  foodImageInput.addEventListener('change', () => {
-    const file = foodImageInput.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        foodImagePreview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; height: auto; margin-top: 10px; border-radius: 8px;" alt="Food Preview" />`;
-      };
-      reader.readAsDataURL(file);
-    } else {
-      foodImagePreview.innerHTML = '';
-    }
-  });
+  // Food image preview
+  if (foodImageInput && foodImagePreview) {
+    foodImageInput.addEventListener('change', () => {
+      const file = foodImageInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          foodImagePreview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; height: auto; margin-top: 10px; border-radius: 8px;" alt="Food Preview" />`;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        foodImagePreview.innerHTML = '';
+      }
+    });
+  }
 
   // Handle retry subscription from /fitness/subscribe
   document.addEventListener('openSubscriptionModal', () => {
-    const modal = document.getElementById('subscription-modal');
     if (modal) {
       modal.style.display = 'block';
       console.log('Subscription modal opened via retry button');

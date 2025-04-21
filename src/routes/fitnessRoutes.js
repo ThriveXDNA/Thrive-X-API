@@ -58,7 +58,7 @@ router.post('/auth/validate', async (req, res) => {
 
   const { data, error } = await supabase
     .from('users')
-    .select('plan, role, email_verified')
+    .select('plan, role, email_verified, requestsRemaining')
     .eq('api_key', apiKey)
     .single();
 
@@ -68,12 +68,19 @@ router.post('/auth/validate', async (req, res) => {
   }
 
   console.log('API key validated:', data);
-  res.json({ plan: data.plan, role: data.role, email_verified: data.email_verified });
+  res.json({ 
+    plan: data.plan, 
+    role: data.role, 
+    email_verified: data.email_verified,
+    requestsRemaining: data.requestsRemaining || 10
+  });
 });
 
 // Check email verification
-router.post('/check-email-verified', authenticateApiKey, async (req, res) => {
+router.post('/check-email-verified', async (req, res) => {
   const { email } = req.body;
+  const apiKey = req.headers['x-api-key'];
+  
   console.log('Reached /check-email-verified with email:', email);
 
   try {
@@ -81,7 +88,7 @@ router.post('/check-email-verified', authenticateApiKey, async (req, res) => {
       .from('users')
       .select('email_verified')
       .eq('email', email)
-      .eq('api_key', req.headers['x-api-key'])
+      .eq('api_key', apiKey)
       .single();
 
     if (error || !data) {
@@ -105,6 +112,24 @@ router.post('/send-verification-code', async (req, res) => {
     if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
       console.error('Invalid email:', email);
       return res.status(400).json({ error: 'Invalid email address' });
+    }
+
+    // Check for rate limiting of codes (max 3 within 15 minutes)
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const { data: existingCodes, error: countError } = await supabase
+      .from('verification_codes')
+      .select('id')
+      .eq('email', email)
+      .gte('created_at', fifteenMinutesAgo);
+
+    if (countError) {
+      console.error('Error checking existing codes:', countError);
+      return res.status(500).json({ error: 'Failed to check rate limits' });
+    }
+
+    if (existingCodes && existingCodes.length >= 3) {
+      console.error('Rate limit exceeded for email:', email);
+      return res.status(429).json({ error: 'Too many verification attempts. Please try again in 15 minutes.' });
     }
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -200,24 +225,87 @@ router.post('/activate-free-plan', async (req, res) => {
       return res.status(400).json({ error: 'Disposable email addresses are not allowed' });
     }
 
-    const apiKey = uuidv4();
-
-    const { data: userData, error } = await supabase
+    // Check if user with this email already exists
+    const { data: existingUser } = await supabase
       .from('users')
-      .insert({
-        api_key: apiKey,
-        plan: planId,
-        role: 'user',
-        requestsRemaining: 10,
-        email,
-        email_verified: false
-      })
-      .select('plan, role, requestsRemaining')
+      .select('api_key')
+      .eq('email', email)
       .single();
 
-    if (error) {
-      console.error('Supabase insert error:', error);
-      return res.status(500).json({ error: 'Failed to create user profile' });
+    let apiKey;
+    let userData;
+
+    if (existingUser) {
+      // Update existing user
+      apiKey = existingUser.api_key;
+      const { data, error } = await supabase
+        .from('users')
+        .update({
+          plan: planId,
+          requestsRemaining: 10,
+          email_verified: false
+        })
+        .eq('email', email)
+        .select('plan, role, requestsRemaining')
+        .single();
+
+      if (error) {
+        console.error('Supabase update error:', error);
+        return res.status(500).json({ error: 'Failed to update user profile' });
+      }
+      
+      userData = data;
+    } else {
+      // Create new user
+      apiKey = uuidv4();
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          api_key: apiKey,
+          plan: planId,
+          role: 'user',
+          requestsRemaining: 10,
+          email,
+          email_verified: false
+        })
+        .select('plan, role, requestsRemaining')
+        .single();
+
+      if (error) {
+        console.error('Supabase insert error:', error);
+        return res.status(500).json({ error: 'Failed to create user profile' });
+      }
+      
+      userData = data;
+    }
+
+    // Send welcome email with API key
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Welcome to Thrive-X Fitness API - Your API Key',
+      text: `Welcome to Thrive-X Fitness API!
+
+Your Essential plan has been activated. Here are your account details:
+
+API Key: ${apiKey}
+Plan: ${planId}
+Requests Remaining: 10
+
+Please keep your API key secure as it provides access to our services.
+
+To verify your email address, we've sent a separate verification code to your email. Please check your inbox and enter the code on our website.
+
+Best regards,
+The Thrive-X Team`
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log('Welcome email sent to:', email);
+    } catch (emailError) {
+      console.error('Error sending welcome email:', emailError);
+      // Continue despite email error
     }
 
     console.log(`Free plan ${planId} activated for email:`, email);
@@ -271,17 +359,21 @@ router.post('/create-checkout-session', async (req, res) => {
       return res.status(400).json({ error: 'Invalid price ID' });
     }
 
+    // Use the request origin or default to production URL
+    const origin = req.headers.origin || 'https://thrive-x-api.vercel.app';
+    
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{ price: priceId }],
       mode: 'subscription',
-      success_url: 'https://thrive-x-api.vercel.app/fitness/subscribe?success=true',
-      cancel_url: 'https://thrive-x-api.vercel.app/fitness/subscribe?canceled=true',
+      success_url: `${origin}/fitness/subscribe?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/fitness/subscribe?canceled=true`,
       metadata: {
         plan: planId,
         email
       },
-      customer_email: email
+      customer_email: email,
+      billing_address_collection: 'required'
     });
 
     console.log('Checkout session created:', session.id);
@@ -311,27 +403,84 @@ router.post('/stripe-webhook', express.raw({ type: 'application/json' }), async 
     case 'checkout.session.completed':
       const session = event.data.object;
       const plan = session.metadata.plan;
-      const email = session.metadata.email;
+      const email = session.metadata.email || session.customer_email;
 
       console.log('Checkout session completed for email:', email, 'Plan:', plan);
 
+      // Create API key for the user
       const apiKey = uuidv4();
-
-      const { error } = await supabase
+      
+      // Check if user already exists
+      const { data: existingUser } = await supabase
         .from('users')
-        .insert({
-          api_key: apiKey,
-          plan,
-          role: 'user',
-          requestsRemaining: plan.startsWith('core') ? 500 : plan.startsWith('elite') ? 2000 : 5000,
-          email,
-          email_verified: false
-        });
-
-      if (error) {
-        console.error('Error inserting user in Supabase:', error);
+        .select('id')
+        .eq('email', email)
+        .single();
+        
+      if (existingUser) {
+        // Update existing user
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            api_key: apiKey,
+            plan,
+            role: 'user',
+            requestsRemaining: plan.startsWith('core') ? 500 : plan.startsWith('elite') ? 2000 : 5000,
+            email_verified: false
+          })
+          .eq('email', email);
+          
+        if (updateError) {
+          console.error('Error updating user in Supabase:', updateError);
+        } else {
+          console.log('User updated in Supabase:', { apiKey, plan, email });
+        }
       } else {
-        console.log('User created in Supabase:', { apiKey, plan, email });
+        // Create new user
+        const { error } = await supabase
+          .from('users')
+          .insert({
+            api_key: apiKey,
+            plan,
+            role: 'user',
+            requestsRemaining: plan.startsWith('core') ? 500 : plan.startsWith('elite') ? 2000 : 5000,
+            email,
+            email_verified: false
+          });
+
+        if (error) {
+          console.error('Error inserting user in Supabase:', error);
+        } else {
+          console.log('User created in Supabase:', { apiKey, plan, email });
+        }
+      }
+      
+      // Send email with API key
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Your Thrive-X Fitness API Subscription',
+        text: `Thank you for subscribing to Thrive-X Fitness API!
+
+Your subscription has been activated. Here are your account details:
+
+API Key: ${apiKey}
+Plan: ${plan}
+Requests: ${plan.startsWith('core') ? '500' : plan.startsWith('elite') ? '2,000' : '5,000'} per month
+
+Please keep your API key secure as it provides access to our services.
+
+To verify your email address, please visit our website and enter the verification code we'll send separately.
+
+Best regards,
+The Thrive-X Team`
+      };
+
+      try {
+        await transporter.sendMail(mailOptions);
+        console.log('Subscription email sent to:', email);
+      } catch (emailError) {
+        console.error('Error sending subscription email:', emailError);
       }
 
       break;

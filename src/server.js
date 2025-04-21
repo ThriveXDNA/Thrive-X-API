@@ -21,6 +21,9 @@ console.log('Loaded env - REDIS_URL:', process.env.REDIS_URL ? process.env.REDIS
 console.log('Loaded env - ADMIN_API_KEY:', process.env.ADMIN_API_KEY ? 'set' : 'not set');
 console.log('Loaded env - EMAIL_USER:', process.env.EMAIL_USER ? 'set' : 'not set');
 console.log('Loaded env - EMAIL_PASS:', process.env.EMAIL_PASS ? 'set' : 'not set');
+console.log('Loaded env - STRIPE_PUBLISHABLE_KEY:', process.env.STRIPE_PUBLISHABLE_KEY ? 'set' : 'not set');
+console.log('Loaded env - STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'set' : 'not set');
+console.log('Loaded env - STRIPE_WEBHOOK_SECRET:', process.env.STRIPE_WEBHOOK_SECRET ? 'set' : 'not set');
 
 // Configuration
 const app = express();
@@ -80,6 +83,13 @@ app.get('/fitness/docs', (req, res) => {
 // Add route for /fitness/subscribe
 app.get('/fitness/subscribe', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'fitness', 'subscribe.html'));
+});
+
+// Add route to expose Stripe publishable key to frontend
+app.get('/fitness/config', (req, res) => {
+  res.json({
+    stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY
+  });
 });
 
 // API key authentication middleware
