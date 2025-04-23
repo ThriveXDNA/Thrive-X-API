@@ -1,10 +1,11 @@
 // src/routes/router.js
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
-
-const router = express.Router();
 const fitnessRoutes = require('./fitnessRoutes');
 
+const router = express.Router();
+
+// Supabase setup (using environment variables from server.js)
 // Supabase setup (using environment variables from server.js)
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 

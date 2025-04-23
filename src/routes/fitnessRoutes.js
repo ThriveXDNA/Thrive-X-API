@@ -11,7 +11,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Email transport
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.EMAIL_SMTP_HOST || 'smtp.office365.com',
+  port: parseInt(process.env.EMAIL_SMTP_PORT || '587'),
+  secure: process.env.EMAIL_SMTP_SECURE === 'true', // true for 465, false for other ports
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
