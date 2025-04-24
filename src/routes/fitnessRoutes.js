@@ -5,6 +5,14 @@ const Stripe = require('stripe');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
 
+// Import the controllers
+const { generateWorkoutPlan } = require('../api/fitness/workoutController');
+const { generateMealPlan } = require('../api/fitness/mealPlanController');
+const { getExerciseDetails } = require('../api/fitness/exerciseController');
+const { getNaturalRemedies } = require('../api/fitness/naturalRemediesController');
+const { analyzeFoodPlate } = require('../api/fitness/foodPlateController');
+const { getIngredientDetails } = require('../api/fitness/foodIngredientController');
+
 // Initialize Supabase and Stripe
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -500,162 +508,11 @@ The Thrive-X Team`
 });
 
 // API routes (unchanged)
-router.post('/workout', authenticateApiKey, async (req, res) => {
-  try {
-    const {
-      goals,
-      fitnessLevel,
-      preferences,
-      bodyFocus,
-      muscleGroups,
-      includeWarmupCooldown,
-      daysPerWeek,
-      sessionDuration,
-      planDurationWeeks
-    } = req.body;
-
-    if (!goals || !fitnessLevel || !daysPerWeek || !planDurationWeeks) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const workoutPlan = {
-      goal: goals,
-      fitnessLevel,
-      daysPerWeek,
-      weeks: planDurationWeeks,
-      days: []
-    };
-
-    res.json({ data: workoutPlan });
-  } catch (error) {
-    console.error('Error generating workout plan:', error);
-    res.status(500).json({ error: 'Failed to generate workout plan' });
-  }
-});
-
-router.post('/meal-plan', authenticateApiKey, async (req, res) => {
-  try {
-    const {
-      goals,
-      dietType,
-      gender,
-      age,
-      weight,
-      heightCm,
-      activityLevel,
-      allergies,
-      religiousPreferences,
-      calorieTarget,
-      mealsPerDay,
-      numberOfDays
-    } = req.body;
-
-    if (!goals || !weight || !heightCm || !mealsPerDay || !numberOfDays) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const mealPlan = {
-      macros: { protein: 0, fat: 0, carbs: 0, calories: calorieTarget || 0 },
-      mealPlan: []
-    };
-
-    res.json({ data: mealPlan });
-  } catch (error) {
-    console.error('Error generating meal plan:', error);
-    res.status(500).json({ error: 'Failed to generate meal plan' });
-  }
-});
-
-router.post('/exercise', authenticateApiKey, async (req, res) => {
-  try {
-    const { exerciseId, includeVariations } = req.body;
-
-    if (!exerciseId) {
-      return res.status(400).json({ error: 'Exercise ID required' });
-    }
-
-    const exerciseDetails = {
-      name: 'Sample Exercise',
-      muscle_groups: ['Sample'],
-      equipment_needed: ['None'],
-      steps: ['Step 1', 'Step 2'],
-      difficulty: 'Beginner',
-      tips: ['Tip 1'],
-      variations: includeVariations ? [{ name: 'Variation', description: 'Desc', difficulty: 'Moderate' }] : []
-    };
-
-    res.json({ data: exerciseDetails });
-  } catch (error) {
-    console.error('Error fetching exercise details:', error);
-    res.status(500).json({ error: 'Failed to fetch exercise details' });
-  }
-});
-
-router.post('/food-plate', authenticateApiKey, async (req, res) => {
-  try {
-    const formData = req.body;
-
-    const foodAnalysis = {
-      title: 'Food Plate Analysis',
-      foods: [{ name: 'Sample Food', calories: 100, protein: 10, fat: 5, carbs: 15 }]
-    };
-
-    res.json({ data: foodAnalysis });
-  } catch (error) {
-    console.error('Error analyzing food plate:', error);
-    res.status(500).json({ error: 'Failed to analyze food plate' });
-  }
-});
-
-router.post('/food-ingredient', authenticateApiKey, async (req, res) => {
-  try {
-    const { ingredient } = req.body;
-
-    if (!ingredient) {
-      return res.status(400).json({ error: 'Ingredient name required' });
-    }
-
-    const ingredientDetails = {
-      name: ingredient,
-      category: 'Sample',
-      origin: 'Sample',
-      safety_rating: 'Safe',
-      definition: 'Sample definition',
-      layman_term: 'Sample term',
-      production_process: 'Sample process',
-      example_use: 'Sample use'
-    };
-
-    res.json({ data: ingredientDetails });
-  } catch (error) {
-    console.error('Error fetching ingredient details:', error);
-    res.status(500).json({ error: 'Failed to fetch ingredient details' });
-  }
-});
-
-router.post('/natural-remedies', authenticateApiKey, async (req, res) => {
-  try {
-    const { symptom, approach } = req.body;
-
-    if (!symptom) {
-      return res.status(400).json({ error: 'Symptom required' });
-    }
-
-    const remedies = {
-      remedies: [{
-        name: 'Sample Remedy',
-        description: 'Sample description',
-        preparation: 'Sample preparation',
-        benefits: 'Sample benefits'
-      }],
-      disclaimer: 'Consult a healthcare professional before use.'
-    };
-
-    res.json({ data: remedies });
-  } catch (error) {
-    console.error('Error fetching natural remedies:', error);
-    res.status(500).json({ error: 'Failed to fetch natural remedies' });
-  }
-});
+router.post('/workout', authenticateApiKey, generateWorkoutPlan);
+router.post('/meal-plan', authenticateApiKey, generateMealPlan);
+router.post('/exercise', authenticateApiKey, getExerciseDetails);
+router.post('/natural-remedies', authenticateApiKey, getNaturalRemedies);
+router.post('/food-plate', authenticateApiKey, analyzeFoodPlate);
+router.post('/food-ingredient', authenticateApiKey, getIngredientDetails);
 
 module.exports = router;
