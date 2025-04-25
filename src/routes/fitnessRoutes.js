@@ -10,7 +10,7 @@ const { generateWorkoutPlan } = require('../api/fitness/workoutController');
 const { generateMealPlan } = require('../api/fitness/mealPlanController');
 const { getExerciseDetails } = require('../api/fitness/exerciseController');
 const { getNaturalRemedies } = require('../api/fitness/naturalRemediesController');
-const { analyzeFoodPlate } = require('../api/fitness/foodPlateController');
+const { analyzeFoodPlate } = require('../api/fitness/analyzeFoodPlate');
 const { getIngredientDetails } = require('../api/fitness/foodIngredientController');
 
 // Initialize Supabase and Stripe
