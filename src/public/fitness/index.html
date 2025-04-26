@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -75,7 +76,7 @@
         <div class="api-card">
           <h2>Generate Workout Plan</h2>
           <p>Create a personalized workout plan based on your goals, fitness level, and preferences.</p>
-          <form id="workout-form">
+          <form id="workout-form" data-api-endpoint="workout" data-result-id="workout-result">
             <div class="form-group">
               <label for="goal">Fitness Goal:</label>
               <select id="goal" name="goals" required>
@@ -225,7 +226,7 @@
         <div class="api-card">
           <h2>Exercise Details</h2>
           <p>Get detailed information about a specific exercise, including proper form and target muscles.</p>
-          <form id="exercise-form">
+          <form id="exercise-form" data-api-endpoint="exercise" data-result-id="exercise-result">
             <div class="form-group">
               <label for="exercise_name">Exercise Name:</label>
               <input type="text" id="exercise_name" name="exerciseId" placeholder="e.g. Bench Press, Squat, Deadlift" required>
@@ -257,7 +258,7 @@
         <div class="api-card">
           <h2>Nutrition & Meal Plan</h2>
           <p>Get personalized nutrition advice and a custom meal plan tailored to your goals, preferences, and needs.</p>
-          <form id="nutrition-meal-form">
+          <form id="nutrition-meal-form" data-api-endpoint="meal-plan" data-result-id="nutrition-meal-result">
             <div class="form-group">
               <label for="nutrition_goal">Nutrition Goal:</label>
               <select id="nutrition_goal" name="goals" required>
@@ -405,7 +406,7 @@
         <div class="api-card">
           <h2>Analyze Food Plate</h2>
           <p>Upload an image of your food plate to analyze its nutritional content and health quality.</p>
-          <form id="food-form" enctype="multipart/form-data">
+          <form id="food-form" data-api-endpoint="food-plate" data-result-id="food-result" enctype="multipart/form-data">
             <div class="form-group">
               <label for="food_image">Upload Food Image:</label>
               <input type="file" id="food_image" name="food_image" accept="image/*" required>
@@ -449,7 +450,7 @@
         <div class="api-card">
           <h2>Food Ingredient Directory</h2>
           <p>Explore detailed information about food ingredients, chemicals, and label info with insights on daily consumption.</p>
-          <form id="food-ingredient-directory-form">
+          <form id="food-ingredient-directory-form" data-api-endpoint="food-ingredient" data-result-id="food-ingredient-directory-result">
             <div class="form-group">
               <label for="ingredient_search">Search Ingredient:</label>
               <input type="text" id="ingredient_search" name="ingredient" placeholder="e.g., Ascorbic Acid, Sugar" required>
@@ -474,7 +475,7 @@
         <div class="api-card">
           <h2>Natural Remedies & Healing Approaches</h2>
           <p>Explore suggested natural options and ancestral healing approaches for health conditions based on traditional wisdom and holistic perspectives. These are personal recommendations, not medical advice.</p>
-          <form id="natural-remedies-form">
+          <form id="natural-remedies-form" data-api-endpoint="natural-remedies" data-result-id="natural-remedies-result">
             <div class="form-group">
               <label for="symptom">Condition or Health Goal:</label>
               <input type="text" id="symptom" name="symptom" placeholder="e.g., Cancer, Diabetes, Heart Disease, Common Cold, Weight Loss" required>

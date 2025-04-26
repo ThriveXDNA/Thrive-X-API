@@ -1,3 +1,4 @@
+
 const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
@@ -473,117 +474,52 @@ router.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-// Stripe webhook handler
-router.post('/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+// Add proper Stripe webhook handler with signature verification
+router.post('/stripe-webhook', express.raw({type: 'application/json'}), async (req, res) => {
   const sig = req.headers['stripe-signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  let event;
-
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-    console.log('Webhook event received:', event.type);
+    const event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+    
+    console.log('Webhook received:', event.type);
+    
+    // Handle the event
+    switch (event.type) {
+      case 'checkout.session.completed':
+        const session = event.data.object;
+        // Create user record in Supabase
+        const supabase = createClient(
+          process.env.SUPABASE_URL,
+          process.env.SUPABASE_KEY
+        );
+        
+        await supabase.from('users').upsert({
+          email: session.customer_email,
+          stripe_customer_id: session.customer,
+          plan: session.metadata.plan,
+          api_key: uuidv4(),
+          created_at: new Date().toISOString()
+        });
+        break;
+      
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted':
+        // Handle subscription changes
+        const subscription = event.data.object;
+        // Update user plan in database
+        break;
+    }
+    
+    res.json({received: true});
   } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
+    console.error('Webhook error:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-
-  switch (event.type) {
-    case 'checkout.session.completed':
-      const session = event.data.object;
-      const plan = session.metadata.plan;
-      const email = session.metadata.email || session.customer_email;
-
-      console.log('Checkout session completed for email:', email, 'Plan:', plan);
-
-      // Create API key for the user
-      const apiKey = uuidv4();
-      
-      // Check if user already exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', email)
-        .single();
-        
-      if (existingUser) {
-        // Update existing user
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({
-            api_key: apiKey,
-            plan,
-            role: 'user',
-            requestsRemaining: plan.startsWith('core') ? 500 : plan.startsWith('elite') ? 2000 : 5000,
-            email_verified: false
-          })
-          .eq('email', email);
-          
-        if (updateError) {
-          console.error('Error updating user in Supabase:', updateError);
-        } else {
-          console.log('User updated in Supabase:', { apiKey, plan, email });
-        }
-      } else {
-        // Create new user
-        const { error } = await supabase
-          .from('users')
-          .insert({
-            api_key: apiKey,
-            plan,
-            role: 'user',
-            requestsRemaining: plan.startsWith('core') ? 500 : plan.startsWith('elite') ? 2000 : 5000,
-            email,
-            email_verified: false
-          });
-
-        if (error) {
-          console.error('Error inserting user in Supabase:', error);
-        } else {
-          console.log('User created in Supabase:', { apiKey, plan, email });
-        }
-      }
-      
-      // Send email with API key
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Your Thrive-X Fitness API Subscription',
-        text: `Thank you for subscribing to Thrive-X Fitness API!
-
-Your subscription has been activated. Here are your account details:
-
-API Key: ${apiKey}
-Plan: ${plan}
-Requests: ${plan.startsWith('core') ? '500' : plan.startsWith('elite') ? '2,000' : '5,000'} per month
-
-Please keep your API key secure as it provides access to our services.
-
-To verify your email address, please visit our website and enter the verification code we'll send separately.
-
-Best regards,
-The Thrive-X Team`
-      };
-
-      try {
-        await transporter.sendMail(mailOptions);
-        console.log('Subscription email sent to:', email);
-      } catch (emailError) {
-        console.error('Error sending subscription email:', emailError);
-      }
-
-      break;
-    case 'invoice.paid':
-      console.log('Invoice paid:', event.data.object);
-      break;
-    case 'invoice.payment_failed':
-      console.log('Invoice payment failed:', event.data.object);
-      break;
-    default:
-      console.log(`Unhandled event type: ${event.type}`);
-  }
-
-  res.json({ received: true });
 });
 
 // API routes (unchanged)

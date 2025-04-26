@@ -1,3 +1,4 @@
+
 // src/public/fitness/scripts.js
 
 // Conversion constants
@@ -49,14 +50,29 @@ async function makeApiRequestWithVerification(endpoint, data, method = 'POST') {
   }
 
   try {
-    const response = await fetch(`/fitness/api/fitness/${endpoint}`, {
+    // Handle different data types properly
+    let options = {
       method: method,
       headers: {
-        'Content-Type': 'application/json',
         'X-API-Key': apiKey
-      },
-      body: JSON.stringify(data)
-    });
+      }
+    };
+    
+    // Handle FormData vs JSON differently
+    if (endpoint === 'food-plate' && data instanceof FormData) {
+      // Don't set Content-Type for FormData (browser sets it with boundary)
+      options.body = data;
+    } else if (typeof data === 'string') {
+      // Already JSON string
+      options.headers['Content-Type'] = 'application/json';
+      options.body = data;
+    } else {
+      // Object needs to be stringified
+      options.headers['Content-Type'] = 'application/json';
+      options.body = JSON.stringify(data);
+    }
+    
+    const response = await fetch(`/fitness/api/fitness/${endpoint}`, options);
 
     if (response.status === 403) {
       const responseData = await response.json();
@@ -388,19 +404,88 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize Stripe
   initializeStripe();
   
-  const formEndpoints = [
-    { formId: 'workout-form', resultId: 'workout-result', endpoint: 'workout' },
-    { formId: 'exercise-form', resultId: 'exercise-result', endpoint: 'exercise' },
-    { formId: 'nutrition-meal-form', resultId: 'nutrition-meal-result', endpoint: 'meal-plan' },
-    { formId: 'food-form', resultId: 'food-result', endpoint: 'food-plate' },
-    { formId: 'food-ingredient-directory-form', resultId: 'food-ingredient-directory-result', endpoint: 'food-ingredient' },
-    { formId: 'natural-remedies-form', resultId: 'natural-remedies-result', endpoint: 'natural-remedies' }
-  ];
-
-  formEndpoints.forEach(({ formId, resultId, endpoint }) => {
-    if (document.getElementById(formId) && document.getElementById(resultId)) {
-      handleFormSubmit(formId, resultId, endpoint);
-    }
+  // Fix for API feature buttons
+  const apiFeatureButtons = document.querySelectorAll('.sidebar-item, .tab-button');
+  apiFeatureButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+      const tabName = this.getAttribute('data-tab');
+      console.log('API feature clicked:', tabName);
+      
+      // Remove active class from all tabs and content
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      // Add active class to clicked tab and corresponding content
+      document.querySelectorAll(`.tab-button[data-tab="${tabName}"]`).forEach(btn => btn.classList.add('active'));
+      const tabContent = document.getElementById(`${tabName}-tab`);
+      if (tabContent) {
+        tabContent.classList.add('active');
+      }
+    });
+  });
+  
+  // Fix for form submissions
+  const forms = document.querySelectorAll('form[data-api-endpoint]');
+  forms.forEach(form => {
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const endpoint = this.getAttribute('data-api-endpoint');
+      const resultId = this.getAttribute('data-result-id');
+      console.log(`Form submitted: ${this.id}, endpoint: ${endpoint}`);
+      
+      const resultContainer = document.getElementById(resultId);
+      if (!resultContainer) return;
+      
+      const resultContent = resultContainer.querySelector('.result-content');
+      const statusBadge = resultContainer.querySelector('.status-badge');
+      
+      // Show loading state
+      if (resultContent) {
+        resultContent.innerHTML = '<div class="loading">Processing request...</div>';
+      }
+      if (statusBadge) {
+        statusBadge.textContent = 'Loading';
+        statusBadge.className = 'status-badge status-loading';
+      }
+      
+      try {
+        // Prepare form data
+        let formData;
+        if (endpoint === 'food-plate') {
+          formData = new FormData(this);
+        } else {
+          const formDataObj = {};
+          new FormData(this).forEach((value, key) => {
+            formDataObj[key] = value;
+          });
+          formData = formDataObj;
+        }
+        
+        // Make API request
+        const response = await makeApiRequestWithVerification(endpoint, formData);
+        if (!response) return;
+        
+        const result = await response.json();
+        if (resultContent) {
+          resultContent.innerHTML = formatResult(result, endpoint);
+        }
+        if (statusBadge) {
+          statusBadge.textContent = 'Success';
+          statusBadge.className = 'status-badge status-success';
+        }
+      } catch (error) {
+        console.error('API request error:', error);
+        if (resultContent) {
+          resultContent.innerHTML = `<p>Error: ${error.message}</p>`;
+        }
+        if (statusBadge) {
+          statusBadge.textContent = 'Error';
+          statusBadge.className = 'status-badge status-error';
+        }
+      }
+    });
   });
 
   // Tab navigation

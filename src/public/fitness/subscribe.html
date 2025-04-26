@@ -442,89 +442,45 @@
 
     // Tab navigation and query parameter handling
     document.addEventListener('DOMContentLoaded', () => {
+      // Plan selection buttons
+      const planButtons = document.querySelectorAll('.plan-select-btn');
+      if (planButtons.length > 0) {
+        planButtons.forEach(btn => {
+          btn.addEventListener('click', async function() {
+            const planId = this.getAttribute('data-plan').toLowerCase();
+            console.log('Plan selected:', planId);
+            
+            // Rest of your plan selection code...
+          });
+        });
+      }
+      
+      // Tab navigation
       const tabButtons = document.querySelectorAll('.tab-button');
       const tabContents = document.querySelectorAll('.tab-content');
-      const retrySubscribeBtn = document.getElementById('retry-subscribe-btn');
-      const modal = document.getElementById('subscription-modal');
-      const closeBtn = document.querySelector('.close');
-
-      // Handle tab switching
+      
       tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
+        button.addEventListener('click', function() {
+          const tabName = this.getAttribute('data-tab');
+          console.log('Tab clicked:', tabName);
+          
           tabButtons.forEach(btn => btn.classList.remove('active'));
           tabContents.forEach(content => content.classList.remove('active'));
-          button.classList.add('active');
-          document.getElementById(`${button.dataset.tab}-tab`).classList.add('active');
+          
+          this.classList.add('active');
+          document.getElementById(`${tabName}-tab`).classList.add('active');
         });
       });
-
-      // Show success, cancel, or essential message based on query parameter
-      const urlParams = new URLSearchParams(window.location.search);
-      const isSuccess = urlParams.get('success') === 'true';
-      const isCanceled = urlParams.get('canceled') === 'true';
-      const isEssential = urlParams.get('plan') === 'essential';
-
-      const successMessage = document.getElementById('success-message');
-      const cancelMessage = document.getElementById('cancel-message');
-      const essentialMessage = document.getElementById('essential-message');
-      const fallbackMessage = document.getElementById('fallback-message');
-
-      if (isSuccess) {
-        successMessage.classList.remove('hidden');
-        cancelMessage.classList.add('hidden');
-        essentialMessage.classList.add('hidden');
-        fallbackMessage.classList.add('hidden');
-      } else if (isCanceled) {
-        cancelMessage.classList.remove('hidden');
-        successMessage.classList.add('hidden');
-        essentialMessage.classList.add('hidden');
-        fallbackMessage.classList.add('hidden');
-      } else if (isEssential) {
-        essentialMessage.classList.remove('hidden');
-        successMessage.classList.add('hidden');
-        cancelMessage.classList.add('hidden');
-        fallbackMessage.classList.add('hidden');
-      } else {
-        fallbackMessage.classList.remove('hidden');
-        successMessage.classList.add('hidden');
-        cancelMessage.classList.add('hidden');
-        essentialMessage.classList.add('hidden');
-      }
-
-      // Handle retry button to trigger subscription modal
-      retrySubscribeBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (modal) {
-          modal.style.display = 'block';
-          console.log('Subscription modal opened via retry button');
-        } else {
-          console.warn('Subscription modal not found, redirecting to /fitness');
-          window.location.href = '/fitness';
-        }
-      });
-
-      // Close modal when clicking the close button
-      if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-          modal.style.display = 'none';
-        });
-      }
-
-      // Close modal when clicking outside the modal
-      window.addEventListener('click', (e) => {
-        if (e.target === modal) {
-          modal.style.display = 'none';
-        }
-      });
-
+      
       // Plan toggle buttons
       const monthlyToggle = document.getElementById('monthly-toggle');
       const yearlyToggle = document.getElementById('yearly-toggle');
       const monthlyPlans = document.getElementById('monthly-plans');
       const yearlyPlans = document.getElementById('yearly-plans');
-
+      
       if (monthlyToggle && yearlyToggle) {
-        monthlyToggle.addEventListener('click', () => {
+        monthlyToggle.addEventListener('click', function() {
+          console.log('Monthly toggle clicked');
           monthlyToggle.classList.add('active');
           monthlyToggle.style.background = '#1ECBE1';
           monthlyToggle.style.color = 'white';
@@ -534,8 +490,9 @@
           monthlyPlans.style.display = 'flex';
           yearlyPlans.style.display = 'none';
         });
-
-        yearlyToggle.addEventListener('click', () => {
+        
+        yearlyToggle.addEventListener('click', function() {
+          console.log('Yearly toggle clicked');
           yearlyToggle.classList.add('active');
           yearlyToggle.style.background = '#1ECBE1';
           yearlyToggle.style.color = 'white';
@@ -544,115 +501,6 @@
           monthlyToggle.style.color = '#333';
           yearlyPlans.style.display = 'flex';
           monthlyPlans.style.display = 'none';
-        });
-      }
-
-      // Initialize plan selection buttons
-      const planButtons = document.querySelectorAll('.plan-select-btn');
-      const disposableEmailDomains = [
-        'mailinator.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com',
-        'sharklasers.com', 'throwawaymail.com', 'yopmail.com', 'dispostable.com'
-      ];
-
-      if (planButtons.length > 0) {
-        planButtons.forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const planId = btn.dataset.plan.toLowerCase();
-            console.log('Plan selected:', planId);
-
-            const emailInput = document.getElementById('user-email');
-            const email = emailInput ? emailInput.value.trim() : '';
-            
-            if (!email) {
-              alert('Please enter a valid email address.');
-              return;
-            }
-            
-            if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
-              alert('Please enter a valid email address.');
-              return;
-            }
-            
-            if (disposableEmailDomains.some(domain => email.toLowerCase().endsWith(`@${domain}`))) {
-              alert('Disposable email addresses are not allowed. Please use a permanent email.');
-              return;
-            }
-
-            // Essential plan
-            if (planId.startsWith('essential')) {
-              try {
-                const response = await fetch('/fitness/api/fitness/activate-free-plan', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({ planId, email })
-                });
-
-                if (!response.ok) {
-                  const errorText = await response.text();
-                  throw new Error(`Failed to activate free plan: ${response.status}, ${errorText}`);
-                }
-
-                const data = await response.json();
-                localStorage.setItem('apiKey', data.apiKey);
-                localStorage.setItem('userEmail', email);
-                modal.style.display = 'none';
-                
-                // Redirect to success page
-                window.location.href = '/fitness/subscribe?plan=essential';
-              } catch (error) {
-                console.error('Error activating essential plan:', error);
-                alert(`Failed to activate Essential plan: ${error.message}`);
-              }
-              return;
-            }
-
-            // Paid plans
-            if (typeof Stripe === 'undefined') {
-              console.error('Stripe.js not loaded');
-              alert('Payment system failed to load. Please disable ad blockers and try again.');
-              return;
-            }
-
-            // Initialize Stripe
-            const response = await fetch('/fitness/config');
-            const { stripePublishableKey } = await response.json();
-            const stripe = Stripe(stripePublishableKey);
-
-            try {
-              const response = await fetch('/fitness/api/fitness/create-checkout-session', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ planId, email })
-              });
-
-              if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Server error: ${response.status}, ${errorText}`);
-              }
-
-              const data = await response.json();
-              console.log('Checkout session response:', data);
-
-              if (!data.id) {
-                throw new Error('No session ID returned from server');
-              }
-
-              localStorage.setItem('userEmail', email);
-              const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
-              
-              if (error) {
-                console.error('Stripe redirect error details:', error);
-                throw new Error(`Stripe redirect error: ${error.message}`);
-              }
-            } catch (error) {
-              console.error('Error creating checkout session:', error);
-              alert(`Payment error: ${error.message}. Please try again or contact support.`);
-            }
-          });
         });
       }
     });

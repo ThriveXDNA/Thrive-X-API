@@ -1,4 +1,4 @@
-// Fixed Stripe plans, added /fitness/subscribe route, and corrected limiter typo
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -9,6 +9,7 @@ const { rateLimit } = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 const router = require('./routes/router');
 const fitnessRoutes = require('./routes/fitnessRoutes');
+const authRoutes = require('./routes/authRoutes');
 const Stripe = require('stripe');
 
 // Load .env
@@ -157,7 +158,7 @@ const limiter = rateLimit({
 // Routes
 try {
   app.use('/fitness/api/fitness', limiter, fitnessRoutes);
-  app.use('/fitness/api/auth', fitnessRoutes);
+  app.use('/fitness/api/auth', authRoutes); // Changed from fitnessRoutes to authRoutes
   app.use('/fitness', router);
   console.log('Routes mounted successfully - /fitness/api/fitness and /fitness/api/auth');
 } catch (err) {
