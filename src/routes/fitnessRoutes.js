@@ -41,7 +41,7 @@ async function authenticateApiKey(req, res, next) {
 
   const { data, error } = await supabase
     .from('users')
-    .select('plan, role, email')
+    .select('plan, role, email, email_verified')
     .eq('api_key', apiKey)
     .single();
 
@@ -52,6 +52,16 @@ async function authenticateApiKey(req, res, next) {
 
   console.log('Supabase response:', { data, error: 'none' });
   console.log('User authenticated:', data);
+  
+  // Check if email is verified
+  if (!data.email_verified) {
+    return res.status(403).json({ 
+      error: 'Email not verified', 
+      email: data.email,
+      requiresVerification: true 
+    });
+  }
+  
   req.user = data;
   next();
 }
@@ -213,6 +223,75 @@ router.post('/verify-code', async (req, res) => {
   } catch (err) {
     console.error('Error in /verify-code:', err.message);
     res.status(500).json({ error: 'Server error during verification' });
+  }
+});
+
+// Resend verification code
+router.post('/resend-verification-code', async (req, res) => {
+  const { email, apiKey } = req.body;
+  console.log('Reached /resend-verification-code with email:', email);
+
+  try {
+    // Verify the API key belongs to this email
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('email, email_verified')
+      .eq('api_key', apiKey)
+      .eq('email', email)
+      .single();
+
+    if (userError || !userData) {
+      console.error('Invalid API key or email:', userError);
+      return res.status(401).json({ error: 'Invalid API key or email' });
+    }
+
+    if (userData.email_verified) {
+      return res.status(200).json({ message: 'Email already verified' });
+    }
+
+    // Check for rate limiting of codes (max 3 within 15 minutes)
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const { data: existingCodes, error: countError } = await supabase
+      .from('verification_codes')
+      .select('id')
+      .eq('email', email)
+      .gte('created_at', fifteenMinutesAgo);
+
+    if (countError) {
+      console.error('Error checking existing codes:', countError);
+      return res.status(500).json({ error: 'Failed to check rate limits' });
+    }
+
+    if (existingCodes && existingCodes.length >= 3) {
+      console.error('Rate limit exceeded for email:', email);
+      return res.status(429).json({ error: 'Too many verification attempts. Please try again in 15 minutes.' });
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const { error } = await supabase
+      .from('verification_codes')
+      .insert({ email, code, expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString() });
+
+    if (error) {
+      console.error('Supabase insert error:', error);
+      return res.status(500).json({ error: 'Failed to store verification code' });
+    }
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Thrive-X Fitness Verification Code',
+      text: `Your verification code is: ${code}\n\nThis code expires in 5 minutes.\n\nBest,\nThrive-X Team`
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Verification code sent to:', email);
+
+    res.status(200).json({ message: 'Verification code sent' });
+  } catch (err) {
+    console.error('Error in /resend-verification-code:', err.message);
+    res.status(500).json({ error: 'Server error during code sending' });
   }
 });
 
