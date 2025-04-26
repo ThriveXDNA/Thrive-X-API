@@ -439,8 +439,11 @@ router.post('/create-checkout-session', async (req, res) => {
   }
 });
 
+// Stripe webhook handler - using raw body parser middleware
+const stripeWebhookMiddleware = express.raw({type: 'application/json'});
+
 // Add proper Stripe webhook handler with signature verification
-router.post('/stripe-webhook', express.raw({type: 'application/json'}), async (req, res) => {
+router.post('/stripe-webhook', stripeWebhookMiddleware, async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   
@@ -458,25 +461,81 @@ router.post('/stripe-webhook', express.raw({type: 'application/json'}), async (r
       case 'checkout.session.completed':
         const session = event.data.object;
         // Create user record in Supabase
-        const supabase = createClient(
-          process.env.SUPABASE_URL,
-          process.env.SUPABASE_KEY
-        );
-        
+        const apiKey = uuidv4();
         await supabase.from('users').upsert({
           email: session.customer_email,
           stripe_customer_id: session.customer,
           plan: session.metadata.plan,
-          api_key: uuidv4(),
+          api_key: apiKey,
+          role: 'user',
+          requestsRemaining: getPlanRequestLimit(session.metadata.plan),
+          email_verified: false,
           created_at: new Date().toISOString()
         });
+        
+        // Send welcome email with API key
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: session.customer_email,
+          subject: 'Welcome to Thrive-X Fitness API - Your API Key',
+          text: `Welcome to Thrive-X Fitness API!
+
+Your ${session.metadata.plan} plan has been activated. Here are your account details:
+
+API Key: ${apiKey}
+Plan: ${session.metadata.plan}
+
+Please keep your API key secure as it provides access to our services.
+
+To verify your email address, we've sent a separate verification code to your email. Please check your inbox and enter the code on our website.
+
+Best regards,
+The Thrive-X Team`
+        };
+
+        try {
+          await transporter.sendMail(mailOptions);
+          console.log('Welcome email sent to:', session.customer_email);
+          
+          // Send verification code as well
+          await sendVerificationCode(session.customer_email);
+        } catch (emailError) {
+          console.error('Error sending welcome email:', emailError);
+          // Continue despite email error
+        }
         break;
       
       case 'customer.subscription.updated':
-      case 'customer.subscription.deleted':
-        // Handle subscription changes
-        const subscription = event.data.object;
+        const updatedSubscription = event.data.object;
+        // Get the plan from the product
+        const updatedProductId = updatedSubscription.items.data[0].price.product;
+        const updatedProduct = await stripe.products.retrieve(updatedProductId);
+        const updatedPlan = updatedProduct.metadata.plan_id || 'core'; // Default to core if not specified
+        
         // Update user plan in database
+        await supabase
+          .from('users')
+          .update({ 
+            plan: updatedPlan,
+            requestsRemaining: getPlanRequestLimit(updatedPlan) 
+          })
+          .eq('stripe_customer_id', updatedSubscription.customer);
+          
+        console.log(`Updated plan to ${updatedPlan} for customer ${updatedSubscription.customer}`);
+        break;
+        
+      case 'customer.subscription.deleted':
+        const deletedSubscription = event.data.object;
+        // Downgrade to free plan
+        await supabase
+          .from('users')
+          .update({ 
+            plan: 'essential',
+            requestsRemaining: 10 
+          })
+          .eq('stripe_customer_id', deletedSubscription.customer);
+          
+        console.log(`Downgraded to essential plan for customer ${deletedSubscription.customer}`);
         break;
     }
     
@@ -486,6 +545,51 @@ router.post('/stripe-webhook', express.raw({type: 'application/json'}), async (r
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 });
+
+// Helper function to get request limit based on plan
+function getPlanRequestLimit(plan) {
+  const limits = {
+    'essential': 10,
+    'essential-yearly': 10,
+    'core': 500,
+    'core-yearly': 500,
+    'elite': 2000,
+    'elite-yearly': 2000,
+    'ultimate': 5000,
+    'ultimate-yearly': 5000
+  };
+  
+  return limits[plan] || 10; // Default to 10 if plan not found
+}
+
+// Helper function to send verification code
+async function sendVerificationCode(email) {
+  try {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    await supabase
+      .from('verification_codes')
+      .insert({ 
+        email, 
+        code, 
+        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString() 
+      });
+      
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Thrive-X Fitness API - Verification Code',
+      text: `Your verification code is: ${code}\n\nThis code expires in 5 minutes.\n\nBest,\nThrive-X Team`
+    };
+    
+    await transporter.sendMail(mailOptions);
+    console.log('Verification code sent to:', email);
+    return true;
+  } catch (err) {
+    console.error('Error sending verification code:', err.message);
+    return false;
+  }
+}
 
 // API routes (unchanged)
 router.post('/workout', authenticateApiKey, generateWorkoutPlan);
