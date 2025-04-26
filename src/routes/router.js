@@ -1,3 +1,4 @@
+
 // src/routes/router.js
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
@@ -16,20 +17,36 @@ router.get('/status', (req, res) => {
 
 // Validate API key and return user profile
 router.post('/fitness/api/auth/validate', async (req, res) => {
-  const { apiKey } = req.body;
-  if (!apiKey) return res.status(400).json({ error: 'API key required' });
+  const apiKey = req.headers['x-api-key'] || req.body.apiKey;
+  
+  if (!apiKey) {
+    return res.status(400).json({ error: 'API key required' });
+  }
 
-  // Fetch user from Supabase
-  const { data, error } = await supabase
-    .from('users')
-    .select('plan, role')
-    .eq('api_key', apiKey)
-    .single();
+  try {
+    // Fetch user from Supabase
+    const { data, error } = await supabase
+      .from('users')
+      .select('plan, role, email, email_verified, requestsRemaining')
+      .eq('api_key', apiKey)
+      .single();
 
-  if (error || !data) return res.status(401).json({ error: 'Invalid API key' });
+    if (error || !data) {
+      return res.status(401).json({ error: 'Invalid API key' });
+    }
 
-  // Return user profile without Redis-based request counting
-  res.json({ plan: data.plan || 'essential', role: data.role || 'user' });
+    // Return user profile
+    res.json({ 
+      plan: data.plan || 'essential', 
+      role: data.role || 'user',
+      email: data.email,
+      email_verified: data.email_verified,
+      requestsRemaining: data.requestsRemaining
+    });
+  } catch (err) {
+    console.error('Error in /auth/validate:', err.message);
+    res.status(500).json({ error: 'Server error during validation' });
+  }
 });
 
 // Mount fitness-specific routes at /api/fitness

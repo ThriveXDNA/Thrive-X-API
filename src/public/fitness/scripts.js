@@ -103,15 +103,15 @@ async function verifyEmailCode(code) {
   try {
     const apiKey = localStorage.getItem('apiKey');
     
-    const response = await fetch('/fitness/api/verify-code', {
+    const response = await fetch('/fitness/api/fitness/verify-code', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey
       },
       body: JSON.stringify({
         email: userEmail,
-        code: code,
-        apiKey: apiKey
+        code: code
       })
     });
 
@@ -125,9 +125,9 @@ async function verifyEmailCode(code) {
       document.getElementById('verification-message').textContent = data.error || 'Verification failed';
       return false;
     }
-  } catch (err) {
-    console.error('Error verifying code:', err);
-    document.getElementById('verification-message').textContent = 'Server error during verification';
+  } catch (error) {
+    console.error('Verification error:', error);
+    document.getElementById('verification-message').textContent = 'Verification failed';
     return false;
   }
 }
@@ -138,7 +138,8 @@ async function resendVerificationCode(email, apiKey) {
     const response = await fetch('/fitness/api/fitness/resend-verification-code', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey
       },
       body: JSON.stringify({
         email: email,
@@ -568,10 +569,12 @@ async function submitVerificationCode() {
   }
 
   try {
-    const response = await fetch('/api/fitness/verify-code', {
+    const apiKey = localStorage.getItem('apiKey');
+    const response = await fetch('/fitness/api/fitness/verify-code', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey
       },
       body: JSON.stringify({ email: userEmail, code })
     });
@@ -588,6 +591,13 @@ async function submitVerificationCode() {
       // Hide modal after a short delay
       setTimeout(() => {
         hideVerificationModal();
+        
+        // If there was a pending API request, retry it now
+        if (pendingApiRequest) {
+          const { endpoint, data, method } = pendingApiRequest;
+          pendingApiRequest = null;
+          makeApiRequestWithVerification(endpoint, data, method);
+        }
       }, 1500);
     } else {
       document.getElementById('verification-message').textContent = data.error || 'Verification failed';

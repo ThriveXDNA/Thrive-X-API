@@ -31,7 +31,8 @@ const transporter = nodemailer.createTransport({
 
 // Middleware to authenticate API key
 async function authenticateApiKey(req, res, next) {
-  const apiKey = req.headers['x-api-key'];
+  const apiKey = req.headers['x-api-key'] || req.headers['X-API-Key'] || req.headers['x-api-key'] || req.headers['X-Api-Key'];
+  
   if (!apiKey) {
     console.error('No API key provided');
     return res.status(401).json({ error: 'API key required' });
@@ -40,31 +41,36 @@ async function authenticateApiKey(req, res, next) {
   console.log('Extracted API key:', apiKey);
   console.log('Querying Supabase for API key:', apiKey);
 
-  const { data, error } = await supabase
-    .from('users')
-    .select('plan, role, email, email_verified')
-    .eq('api_key', apiKey)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('plan, role, email, email_verified, requestsRemaining')
+      .eq('api_key', apiKey)
+      .single();
 
-  if (error || !data) {
-    console.error('Supabase error or no user found:', error);
-    return res.status(401).json({ error: 'Invalid API key' });
-  }
+    if (error || !data) {
+      console.error('Supabase error or no user found:', error);
+      return res.status(401).json({ error: 'Invalid API key' });
+    }
 
-  console.log('Supabase response:', { data, error: 'none' });
-  console.log('User authenticated:', data);
-  
-  // Check if email is verified
-  if (!data.email_verified) {
-    return res.status(403).json({ 
-      error: 'Email not verified', 
-      email: data.email,
-      requiresVerification: true 
-    });
+    console.log('Supabase response:', { data, error: 'none' });
+    console.log('User authenticated:', data);
+    
+    // Check if email is verified
+    if (!data.email_verified) {
+      return res.status(403).json({ 
+        error: 'Email not verified', 
+        email: data.email,
+        requiresVerification: true 
+      });
+    }
+    
+    req.user = data;
+    next();
+  } catch (err) {
+    console.error('Error in authenticateApiKey middleware:', err.message);
+    return res.status(500).json({ error: 'Server error during authentication' });
   }
-  
-  req.user = data;
-  next();
 }
 
 // Validate API key
@@ -227,27 +233,25 @@ router.post('/verify-code', async (req, res) => {
   }
 });
 
-// Resend verification code
+// Resend verification code endpoint
 router.post('/resend-verification-code', async (req, res) => {
   const { email, apiKey } = req.body;
   console.log('Reached /resend-verification-code with email:', email);
+  
+  if (!email || !apiKey) {
+    return res.status(400).json({ error: 'Email and API key are required' });
+  }
 
   try {
-    // Verify the API key belongs to this email
+    // Verify the API key
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('email, email_verified')
       .eq('api_key', apiKey)
-      .eq('email', email)
       .single();
 
     if (userError || !userData) {
-      console.error('Invalid API key or email:', userError);
-      return res.status(401).json({ error: 'Invalid API key or email' });
-    }
-
-    if (userData.email_verified) {
-      return res.status(200).json({ message: 'Email already verified' });
+      return res.status(401).json({ error: 'Invalid API key' });
     }
 
     // Check for rate limiting of codes (max 3 within 15 minutes)
