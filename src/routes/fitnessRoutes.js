@@ -313,106 +313,67 @@ router.post('/activate-free-plan', async (req, res) => {
       console.error('Invalid email:', email);
       return res.status(400).json({ error: 'Invalid email address' });
     }
-    const disposableDomains = ['mailinator.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com', 'sharklasers.com', 'throwawaymail.com', 'yopmail.com', 'dispostable.com'];
-    if (disposableDomains.some(domain => email.toLowerCase().endsWith(`@${domain}`))) {
-      console.error('Disposable email detected:', email);
-      return res.status(400).json({ error: 'Disposable email addresses are not allowed' });
-    }
 
-    // Check if user with this email already exists
+    // Check if user already exists
     const { data: existingUser } = await supabase
       .from('users')
-      .select('api_key')
+      .select('*')
       .eq('email', email)
       .single();
 
-    let apiKey;
-    let userData;
-
     if (existingUser) {
-      // Update existing user
-      apiKey = existingUser.api_key;
-      const { data, error } = await supabase
-        .from('users')
-        .update({
-          plan: planId,
-          requestsRemaining: 10,
-          email_verified: false
-        })
-        .eq('email', email)
-        .select('plan, role, requestsRemaining')
-        .single();
-
-      if (error) {
-        console.error('Supabase update error:', error);
-        return res.status(500).json({ error: 'Failed to update user profile' });
+      console.log('User already exists with email:', email);
+      // Update existing user to essential plan if they don't have a paid plan
+      if (!['core', 'core-yearly', 'elite', 'elite-yearly', 'ultimate', 'ultimate-yearly'].includes(existingUser.plan)) {
+        await supabase
+          .from('users')
+          .update({ plan: planId })
+          .eq('email', email);
       }
-      
-      userData = data;
     } else {
-      // Create new user
-      apiKey = uuidv4();
-      const { data, error } = await supabase
-        .from('users')
-        .insert({
-          api_key: apiKey,
-          plan: planId,
-          role: 'user',
-          requestsRemaining: 10,
-          email,
-          email_verified: false
-        })
-        .select('plan, role, requestsRemaining')
-        .single();
+      // Create new user with essential plan
+      const apiKey = uuidv4();
+      await supabase.from('users').insert({
+        email,
+        plan: planId,
+        api_key: apiKey,
+        created_at: new Date().toISOString(),
+        email_verified: false
+      });
 
-      if (error) {
-        console.error('Supabase insert error:', error);
-        return res.status(500).json({ error: 'Failed to create user profile' });
-      }
-      
-      userData = data;
-    }
+      // Send verification email
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      await supabase.from('verification_codes').insert({
+        email,
+        code: verificationCode,
+        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString() // 5 minutes expiry
+      });
 
-    // Send welcome email with API key
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Welcome to Thrive-X Fitness API - Your API Key',
-      text: `Welcome to Thrive-X Fitness API!
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Welcome to Thrive X Fitness API - Verify Your Email',
+        text: `Thank you for signing up for the Thrive X Fitness API Essential Plan!
 
-Your Essential plan has been activated. Here are your account details:
+Your API Key: ${apiKey}
 
-API Key: ${apiKey}
-Plan: ${planId}
-Requests Remaining: 10
+To verify your email and activate your account, please use this verification code:
+${verificationCode}
 
-Please keep your API key secure as it provides access to our services.
-
-To verify your email address, we've sent a separate verification code to your email. Please check your inbox and enter the code on our website.
+This code will expire in 5 minutes.
 
 Best regards,
-The Thrive-X Team`
-    };
+The Thrive X Team`
+      };
 
-    try {
       await transporter.sendMail(mailOptions);
-      console.log('Welcome email sent to:', email);
-    } catch (emailError) {
-      console.error('Error sending welcome email:', emailError);
-      // Continue despite email error
+      console.log('Verification email sent to:', email);
     }
 
-    console.log(`Free plan ${planId} activated for email:`, email);
-
-    res.status(200).json({
-      apiKey,
-      plan: userData.plan,
-      role: userData.role,
-      requestsRemaining: userData.requestsRemaining
-    });
-  } catch (err) {
-    console.error('Error in /activate-free-plan:', err.message);
-    res.status(500).json({ error: 'Server error during free plan activation' });
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error activating free plan:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

@@ -435,22 +435,108 @@
     // Mobile menu toggle
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.getElementById('sidebar');
-    menuToggle.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed');
-      menuToggle.textContent = sidebar.classList.contains('collapsed') ? '☰' : '✕';
-    });
+    if (menuToggle) {
+      menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        menuToggle.textContent = sidebar.classList.contains('collapsed') ? '☰' : '✕';
+      });
+    }
 
     // Tab navigation and query parameter handling
     document.addEventListener('DOMContentLoaded', () => {
+      // Check URL parameters for subscription status
+      const urlParams = new URLSearchParams(window.location.search);
+      const success = urlParams.get('success');
+      const canceled = urlParams.get('canceled');
+      const essential = urlParams.get('essential');
+      const sessionId = urlParams.get('session_id');
+      
+      // Hide all message boxes initially
+      document.getElementById('success-message').classList.add('hidden');
+      document.getElementById('cancel-message').classList.add('hidden');
+      document.getElementById('essential-message').classList.add('hidden');
+      document.getElementById('fallback-message').classList.add('hidden');
+      
+      // Show appropriate message based on URL parameters
+      if (success === 'true' && sessionId) {
+        document.getElementById('success-message').classList.remove('hidden');
+        document.getElementById('fallback-message').classList.add('hidden');
+        console.log('Showing success message for session ID:', sessionId);
+      } else if (canceled === 'true') {
+        document.getElementById('cancel-message').classList.remove('hidden');
+        document.getElementById('fallback-message').classList.add('hidden');
+        console.log('Showing cancellation message');
+      } else if (essential === 'true') {
+        document.getElementById('essential-message').classList.remove('hidden');
+        document.getElementById('fallback-message').classList.add('hidden');
+        console.log('Showing essential plan activation message');
+      } else {
+        document.getElementById('fallback-message').classList.remove('hidden');
+        console.log('Showing fallback message - no status parameters found');
+      }
+      
       // Plan selection buttons
       const planButtons = document.querySelectorAll('.plan-select-btn');
       if (planButtons.length > 0) {
         planButtons.forEach(btn => {
           btn.addEventListener('click', async function() {
             const planId = this.getAttribute('data-plan').toLowerCase();
-            console.log('Plan selected:', planId);
+            const emailInput = document.getElementById('user-email');
+            const email = emailInput ? emailInput.value.trim() : '';
             
-            // Rest of your plan selection code...
+            console.log('Plan selected:', planId, 'Email:', email);
+            
+            if (!email || !email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
+              alert('Please enter a valid email address');
+              return;
+            }
+            
+            try {
+              if (planId.includes('essential')) {
+                // Handle free plan activation
+                const response = await fetch('/fitness/api/activate-free-plan', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ planId, email }),
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                  window.location.href = '/fitness/subscribe?essential=true';
+                } else {
+                  alert(`Error: ${result.error || 'Failed to activate free plan'}`);
+                }
+              } else {
+                // Handle paid plan checkout
+                const response = await fetch('/fitness/api/create-checkout-session', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ planId, email }),
+                });
+                
+                const session = await response.json();
+                
+                if (response.ok && session.id) {
+                  // Initialize Stripe if not already done
+                  if (typeof stripe === 'undefined') {
+                    await initializeStripe();
+                  }
+                  
+                  // Redirect to Stripe checkout
+                  stripe.redirectToCheckout({ sessionId: session.id });
+                } else {
+                  alert(`Error: ${session.error || 'Failed to create checkout session'}`);
+                }
+              }
+            } catch (error) {
+              console.error('Error during plan selection:', error);
+              alert(`Error: ${error.message || 'An unexpected error occurred'}`);
+            }
           });
         });
       }
@@ -503,7 +589,42 @@
           monthlyPlans.style.display = 'none';
         });
       }
+      
+      // Retry subscription button
+      const retrySubscribeBtn = document.getElementById('retry-subscribe-btn');
+      if (retrySubscribeBtn) {
+        retrySubscribeBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          // Open subscription modal
+          const modal = document.getElementById('subscription-modal');
+          if (modal) {
+            modal.style.display = 'block';
+          }
+        });
+      }
     });
+
+    // Initialize Stripe with publishable key from server
+    async function initializeStripe() {
+      try {
+        const response = await fetch('/fitness/config');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch Stripe config: ${response.status}`);
+        }
+        const { stripePublishableKey } = await response.json();
+        if (stripePublishableKey) {
+          stripe = Stripe(stripePublishableKey);
+          console.log('Stripe initialized with publishable key');
+          return true;
+        } else {
+          console.error('No Stripe publishable key found in config');
+          return false;
+        }
+      } catch (error) {
+        console.error('Failed to load Stripe configuration:', error);
+        return false;
+      }
+    }
   </script>
 </body>
 </html>
