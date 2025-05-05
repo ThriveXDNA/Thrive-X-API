@@ -37,7 +37,7 @@ router.post('/fitness/api/auth/validate', async (req, res) => {
 
     // Return user profile
     res.json({ 
-      plan: data.plan || 'essential', 
+      plan: data.plan || 'core', 
       role: data.role || 'user',
       email: data.email,
       email_verified: data.email_verified,

@@ -19,9 +19,9 @@ let stripe;
 
 // User profile object
 let userProfile = {
-  plan: 'essential',
+  plan: 'core',
   role: 'user',
-  requestsRemaining: 10
+  requestsRemaining: 500
 };
 
 // Email verification handling

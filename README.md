@@ -29,7 +29,6 @@ The ThriveX API powers a rich user experience at thrive-x-api.vercel.app, with t
 
 | Plan | Monthly Price | Annual Price | Annual Savings | API Requests/Month | 
 |------|--------------|--------------|----------------|-------------------|
-| **Essential** | Free | Free | — | 10 | 
 | **Core** | $14.99 | $149.90 | $30 (17%) | 500 | 
 | **Elite** | $49.99 | $479.90 | $120 (20%) | 2,000 | 
 | **Ultimate** | $129.99 | $1,169.90 | $390 (25%) | 5,000 |
@@ -49,11 +48,11 @@ The ThriveX API powers a rich user experience at thrive-x-api.vercel.app, with t
 
 ### API Usage Notes
 
-- All features are accessible on every plan through the ThriveX API at thrive-x-api.vercel.app
+- All features are accessible across all subscription plans through the ThriveX API at thrive-x-api.vercel.app
 - Your subscription tier determines your monthly API request limit
 - Higher tiers allow for more API calls, enabling more frequent use of all features
 - Request limits reset at the beginning of each billing cycle
-- Additional API requests beyond your plan limit require an upgrade or will be unavailable until the next cycle
+- Additional API requests beyond your plan limit are available at an additional per-request cost (varies by plan)
 
 Get Started: Sign up at thrive-x-api.vercel.app to select a plan and generate your API key.
 Payment: Powered by Stripe for secure, hassle-free transactions.
@@ -70,4 +69,3 @@ Issues: Report bugs or suggest features at GitHub Issues.
 
 ```bash
 npm install @thrivex/api
-

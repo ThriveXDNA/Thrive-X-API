@@ -4,6 +4,8 @@ const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
 const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
+const { generateToken, verifyToken, refreshToken } = require('../utils/jwtAuth');
+const { formatApiResponse, formatErrorResponse } = require('../utils/responseFormatter');
 
 // Initialize Supabase
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
@@ -60,9 +62,9 @@ router.post('/register', async (req, res) => {
       .from('users')
       .insert({
         api_key: apiKey,
-        plan: 'essential',
+        plan: 'core',
         role: 'user',
-        requestsRemaining: 10,
+        requestsRemaining: 500,
         email,
         email_verified: false,
         supabase_user_id: authData.user.id
@@ -182,7 +184,7 @@ router.post('/validate', async (req, res) => {
     plan: data.plan, 
     role: data.role, 
     email_verified: data.email_verified,
-    requestsRemaining: data.requestsRemaining || 10
+    requestsRemaining: data.requestsRemaining || 500
   });
 });
 
@@ -272,6 +274,108 @@ router.post('/regenerate-api-key', async (req, res) => {
     console.error('Error in /regenerate-api-key:', err.message);
     res.status(500).json({ error: 'Server error during API key regeneration' });
   }
+});
+
+// Mobile token-based authentication endpoint
+router.post('/mobile/token', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json(
+        formatErrorResponse('Email and password are required', 400, 'AUTH_MISSING_CREDENTIALS')
+      );
+    }
+    
+    // Sign in with Supabase auth
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    if (signInError) {
+      console.error('Supabase auth error:', signInError);
+      return res.status(401).json(
+        formatErrorResponse('Invalid credentials', 401, 'AUTH_INVALID_CREDENTIALS')
+      );
+    }
+    
+    // Get user data from our custom users table
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, api_key, plan, role, email_verified, requestsRemaining')
+      .eq('email', email)
+      .single();
+      
+    if (error || !data) {
+      console.error('Supabase select error:', error);
+      return res.status(404).json(
+        formatErrorResponse('User profile not found', 404, 'AUTH_PROFILE_NOT_FOUND')
+      );
+    }
+
+    // Generate JWT token for mobile clients
+    const token = generateToken(data);
+    
+    res.status(200).json(formatApiResponse({
+      token,
+      apiKey: data.api_key,
+      plan: data.plan,
+      role: data.role,
+      email_verified: data.email_verified,
+      requestsRemaining: data.requestsRemaining,
+      requiresVerification: !data.email_verified
+    }));
+  } catch (err) {
+    console.error('Error in /mobile/token:', err.message);
+    res.status(500).json(
+      formatErrorResponse('Server error during authentication', 500, 'SERVER_ERROR')
+    );
+  }
+});
+
+// Mobile token refresh endpoint
+router.post('/mobile/refresh-token', async (req, res) => {
+  try {
+    const { token: oldToken } = req.body;
+    
+    if (!oldToken) {
+      return res.status(400).json(
+        formatErrorResponse('Token is required', 400, 'AUTH_TOKEN_MISSING')
+      );
+    }
+    
+    // Refresh the token
+    try {
+      const newToken = refreshToken(oldToken);
+      
+      res.status(200).json(formatApiResponse({
+        token: newToken
+      }));
+    } catch (tokenError) {
+      return res.status(401).json(
+        formatErrorResponse('Invalid token', 401, 'AUTH_TOKEN_INVALID')
+      );
+    }
+  } catch (err) {
+    console.error('Error in /mobile/refresh-token:', err.message);
+    res.status(500).json(
+      formatErrorResponse('Server error during token refresh', 500, 'SERVER_ERROR')
+    );
+  }
+});
+
+// Validate JWT token
+router.post('/mobile/validate-token', verifyToken, (req, res) => {
+  // If we get here, the token is valid (verifyToken middleware validated it)
+  res.status(200).json(formatApiResponse({
+    valid: true,
+    user: {
+      email: req.user.email,
+      plan: req.user.plan,
+      role: req.user.role
+    }
+  }));
 });
 
 module.exports = router;
