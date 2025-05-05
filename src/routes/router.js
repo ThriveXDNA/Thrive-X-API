@@ -15,8 +15,18 @@ router.get('/status', (req, res) => {
   res.json({ status: 'API is running', version: '1.0.0', timestamp: new Date().toISOString() });
 });
 
+// Config endpoint for frontend to get Stripe publishable key
+router.get('/config', (req, res) => {
+  res.json({ 
+    stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+    apiVersion: '1.0.0'
+  });
+});
+
 // Validate API key and return user profile
-router.post('/fitness/api/auth/validate', async (req, res) => {
+// This will be accessible at both /fitness/api/auth/validate (from the /fitness mount)
+// and /api/auth/validate (from the /api mount in this file)
+router.post('/api/auth/validate', async (req, res) => {
   const apiKey = req.headers['x-api-key'] || req.body.apiKey;
   
   if (!apiKey) {
@@ -49,7 +59,8 @@ router.post('/fitness/api/auth/validate', async (req, res) => {
   }
 });
 
-// Mount fitness-specific routes at /api/fitness
-router.use('/api/fitness', fitnessRoutes);
+// Mount fitness-specific routes at /api to match frontend expectations
+// This will make routes accessible at /fitness/api/* through the server.js mounting
+router.use('/api', fitnessRoutes);
 
 module.exports = router;

@@ -102,15 +102,6 @@ app.use(cookieParser());
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Parse JSON request bodies (except for webhook endpoint)
-app.use(express.json());
-
-// Parse URL-encoded bodies
-app.use(express.urlencoded({ extended: true }));
-
-// Mount the router
-app.use('/', router);
-
 // Priority middleware for Stripe webhooks
 // This must come before express.json() and other body parsers
 app.post('/fitness/api/webhook', express.raw({type: 'application/json'}), async (req, res) => {
@@ -283,6 +274,18 @@ app.post('/fitness/api/webhook', express.raw({type: 'application/json'}), async 
   // Return a 200 response to acknowledge receipt of the event
   res.send();
 });
+
+// Parse JSON request bodies (after the webhook raw body parser)
+app.use(express.json());
+
+// Parse URL-encoded bodies
+app.use(express.urlencoded({ extended: true }));
+
+// Mount the router with prefix to match client side expectations
+app.use('/fitness', router);
+
+// Also mount at root for backward compatibility 
+app.use('/', router);
 
 // Helper function to map Stripe price ID to our plan ID
 function getPlanFromPriceId(priceId) {
