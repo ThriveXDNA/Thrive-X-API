@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thrive X Fitness API - Subscription Status</title>
+  <title>Thrive X Fitness API - Subscribe</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="/css/styles.css">
+  <!-- Include Stripe.js and Pricing Table -->
+  <script src="https://js.stripe.com/v3/"></script>
+  <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
   <style>
     :root {
       --primary: #1ECBE1;
@@ -89,36 +92,6 @@
       margin-bottom: 10px;
       color: var(--primary);
     }
-    .tab-navigation {
-      display: flex;
-      border-bottom: 1px solid #ddd;
-      margin-bottom: 30px;
-      flex-wrap: wrap;
-    }
-    .tab-button {
-      padding: 12px 24px;
-      background: none;
-      border: none;
-      border-bottom: 3px solid transparent;
-      font-size: 1rem;
-      font-weight: 500;
-      color: #777;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .tab-button:hover {
-      color: var(--primary);
-    }
-    .tab-button.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
     .message-box {
       max-width: 600px;
       margin: 0 auto;
@@ -152,12 +125,9 @@
       cursor: pointer;
       z-index: 100;
     }
+    /* Hide elements by default */
     .hidden {
       display: none;
-    }
-    .pricing-container {
-      max-width: 900px;
-      margin: 0 auto;
     }
     @media (max-width: 992px) {
       body {
@@ -184,7 +154,6 @@
       }
     }
   </style>
-  <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
 </head>
 <body>
   <!-- Sidebar Navigation -->
@@ -201,12 +170,12 @@
     </div>
     <div class="sidebar-section">
       <div class="sidebar-title">API Endpoints</div>
-      <a href="/fitness" class="sidebar-item tab-trigger" data-tab="workout">Generate Workout Plan</a>
-      <a href="/fitness" class="sidebar-item tab-trigger" data-tab="exercise">Exercise Details</a>
-      <a href="/fitness" class="sidebar-item tab-trigger" data-tab="nutrition-meal">Nutrition & Meal Plan</a>
-      <a href="/fitness" class="sidebar-item tab-trigger" data-tab="food">Analyze Food Plate</a>
-      <a href="/fitness" class="sidebar-item tab-trigger" data-tab="food-ingredient-directory">Food Ingredient Directory</a>
-      <a href="/fitness" class="sidebar-item tab-trigger" data-tab="natural-remedies">Natural Remedies</a>
+      <a href="/fitness" class="sidebar-item">Generate Workout Plan</a>
+      <a href="/fitness" class="sidebar-item">Exercise Details</a>
+      <a href="/fitness" class="sidebar-item">Nutrition & Meal Plan</a>
+      <a href="/fitness" class="sidebar-item">Analyze Food Plate</a>
+      <a href="/fitness" class="sidebar-item">Food Ingredient Directory</a>
+      <a href="/fitness" class="sidebar-item">Natural Remedies</a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-title">Legal Information</div>
@@ -223,148 +192,75 @@
   <!-- Main Content Area -->
   <main class="content-area">
     <div class="content-header">
-      <h1>Thrive X Fitness API Interface</h1>
+      <h1>Thrive X Fitness API Subscription</h1>
     </div>
-    <div class="tab-navigation">
-      <button class="tab-button" data-tab="workout">Generate Workout Plan</button>
-      <button class="tab-button" data-tab="exercise">Exercise Details</button>
-      <button class="tab-button" data-tab="nutrition-meal">Nutrition & Meal Plan</button>
-      <button class="tab-button" data-tab="food">Analyze Food Plate</button>
-      <button class="tab-button" data-tab="food-ingredient-directory">Food Ingredient Directory</button>
-      <button class="tab-button" data-tab="natural-remedies">Natural Remedies</button>
-      <button class="tab-button active" data-tab="subscription-status">Subscription Status</button>
+    
+    <!-- Subscription Plans (default view) -->
+    <div id="subscription-plans" class="subscription-content">
+      <!-- ONLY Stripe Pricing Table component -->
+      <stripe-pricing-table pricing-table-id="prctbl_1RIbMtBiUs9vvIkwccP1RHDl"
+        publishable-key="pk_live_51QXEvIBiUs9vvIkwd8zmWPqbRN2UzK2VjYBfgvyJD1qPmgZY4dNCw5juRmUIgRlZFrbVaNv90przGsiPqp8dirfP005P8e5gRB">
+      </stripe-pricing-table>
     </div>
-    <div id="workout-tab" class="tab-content">
-      <div class="message-box">
-        <p class="text-gray-600">Please visit the <a href="/fitness" class="text-[var(--primary)] hover:underline">Home page</a> to use the Generate Workout Plan feature.</p>
-      </div>
+    
+    <!-- Success Message -->
+    <div id="success-message" class="message-box success-box hidden">
+      <h2 style="font-size: 1.5rem; font-weight: bold; color: var(--primary); margin-bottom: 1rem;">Subscription Successful!</h2>
+      <p style="color: #666; margin-bottom: 1.5rem;">Thank you for subscribing to Thrive X Fitness API! Your plan is now active, and you can start using your API requests.</p>
+      <a href="/fitness/dashboard" style="display: inline-block; background-color: var(--primary); color: white; padding: 0.75rem 1.5rem; border-radius: 0.25rem; text-decoration: none;">
+        <i class="fas fa-tachometer-alt" style="margin-right: 0.5rem;"></i>Go to Dashboard
+      </a>
     </div>
-    <div id="exercise-tab" class="tab-content">
-      <div class="message-box">
-        <p class="text-gray-600">Please visit the <a href="/fitness" class="text-[var(--primary)] hover:underline">Home page</a> to use the Exercise Details feature.</p>
-      </div>
-    </div>
-    <div id="nutrition-meal-tab" class="tab-content">
-      <div class="message-box">
-        <p class="text-gray-600">Please visit the <a href="/fitness" class="text-[var(--primary)] hover:underline">Home page</a> to use the Nutrition & Meal Plan feature.</p>
-      </div>
-    </div>
-    <div id="food-tab" class="tab-content">
-      <div class="message-box">
-        <p class="text-gray-600">Please visit the <a href="/fitness" class="text-[var(--primary)] hover:underline">Home page</a> to use the Analyze Food Plate feature.</p>
-      </div>
-    </div>
-    <div id="food-ingredient-directory-tab" class="tab-content">
-      <div class="message-box">
-        <p class="text-gray-600">Please visit the <a href="/fitness" class="text-[var(--primary)] hover:underline">Home page</a> to use the Food Ingredient Directory feature.</p>
-      </div>
-    </div>
-    <div id="natural-remedies-tab" class="tab-content">
-      <div class="message-box">
-        <p class="text-gray-600">Please visit the <a href="/fitness" class="text-[var(--primary)] hover:underline">Home page</a> to use the Natural Remedies feature.</p>
-      </div>
-    </div>
-    <div id="subscription-status-tab" class="tab-content active">
-      <!-- Success Message -->
-      <div id="success-message" class="message-box success-box hidden">
-        <h2 class="text-xl font-bold text-[var(--primary)] mb-4">Subscription Successful!</h2>
-        <p class="text-gray-600 mb-6">Thank you for subscribing to Thrive X Fitness API! Your plan is now active. Please check your email for your API key and verification instructions.</p>
-        <a href="/fitness/dashboard" class="inline-block bg-[var(--primary)] text-white px-6 py-2 rounded hover:bg-[#0da8bc]">
-          <i class="fas fa-tachometer-alt mr-2"></i>Go to Dashboard
+    
+    <!-- Cancel Message -->
+    <div id="cancel-message" class="message-box cancel-box hidden">
+      <h2 style="font-size: 1.5rem; font-weight: bold; color: var(--highlight); margin-bottom: 1rem;">Subscription Canceled</h2>
+      <p style="color: #666; margin-bottom: 1.5rem;">Your subscription was not completed. Would you like to try again?</p>
+      <div style="display: flex; justify-content: center; gap: 1rem;">
+        <a href="/fitness/subscribe" style="display: inline-block; background-color: var(--highlight); color: white; padding: 0.75rem 1.5rem; border-radius: 0.25rem; text-decoration: none;">
+          <i class="fas fa-redo-alt" style="margin-right: 0.5rem;"></i>Try Again
         </a>
-      </div>
-      <!-- Cancel Message -->
-      <div id="cancel-message" class="message-box cancel-box hidden">
-        <h2 class="text-xl font-bold text-[var(--highlight)] mb-4">Subscription Canceled</h2>
-        <p class="text-gray-600 mb-6">Your subscription was not completed. Would you like to try again or return to the homepage?</p>
-        <div class="flex justify-center gap-4">
-          <a href="#" id="retry-subscribe-btn" class="inline-block bg-[var(--highlight)] text-white px-6 py-2 rounded hover:bg-[#c12b18]">
-            <i class="fas fa-redo-alt mr-2"></i>Try Again
-          </a>
-          <a href="/fitness" class="inline-block bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">
-            <i class="fas fa-home mr-2"></i>Return Home
-          </a>
-        </div>
-      </div>
-      <!-- Subscription Options -->
-      <div id="fallback-message" class="message-box">
-        <h2 class="text-xl font-bold text-gray-600 mb-4">Choose Your Subscription Plan</h2>
-        <p class="text-gray-600 mb-6">Select a subscription plan that fits your needs.</p>
-        
-        <!-- Stripe Pricing Table Container -->
-        <div class="pricing-container">
-          <stripe-pricing-table pricing-table-id="prctbl_1RIbMtBiUs9vvIkwccP1RHDl"
-          publishable-key="pk_live_51QXEvIBiUs9vvIkwd8zmWPqbRN2UzK2VjYBfgvyJD1qPmgZY4dNCw5juRmUIgRlZFrbVaNv90przGsiPqp8dirfP005P8e5gRB">
-          </stripe-pricing-table>
-        </div>
+        <a href="/fitness" style="display: inline-block; background-color: #666; color: white; padding: 0.75rem 1.5rem; border-radius: 0.25rem; text-decoration: none;">
+          <i class="fas fa-home" style="margin-right: 0.5rem;"></i>Return Home
+        </a>
       </div>
     </div>
   </main>
 
-  <script src="https://js.stripe.com/v3/"></script>
-  <script src="/fitness/scripts.js" defer></script>
   <script>
     // Mobile menu toggle
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.getElementById('sidebar');
-    if (menuToggle) {
-      menuToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('collapsed');
-        menuToggle.textContent = sidebar.classList.contains('collapsed') ? '☰' : '✕';
-      });
-    }
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      menuToggle.textContent = sidebar.classList.contains('collapsed') ? '☰' : '✕';
+    });
 
-    // Tab navigation and query parameter handling
+    // Handle Stripe redirect status
     document.addEventListener('DOMContentLoaded', () => {
-      // Check URL parameters for subscription status
       const urlParams = new URLSearchParams(window.location.search);
-      const success = urlParams.get('success');
-      const canceled = urlParams.get('canceled');
-      const sessionId = urlParams.get('session_id');
-      
-      // Hide all message boxes initially
-      document.getElementById('success-message').classList.add('hidden');
-      document.getElementById('cancel-message').classList.add('hidden');
-      
-      // Show appropriate message based on URL parameters
-      if (success === 'true' && sessionId) {
-        document.getElementById('success-message').classList.remove('hidden');
-        document.getElementById('fallback-message').classList.add('hidden');
-        console.log('Showing success message for session ID:', sessionId);
-      } else if (canceled === 'true') {
-        document.getElementById('cancel-message').classList.remove('hidden');
-        document.getElementById('fallback-message').classList.add('hidden');
-        console.log('Showing cancellation message');
+      const isSuccess = urlParams.get('success') === 'true';
+      const isCanceled = urlParams.get('canceled') === 'true';
+
+      const subscriptionPlans = document.getElementById('subscription-plans');
+      const successMessage = document.getElementById('success-message');
+      const cancelMessage = document.getElementById('cancel-message');
+
+      if (isSuccess) {
+        // Show success message
+        subscriptionPlans.classList.add('hidden');
+        successMessage.classList.remove('hidden');
+        cancelMessage.classList.add('hidden');
+      } else if (isCanceled) {
+        // Show cancel message
+        subscriptionPlans.classList.add('hidden');
+        successMessage.classList.add('hidden');
+        cancelMessage.classList.remove('hidden');
       } else {
-        document.getElementById('fallback-message').classList.remove('hidden');
-        console.log('Showing subscription options');
-      }
-      
-      // Tab navigation
-      const tabButtons = document.querySelectorAll('.tab-button');
-      const tabContents = document.querySelectorAll('.tab-content');
-      
-      tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
-          const tabName = this.getAttribute('data-tab');
-          console.log('Tab clicked:', tabName);
-          
-          tabButtons.forEach(btn => btn.classList.remove('active'));
-          tabContents.forEach(content => content.classList.remove('active'));
-          
-          this.classList.add('active');
-          document.getElementById(`${tabName}-tab`).classList.add('active');
-        });
-      });
-      
-      // Retry subscription button
-      const retrySubscribeBtn = document.getElementById('retry-subscribe-btn');
-      if (retrySubscribeBtn) {
-        retrySubscribeBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          // Return to subscription page
-          window.location.href = '/fitness/subscribe';
-        });
+        // Show subscription plans by default
+        subscriptionPlans.classList.remove('hidden');
+        successMessage.classList.add('hidden');
+        cancelMessage.classList.add('hidden');
       }
     });
   </script>

@@ -1,149 +1,72 @@
-# Thrive X Fitness API
+MIT License
 
-A comprehensive fitness and nutrition API that provides AI-powered content including workout plans, meal plans, exercise details, and more.
+Copyright (c) 2025 ThriveXDNA.com
 
-## Serverless Deployment Architecture
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This API is designed to work with Vercel's serverless architecture, with the following structure:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-- `api/` - Contains serverless function endpoints
-  - `index.js` - Main API handler
-  - `webhook.js` - Dedicated webhook handler for Stripe
-  - `workout.js` - Dedicated endpoint for workout plans
-  - `utils/` - Shared utilities
-    - `database.js` - Supabase connection pooling
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
-- `src/` - Original source code and controllers
-  - `api/` - API controllers
-  - `routes/` - Route definitions
-  - `utils/` - Utility functions
+Tabs and Features
+The ThriveX API powers a rich user experience at thrive-x-api.vercel.app, with the following key features accessible via the interface:
 
-## Features
+# ThriveX API Subscription Plans
 
-- AI-powered workout plan generation
-- Personalized meal planning
-- Exercise details and instructions
-- Natural remedies
-- Food ingredient analysis
-- Food plate analysis
-- Subscription management with Stripe
-- API key authentication
-- Email verification
+## All Features Included, Only API Request Limits Vary
 
-## Deployment to Vercel
+| Plan | Monthly Price | Annual Price | Annual Savings | API Requests/Month | 
+|------|--------------|--------------|----------------|-------------------|
+| **Core** | $14.99 | $149.90 | $30 (17%) | 500 | 
+| **Elite** | $49.99 | $479.90 | $120 (20%) | 2,000 | 
+| **Ultimate** | $129.99 | $1,169.90 | $390 (25%) | 5,000 |
 
-### Prerequisites
+*All annual plans are billed once yearly. Prices shown in USD.*
 
-1. A Vercel account
-2. A Supabase project
-3. A Stripe account
-4. An Anthropic API key
+## Features Available Across All Plans
 
-### Setup
+| Feature | Description | Available On |
+|---------|-------------|-------------|
+| **Generate Workout Plan** | Create personalized workout plans based on user goals and fitness level | All Plans |
+| **Exercise Details** | Access a comprehensive database of exercises with descriptions, instructions, and visuals | All Plans |
+| **Nutrition & Meal Plan** | Generate tailored meal plans with nutritional breakdowns | All Plans |
+| **Analyze Food Plate** | Upload a photo or input food items to analyze nutritional content | All Plans |
+| **Food Ingredient Directory** | Explore a searchable directory of ingredients with nutritional data | All Plans |
+| **Natural Remedies** | Discover natural health remedies and supplements tied to fitness and nutrition goals | All Plans |
 
-1. Clone this repository
-2. Install dependencies:
-   ```
-   npm install
-   ```
-3. Copy the `.env.example` file to `.env` for local development:
-   ```
-   cp .env.example .env
-   ```
-4. Fill in your environment variables in the `.env` file
+### API Usage Notes
 
-### Local Development
+- All features are accessible on every plan through the ThriveX API at thrive-x-api.vercel.app
+- Your subscription tier determines your monthly API request limit
+- Higher tiers allow for more API calls, enabling more frequent use of all features
+- Request limits reset at the beginning of each billing cycle
+- Additional API requests beyond your plan limit require an upgrade or will be unavailable until the next cycle
 
-Run the development server:
+Get Started: Sign up at thrive-x-api.vercel.app to select a plan and generate your API key.
+Payment: Powered by Stripe for secure, hassle-free transactions.
 
-```
-npm run dev
-```
+# ThriveX API Integration Guide
 
-### Deploy to Vercel
+## Quick Start
 
-1. **Install Vercel CLI** (optional but helpful for debugging):
-   ```
-   npm install -g vercel
-   ```
+### 1. Install the package
 
-2. **Configure Environment Variables in Vercel Dashboard**:
-   - Go to your Vercel dashboard
-   - Select your project
-   - Go to "Settings" > "Environment Variables"
-   - Add all the environment variables from your `.env` file
+Contact
+Support: Reach out to support@thrivexdna.com for assistance.
+Issues: Report bugs or suggest features at GitHub Issues.
 
-3. **Deploy to Vercel**:
-   ```
-   vercel
-   ```
-   Or connect your GitHub repository for automatic deployments.
+```bash
+npm install @thrivex/api
 
-4. **Configure Stripe Webhooks**:
-   - In your Stripe dashboard, add a webhook endpoint pointing to:
-     ```
-     https://your-vercel-domain.vercel.app/fitness/api/webhook
-     ```
-
-## Serverless Architecture Optimizations
-
-This codebase has been optimized for Vercel's serverless architecture with the following improvements:
-
-1. **Connection Pooling**: Supabase client is initialized once and reused across function invocations using a singleton pattern.
-
-2. **Path-Based Routing**: The `vercel.json` configuration maps specific routes to dedicated serverless functions.
-
-3. **Webhook Handling**: Webhook endpoints use raw body parsers to properly handle Stripe signatures.
-
-4. **Memory and Duration Settings**: Serverless functions are configured with appropriate memory and timeout settings.
-
-## Subscription Plans
-
-- **Core**: $14.99/month or $149.90/year (500 requests/month)
-- **Elite**: $49.99/month or $479.90/year (2000 requests/month)
-- **Ultimate**: $129.99/month or $1169.90/year (5000 requests/month)
-
-## API Endpoints
-
-Base URL: `https://your-vercel-domain.vercel.app/fitness/api`
-
-### Fitness Endpoints
-
-- `POST /workout` - Generate personalized workout plans
-- `POST /meal-plan` - Create customized meal plans
-- `POST /exercise` - Get detailed exercise information
-- `POST /natural-remedies` - Retrieve natural remedies for symptoms
-- `POST /food-plate` - Analyze food plate composition
-- `POST /food-ingredient` - Get detailed food ingredient information
-
-### Authentication Endpoints
-
-- `POST /auth/validate` - Validate API key
-- `POST /check-email-verified` - Check if user's email is verified
-- `POST /send-verification-code` - Send verification code to user's email
-- `POST /verify-code` - Verify email with code
-- `POST /resend-verification-code` - Resend verification code
-
-### Subscription Endpoints
-
-- `POST /create-checkout-session` - Create Stripe checkout session
-- `GET /config` - Get API configuration (e.g., Stripe publishable key)
-
-## Authentication
-
-All API requests must include an API key in the headers:
-
-```
-X-API-Key: your_api_key
-```
-
-## Error Handling
-
-The API returns standard HTTP status codes:
-
-- `200` - Success
-- `400` - Bad Request (missing or invalid parameters)
-- `401` - Unauthorized (invalid or missing API key)
-- `403` - Forbidden (email not verified or subscription inactive)
-- `429` - Too Many Requests (rate limit exceeded)
-- `500` - Server Error

@@ -1,12 +1,10 @@
-
 // src/routes/router.js
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
-const fitnessRoutes = require('./fitnessRoutes');
 
 const router = express.Router();
+const fitnessRoutes = require('./fitnessRoutes');
 
-// Supabase setup (using environment variables from server.js)
 // Supabase setup (using environment variables from server.js)
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
@@ -15,52 +13,25 @@ router.get('/status', (req, res) => {
   res.json({ status: 'API is running', version: '1.0.0', timestamp: new Date().toISOString() });
 });
 
-// Config endpoint for frontend to get Stripe publishable key
-router.get('/config', (req, res) => {
-  res.json({ 
-    stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
-    apiVersion: '1.0.0'
-  });
-});
-
 // Validate API key and return user profile
-// This will be accessible at both /fitness/api/auth/validate (from the /fitness mount)
-// and /api/auth/validate (from the /api mount in this file)
-router.post('/api/auth/validate', async (req, res) => {
-  const apiKey = req.headers['x-api-key'] || req.body.apiKey;
-  
-  if (!apiKey) {
-    return res.status(400).json({ error: 'API key required' });
-  }
+router.post('/fitness/api/auth/validate', async (req, res) => {
+  const { apiKey } = req.body;
+  if (!apiKey) return res.status(400).json({ error: 'API key required' });
 
-  try {
-    // Fetch user from Supabase
-    const { data, error } = await supabase
-      .from('users')
-      .select('plan, role, email, email_verified, requestsRemaining')
-      .eq('api_key', apiKey)
-      .single();
+  // Fetch user from Supabase
+  const { data, error } = await supabase
+    .from('users')
+    .select('plan, role')
+    .eq('api_key', apiKey)
+    .single();
 
-    if (error || !data) {
-      return res.status(401).json({ error: 'Invalid API key' });
-    }
+  if (error || !data) return res.status(401).json({ error: 'Invalid API key' });
 
-    // Return user profile
-    res.json({ 
-      plan: data.plan || 'core', 
-      role: data.role || 'user',
-      email: data.email,
-      email_verified: data.email_verified,
-      requestsRemaining: data.requestsRemaining
-    });
-  } catch (err) {
-    console.error('Error in /auth/validate:', err.message);
-    res.status(500).json({ error: 'Server error during validation' });
-  }
+  // Return user profile without Redis-based request counting
+  res.json({ plan: data.plan || 'essential', role: data.role || 'user' });
 });
 
-// Mount fitness-specific routes at /api to match frontend expectations
-// This will make routes accessible at /fitness/api/* through the server.js mounting
-router.use('/api', fitnessRoutes);
+// Mount fitness-specific routes at /api/fitness
+router.use('/api/fitness', fitnessRoutes);
 
 module.exports = router;
