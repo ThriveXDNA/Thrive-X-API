@@ -649,27 +649,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
   
-  // Check for Stripe success/cancel parameters for subscription page
-  if (window.location.pathname === '/fitness/subscribe') {
-    const urlParams = new URLSearchParams(window.location.search);
-    const isSuccess = urlParams.get('success') === 'true';
-    const isCanceled = urlParams.get('canceled') === 'true';
-    
-    // Handle subscription status messages
-    const successMessage = document.getElementById('success-message');
-    const cancelMessage = document.getElementById('cancel-message');
-    const subscriptionPlans = document.getElementById('subscription-plans');
-    
-    if (successMessage && cancelMessage && subscriptionPlans) {
-      if (isSuccess) {
-        subscriptionPlans.classList.add('hidden');
-        successMessage.classList.remove('hidden');
-        cancelMessage.classList.add('hidden');
-      } else if (isCanceled) {
-        subscriptionPlans.classList.add('hidden');
-        successMessage.classList.add('hidden');
-        cancelMessage.classList.remove('hidden');
-      }
-    }
-  }
 });
