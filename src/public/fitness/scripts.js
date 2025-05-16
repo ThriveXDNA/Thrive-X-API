@@ -624,14 +624,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Subscribe button redirects
-  const subscribeButtons = document.querySelectorAll('.sidebar-item[href="/fitness/subscribe"], #auth-subscribe-btn');
-  subscribeButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
+  // Updated: Only add click handler for non-link subscribe button
+  const authSubscribeBtn = document.getElementById('auth-subscribe-btn');
+  if (authSubscribeBtn) {
+    authSubscribeBtn.addEventListener('click', () => {
       window.location.href = '/fitness/subscribe';
     });
-  });
+  }
 
   // Food image preview
   if (foodImageInput && foodImagePreview) {
@@ -648,5 +647,4 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   }
-  
 });
