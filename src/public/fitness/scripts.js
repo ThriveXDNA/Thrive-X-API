@@ -631,6 +631,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.location.href = '/fitness/subscribe';
     });
   }
+  
+  // Fix for sidebar subscribe button
+  const sidebarSubscribeBtn = document.getElementById('sidebar-subscribe-btn');
+  if (sidebarSubscribeBtn) {
+    sidebarSubscribeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = '/fitness/subscribe';
+    });
+  }
 
   // Food image preview
   if (foodImageInput && foodImagePreview) {
