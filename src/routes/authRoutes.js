@@ -21,6 +21,139 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// List of common temporary email domains
+const tempEmailDomains = [
+  'tempmail.com', 'temp-mail.org', 'guerrillamail.com', 'guerrillamail.net',
+  'sharklasers.com', 'mailinator.com', '10minutemail.com', 'yopmail.com',
+  'throwawaymail.com', 'getairmail.com', 'getnada.com', 'mailnesia.com',
+  'tempr.email', 'tempmail.net', 'dispostable.com', 'mintemail.com',
+  'mailcatch.com', 'anonbox.net', 'harakirimail.com', 'trashmail.com'
+];
+
+// Helper function to check if email is from a temporary domain
+function isTemporaryEmail(email) {
+  const domain = email.split('@')[1].toLowerCase();
+  return tempEmailDomains.includes(domain);
+}
+
+// Helper function to determine plan type from Stripe price ID
+function determinePlanFromPriceId(priceId) {
+  // Map Stripe price IDs to plan types based on your subscription plans
+  const priceMap = {
+    [process.env.STRIPE_PRICE_CORE]: 'core',
+    [process.env.STRIPE_PRICE_CORE_YEARLY]: 'core-yearly',
+    [process.env.STRIPE_PRICE_ELITE]: 'elite',
+    [process.env.STRIPE_PRICE_ELITE_YEARLY]: 'elite-yearly',
+    [process.env.STRIPE_PRICE_ULTIMATE]: 'ultimate',
+    [process.env.STRIPE_PRICE_ULTIMATE_YEARLY]: 'ultimate-yearly'
+  };
+  
+  return priceMap[priceId] || 'core'; // Default to core if unknown
+}
+
+// Helper function to get request limit based on plan
+function getRequestLimit(planType) {
+  const planLimits = {
+    'core': 500,
+    'core-yearly': 500,
+    'elite': 2000,
+    'elite-yearly': 2000,
+    'ultimate': 5000,
+    'ultimate-yearly': 5000
+  };
+  
+  return planLimits[planType] || 500;
+}
+
+// Create or update user from Stripe checkout
+async function createOrUpdateUserFromStripe(email, planType, subscriptionId) {
+  try {
+    // Check if user already exists
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id, api_key')
+      .eq('email', email)
+      .single();
+      
+    let apiKey;
+    
+    if (existingUser) {
+      // Update existing user
+      apiKey = existingUser.api_key;
+      await supabase
+        .from('users')
+        .update({
+          plan: planType,
+          subscription_id: subscriptionId,
+          requestsRemaining: getRequestLimit(planType),
+          email_verified: true // Payment confirms email ownership
+        })
+        .eq('email', email);
+    } else {
+      // Create new user with API key
+      apiKey = uuidv4();
+      
+      // Create auth user if they don't exist yet
+      const tempPassword = uuidv4(); // Random temporary password
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password: tempPassword,
+      });
+      
+      if (authError) {
+        console.error('Failed to create Supabase auth user:', authError);
+        throw new Error('Failed to create user account');
+      }
+      
+      // Insert user into our users table
+      await supabase
+        .from('users')
+        .insert({
+          api_key: apiKey,
+          plan: planType,
+          role: 'user',
+          requestsRemaining: getRequestLimit(planType),
+          email,
+          email_verified: true, // Payment confirms email ownership
+          subscription_id: subscriptionId,
+          supabase_user_id: authData.user?.id
+        });
+    }
+    
+    return apiKey;
+  } catch (error) {
+    console.error('Error in createOrUpdateUserFromStripe:', error);
+    throw error;
+  }
+}
+
+// Send API key welcome email
+async function sendApiKeyWelcomeEmail(email, apiKey, planType) {
+  const planName = planType.charAt(0).toUpperCase() + planType.slice(1);
+  const FRONTEND_URL = process.env.FRONTEND_URL || 'https://thrivexdna.com';
+  
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Welcome to Thrive-X Fitness API - Your API Key',
+    html: `
+      <h1>Welcome to Thrive-X Fitness API!</h1>
+      <p>Thank you for subscribing to our ${planName} plan.</p>
+      <p>Your API Key: <strong>${apiKey}</strong></p>
+      <p>To get started:</p>
+      <ol>
+        <li>Visit our <a href="${FRONTEND_URL}/fitness/docs">API documentation</a></li>
+        <li>Add your API key to the request headers as X-API-Key</li>
+        <li>Start building amazing fitness applications!</li>
+      </ol>
+      <p>If you need any assistance, please contact our support team.</p>
+      <p>Best,<br>Thrive-X Team</p>
+    `
+  };
+  
+  await transporter.sendMail(mailOptions);
+}
+
 // Register a new user
 router.post('/register', async (req, res) => {
   try {
@@ -32,6 +165,11 @@ router.post('/register', async (req, res) => {
     
     if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
       return res.status(400).json({ error: 'Invalid email address' });
+    }
+    
+    // Check for temporary email domains
+    if (isTemporaryEmail(email)) {
+      return res.status(400).json({ error: 'Temporary email addresses are not allowed' });
     }
     
     // Check if user already exists
@@ -273,6 +411,26 @@ router.post('/regenerate-api-key', async (req, res) => {
   } catch (err) {
     console.error('Error in /regenerate-api-key:', err.message);
     res.status(500).json({ error: 'Server error during API key regeneration' });
+  }
+});
+
+// Process Stripe checkout completion (helper method for webhook)
+router.post('/stripe-subscription-created', async (req, res) => {
+  try {
+    const { email, priceId, subscriptionId } = req.body;
+    
+    if (!email || !priceId || !subscriptionId) {
+      return res.status(400).json({ error: 'Email, priceId, and subscriptionId are required' });
+    }
+    
+    const planType = determinePlanFromPriceId(priceId);
+    const apiKey = await createOrUpdateUserFromStripe(email, planType, subscriptionId);
+    await sendApiKeyWelcomeEmail(email, apiKey, planType);
+    
+    res.status(200).json({ message: 'Subscription processed successfully' });
+  } catch (err) {
+    console.error('Error in /stripe-subscription-created:', err.message);
+    res.status(500).json({ error: 'Server error processing subscription' });
   }
 });
 
