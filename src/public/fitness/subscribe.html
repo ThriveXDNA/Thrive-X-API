@@ -199,8 +199,8 @@
     <div id="subscription-plans" class="subscription-content">
       <!-- ONLY Stripe Pricing Table component -->
       <stripe-pricing-table pricing-table-id="prctbl_1RIbMtBiUs9vvIkwccP1RHDl"
-        publishable-key="pk_live_51QXEvIBiUs9vvIkwd8zmWPqbRN2UzK2VjYBfgvyJD1qPmgZY4dNCw5juRmUIgRlZFrbVaNv90przGsiPqp8dirfP005P8e5gRB">
-      </stripe-pricing-table>
+      publishable-key="<%- process.env.STRIPE_PUBLISHABLE_KEY %>">
+    </stripe-pricing-table>
     </div>
     
     <!-- Success Message -->

@@ -17,7 +17,7 @@ console.log('Loaded env - OPENAI:', process.env.OPENAI_API_KEY ? 'set' : 'not se
 console.log('Loaded env - ANTHROPIC:', process.env.ANTHROPIC_API_KEY ? 'set' : 'not set');
 console.log('Loaded env - SUPABASE_URL:', process.env.SUPABASE_URL ? 'set' : 'not set');
 console.log('Loaded env - SUPABASE_KEY:', process.env.SUPABASE_KEY ? 'set' : 'not set');
-console.log('Loaded env - REDIS_URL:', process.env.REDIS_URL ? process.env.REDIS_URL : 'not set');
+console.log('Loaded env - REDIS_URL:', process.env.REDIS_URL ? 'set' : 'not set');
 console.log('Loaded env - ADMIN_API_KEY:', process.env.ADMIN_API_KEY ? 'set' : 'not set');
 
 // Configuration
@@ -81,10 +81,18 @@ app.get('/fitness/subscribe', (req, res) => {
 // API key authentication middleware
 const authenticateApiKey = async (req, res, next) => {
   console.log('Entering authenticateApiKey middleware for path:', req.path);
-  console.log('Request headers:', JSON.stringify(req.headers));
+  
+  // Safely log headers without sensitive data
+  const safeHeaders = {...req.headers};
+  if (safeHeaders['x-api-key']) safeHeaders['x-api-key'] = '[REDACTED]';
+  if (safeHeaders['X-API-Key']) safeHeaders['X-API-Key'] = '[REDACTED]';
+  if (safeHeaders['X-Api-Key']) safeHeaders['X-Api-Key'] = '[REDACTED]';
+  if (safeHeaders['authorization']) safeHeaders['authorization'] = '[REDACTED]';
+  console.log('Request headers:', JSON.stringify(safeHeaders));
+  
   try {
     const apiKey = req.headers['x-api-key'] || req.headers['X-API-Key'] || req.headers['X-Api-Key'];
-    console.log('Extracted API key:', apiKey || 'none provided');
+    console.log('Extracted API key:', apiKey ? '[REDACTED]' : 'none provided');
 
     if (!apiKey) {
       console.log('No API key provided in headers for path:', req.path);
@@ -96,7 +104,7 @@ const authenticateApiKey = async (req, res, next) => {
       return res.status(500).json({ error: 'Server configuration error' });
     }
 
-    console.log('Querying Supabase for API key:', apiKey);
+    console.log('Querying Supabase for API key: [REDACTED]');
     const { data, error } = await supabase
       .from('users')
       .select('plan, role')
@@ -118,7 +126,7 @@ const authenticateApiKey = async (req, res, next) => {
       return next();
     }
 
-    console.log('Invalid API key:', apiKey, 'for path:', req.path);
+    console.log('Invalid API key: [REDACTED] for path:', req.path);
     return res.status(401).json({ error: 'Invalid API key' });
   } catch (err) {
     console.error('Auth middleware error:', err.message, 'Path:', req.path);

@@ -44,10 +44,13 @@ async function sendApiKeyEmail(email, apiKey, planName) {
       html: `
         <h1>Welcome to Thrive-X Fitness API!</h1>
         <p>Thank you for subscribing to our ${planName} plan.</p>
-        <p>Your API Key: <strong>${apiKey}</strong></p>
-        <p>Visit our <a href="${FRONTEND_URL}/fitness/docs">documentation</a> to get started.</p>
+        <p>Your API Key is now available in your account dashboard.</p>
+        <p>Visit our <a href="${FRONTEND_URL}/fitness/dashboard">dashboard</a> to retrieve your API key and <a href="${FRONTEND_URL}/fitness/docs">documentation</a> to get started.</p>
       `
     };
+    
+    // Then add a separate function to create a temporary access link for the dashboard
+    // Or implement a secure dashboard view where users can see their API key after authentication
     
     await transporter.sendMail(mailOptions);
     console.log(`API key email sent to ${email}`);
@@ -78,7 +81,7 @@ router.post('/food-plate', upload.single('food_image'), (req, res, next) => {
 });
 
 router.post('/food-ingredient', (req, res, next) => {
-  console.log('Reached /food-ingredient route, User:', req.user);
+  console.log('Reached /food-ingredient route, User ID:', req.user?.id || 'unknown');
   getFoodIngredientDetails(req, res, next);
 });
 

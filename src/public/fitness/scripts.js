@@ -10,9 +10,9 @@ const unitSystemSelect = document.getElementById('unit-system');
 // Initialize Stripe (if on subscription page)
 let stripe;
 if (typeof Stripe !== 'undefined') {
-  stripe = Stripe('pk_live_51QXEvIBiUs9vvIkwd8zmWPqbRN2UzK2VjYBfgvyJD1qPmgZY4dNCw5juRmUIgRlZFrbVaNv90przGsiPqp8dirfP005P8e5gRB');
+  const stripePublishableKey = document.querySelector('meta[name="stripe-key"]')?.getAttribute('content');
+  stripe = Stripe(stripePublishableKey);
 }
-
 // User profile object
 let userProfile = {
   plan: 'core',

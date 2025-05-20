@@ -3,9 +3,9 @@ const Anthropic = require('@anthropic-ai/sdk');
 const path = require('path');
 const dotenv = require('dotenv');
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-console.log('ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY || 'not set');
+console.log('ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY ? 'set' : 'not set');
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-console.log('[Debug] Anthropic initialized with key:', process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.substring(0, 10) + '...' : 'not set');
+console.log('[Debug] Anthropic initialized with key:', process.env.ANTHROPIC_API_KEY ? 'set' : 'not set');
 
 async function callClaude(prompt, endpoint) {
   try {
