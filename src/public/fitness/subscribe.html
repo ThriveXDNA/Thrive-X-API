@@ -9,6 +9,8 @@
   <!-- Include Stripe.js and Pricing Table -->
   <script src="https://js.stripe.com/v3/"></script>
   <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
+  <!-- Add Stripe key meta tag -->
+  <meta name="stripe-key" content="pk_live_51QXEvIBiUs9vvIkwd8zmWPqbRN2UzK2VjYBfgvyJD1qPmgZY4dNCw5juRmUIgRlZFrbVaNv90przGsiPqp8dirfP005P8e5gRB">
   <style>
     :root {
       --primary: #1ECBE1;
@@ -199,7 +201,7 @@
     <div id="subscription-plans" class="subscription-content">
       <!-- ONLY Stripe Pricing Table component -->
       <stripe-pricing-table pricing-table-id="prctbl_1RIbMtBiUs9vvIkwccP1RHDl"
-      publishable-key="<%- process.env.STRIPE_PUBLISHABLE_KEY %>">
+      publishable-key="pk_live_51QXEvIBiUs9vvIkwd8zmWPqbRN2UzK2VjYBfgvyJD1qPmgZY4dNCw5juRmUIgRlZFrbVaNv90przGsiPqp8dirfP005P8e5gRB">
     </stripe-pricing-table>
     </div>
     
