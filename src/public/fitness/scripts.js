@@ -8,10 +8,13 @@ const IN_TO_CM = 2.54;
 const unitSystemSelect = document.getElementById('unit-system');
 
 // Initialize Stripe (if on subscription page)
+// Replace these lines in scripts.js (around line 8-12)
+
+// Initialize Stripe (if on subscription page)
 let stripe;
 if (typeof Stripe !== 'undefined') {
-  const stripePublishableKey = document.querySelector('meta[name="stripe-key"]')?.getAttribute('content');
-  stripe = Stripe(stripePublishableKey);
+  // Use a direct reference to the publishable key
+  stripe = Stripe('pk_live_51QXEvIBiUs9vvIkwd8zmWPqbRN2UzK2VjYBfgvyJD1qPmgZY4dNCw5juRmUIgRlZFrbVaNv90przGsiPqp8dirfP005P8e5gRB');
 }
 // User profile object
 let userProfile = {
